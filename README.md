@@ -12,7 +12,7 @@ make onlye HTML file, do not seperate CSS and JS file.
 
 use local server, in VScode add Live server extenstion.
 
-
+Check the template.html 
 
 Have a nice day!
 
