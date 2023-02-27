@@ -53,13 +53,13 @@ body
   <canvas class="webgl"></canvas>
 
   <section class="section">
-      <h1>My Portfolio</h1>
+      <h1>Gavin Quach</h1>
   </section>
   <section class="section">
-      <h2>My projects</h2>
+      <h2 style="text-align: right;">Scroll based animations</h2>
   </section>
   <section class="section">
-      <h2>Contact me</h2>
+      <h2 style="text-align: left; width: 50%;">Chapter 2 Lesson 20</h2>
   </section>
 
   <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
@@ -69,15 +69,15 @@ body
       {
         "imports": {
           "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
-          // if need add module here
           "lil-gui": "https://unpkg.com/browse/lil-gui@0.16.1/dist/lil-gui.esm.js",
-          "gsap": "https://unpkg.com/browse/gsap@3.5.1/index.js",
+        }
       }
     </script>
   <script type="module">
     import * as THREE from 'three'
     import * as dat from 'lil-gui'
-    import gsap from 'gsap'
+    import { gsap } from 'https://cdn.skypack.dev/gsap';
+    // console.log(gsap)
 
     /**
      * Debug
