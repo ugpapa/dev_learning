@@ -3,20 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>12 - Materials</title>
-    <link rel="stylesheet" href="./style.css" />
+    <title>Texture</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        overflow: hidden;
+      }
+
+      .webgl {
+        position: fixed;
+        top: 0;
+        left: 0;
+        outline: none;
+      }
+    </style>
   </head>
   <body>
     <canvas class="webgl"></canvas>
+    <script
+      defer
+      src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"
+    ></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+          "control": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js"
+        }
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.17"></script>
     <script type="module">
       import * as THREE from "three";
-      import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-      import * as dat from "lil-gui";
+      import { OrbitControls } from "control";
 
       /**
        * Debug UI
        */
-      // const gui = new dat.GUI();
+      const GUI = lil.GUI;
+      const gui = new GUI();
 
       /**
        * Base
@@ -31,12 +61,12 @@
       const cubeTextureLoader = new THREE.CubeTextureLoader();
 
       const environmentMapTexture = cubeTextureLoader.load([
-        "/textures/environmentMaps/1/px.jpg",
-        "/textures/environmentMaps/1/nx.jpg",
-        "/textures/environmentMaps/1/py.jpg",
-        "/textures/environmentMaps/1/ny.jpg",
-        "/textures/environmentMaps/1/pz.jpg",
-        "/textures/environmentMaps/1/nz.jpg",
+        "./textures/environmentMaps/1/px.jpg",
+        "./textures/environmentMaps/1/nx.jpg",
+        "./textures/environmentMaps/1/py.jpg",
+        "./textures/environmentMaps/1/ny.jpg",
+        "./textures/environmentMaps/1/pz.jpg",
+        "./textures/environmentMaps/1/nz.jpg",
       ]);
 
       /**
@@ -44,21 +74,25 @@
        */
       const textureLoader = new THREE.TextureLoader();
 
-      const doorColorTexture = textureLoader.load("/textures/door/color.jpg");
-      const doorAlphaTexture = textureLoader.load("/textures/door/alpha.jpg");
+      const doorColorTexture = textureLoader.load("./textures/door/color.jpg");
+      const doorAlphaTexture = textureLoader.load("./textures/door/alpha.jpg");
       const doorAmbientOcclusionTexture = textureLoader.load(
-        "/textures/door/ambientOcclusion.jpg"
+        "./textures/door/ambientOcclusion.jpg"
       );
-      const doorHeightTexture = textureLoader.load("/textures/door/height.jpg");
-      const doorNormalTexture = textureLoader.load("/textures/door/normal.jpg");
+      const doorHeightTexture = textureLoader.load(
+        "./textures/door/height.jpg"
+      );
+      const doorNormalTexture = textureLoader.load(
+        "./textures/door/normal.jpg"
+      );
       const doorMetalnessTexture = textureLoader.load(
-        "/textures/door/metalness.jpg"
+        "./textures/door/metalness.jpg"
       );
       const doorRoughnessTexture = textureLoader.load(
-        "/textures/door/roughness.jpg"
+        "./textures/door/roughness.jpg"
       );
-      const matcapTexture = textureLoader.load("/textures/matcaps/1.png");
-      const gradientTexture = textureLoader.load("/textures/gradients/3.jpg");
+      const matcapTexture = textureLoader.load("./textures/matcaps/1.png");
+      const gradientTexture = textureLoader.load("./textures/gradients/3.jpg");
 
       /**
        * Objects
@@ -67,10 +101,10 @@
       materials.metalness = 0.7;
       materials.roughness = 0.2;
       materials.envMap = environmentMapTexture;
-      //  materials.envMap = environmentMapTexture;
-      // gui.add(materials, 'metalness').min(0).max(1).step(0.0001);
-      // gui.add(materials, 'roughness').min(0).max(1).step(0.0001);
-      //  materials.map = doorColorTexture;
+      materials.envMap = environmentMapTexture;
+      gui.add(materials, "metalness").min(0).max(1).step(0.0001);
+      gui.add(materials, "roughness").min(0).max(1).step(0.0001);
+      materials.map = doorColorTexture;
 
       // display some rough angles
       materials.flatShading = true;
@@ -83,25 +117,13 @@
 
       const plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), materials);
 
-      // const cone = new THREE.Mesh(new THREE.ConeGeometry(1, 1), materials);
-      // cone.position.x = 3;
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(1, 1), materials);
+      cone.position.x = 3;
       const coneMaterial = new THREE.MeshMatcapMaterial({
         matcap: matcapTexture,
       });
 
-      for (let i = 0; i < 100; i++) {
-        const cone = new THREE.Mesh(new THREE.ConeGeometry(1, 1), coneMaterial);
-        cone.position.x = (Math.random() - 0.5) * 10;
-        cone.position.y = (Math.random() - 0.5) * 10;
-        cone.position.z = (Math.random() - 0.5) * 10;
-        cone.rotation.x = Math.random() * Math.PI;
-        cone.rotation.y = Math.random() * Math.PI;
-        const scale = Math.random();
-        cone.scale.set(scale, scale, scale);
-        scene.add(cone);
-      }
-
-      // scene.add(cone);
+      scene.add(sphere, plane, cone);
       /**
        * Sizes
        */
@@ -161,13 +183,13 @@
         const elapsedTime = clock.getElapsedTime();
 
         // Update objects
-        //   cone.rotation.y = 0.1 * elapsedTime;
-        //   sphere.rotation.y = 0.1 * elapsedTime;
-        //   plane.rotation.y = 0.1 * elapsedTime;
+        cone.rotation.y = 0.1 * elapsedTime;
+        sphere.rotation.y = 0.1 * elapsedTime;
+        plane.rotation.y = 0.1 * elapsedTime;
 
-        //   cone.rotation.x = 0.15 * elapsedTime;
-        //   sphere.rotation.x = 0.15 * elapsedTime;
-        //   plane.rotation.x = 0.15 * elapsedTime;
+        cone.rotation.x = 0.15 * elapsedTime;
+        sphere.rotation.x = 0.15 * elapsedTime;
+        plane.rotation.x = 0.15 * elapsedTime;
 
         // Update controls
         controls.update();
