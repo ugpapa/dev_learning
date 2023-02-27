@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>18 - Particles</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      overflow: hidden;
+    }
+
+    .webgl {
+      position: fixed;
+      top: 0;
+      left: 0;
+      outline: none;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas class="webgl"></canvas>
+
+  <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+
+
+  <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+          "lil-gui": "https://unpkg.com/browse/lil-gui@0.16.1/dist/lil-gui.esm.js"
+        }
+      }
+    </script>
+  <script type="module">
+    import * as THREE from 'three'
+    import { OrbitControls } from 'https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js'
+    import * as dat from 'lil-gui'
+
+    /**
+     * Base
+     */
+    // Debug
+    const gui = new dat.GUI()
+
+    // Canvas
+    const canvas = document.querySelector('canvas.webgl')
+
+    // Scene
+    const scene = new THREE.Scene()
+
+    /**
+     * Textures
+     */
+    const textureLoader = new THREE.TextureLoader()
+    const particlesTexture = textureLoader.load('/textures/particles/2.png')
+
+    /**
+     * Particles
+     */
+    const particlesGeometry = new THREE.SphereGeometry(1, 32, 32)
+    const count = 5000
+
+    const positions = new Float32Array(count * 3) // Multiply by 3 because each position is composed of 3 values (x, y, z)
+    const colors = new Float32Array(count * 3)
+
+
+    for (let i = 0; i < count * 3; i++) {
+      positions[i] = (Math.random() - .5) * 10  // Math.random() - 0.5 to have a random value between -0.5 and +0.5
+      colors[i] = Math.random()
+    }
+
+    // Create the Three.js BufferAttribute and specify that each information is composed of 3 values
+    particlesGeometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(positions, 3)
+    )
+
+    particlesGeometry.setAttribute(
+      'color',
+      new THREE.BufferAttribute(colors, 3)
+    )
+
+    const particlesMaterial = new THREE.PointsMaterial()
+    particlesMaterial.size = .1
+    particlesMaterial.sizeAttenuation = true
+    particlesMaterial.color = new THREE.Color('#ff88cc') // pink
+    particlesMaterial.transparent = true
+    particlesMaterial.alphaMap = particlesTexture
+    // particlesMaterial.alphaTest = 0.001
+    // particlesMaterial.depthTest = false
+    particlesMaterial.depthWrite = false
+    particlesMaterial.blending = THREE.AdditiveBlending
+    particlesMaterial.vertexColors = true
+
+    /**
+     * Points
+     */
+    const particles = new THREE.Points(particlesGeometry, particlesMaterial)
+    scene.add(particles)
+
+    // /**
+    //  * Test cube
+    //  */
+    // const cube = new THREE.Mesh(
+    //     new THREE.BoxGeometry(1, 1, 1),
+    //     new THREE.MeshBasicMaterial()
+    // )
+    // scene.add(cube)
+
+    /**
+     * Sizes
+     */
+    const sizes = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+
+    window.addEventListener('resize', () => {
+      // Update sizes
+      sizes.width = window.innerWidth
+      sizes.height = window.innerHeight
+
+      // Update camera
+      camera.aspect = sizes.width / sizes.height
+      camera.updateProjectionMatrix()
+
+      // Update renderer
+      renderer.setSize(sizes.width, sizes.height)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    })
+
+    /**
+     * Camera
+     */
+    // Base camera
+    const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+    camera.position.z = 3
+    scene.add(camera)
+
+    // Controls
+    const controls = new OrbitControls(camera, canvas)
+    controls.enableDamping = true
+
+    /**
+     * Renderer
+     */
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas
+    })
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+    /**
+     * Animate
+     */
+    const clock = new THREE.Clock()
+
+    const tick = () => {
+      const elapsedTime = clock.getElapsedTime()
+
+      // particles.rotation.y = elapsedTime * 0.5
+
+      for (let i = 0; i < count; i++) {
+        let i3 = i * 3
+
+        const x = particlesGeometry.attributes.position.array[i3]
+        particlesGeometry.attributes.position.array[i3 + 1] = Math.sin(elapsedTime + x)
+      }
+      particlesGeometry.attributes.position.needsUpdate = true
+
+      // Update controls
+      controls.update()
+
+      // Render
+      renderer.render(scene, camera)
+
+      // Call tick again on the next frame
+      window.requestAnimationFrame(tick)
+    }
+
+    tick()
+  </script>
+</body>
+
+</html>
