@@ -22,7 +22,6 @@
         outline: none;
       }
     </style>
-   
   </head>
   <body>
     <canvas class="webgl"></canvas>
@@ -34,13 +33,13 @@
       {
         "imports": {
           "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
-          "control": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js"
+          "control": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js"        
         }
       }
     </script>
     <script type="module">
       import * as THREE from "three";
-      import { OrbitControls } from 'control';
+      import { OrbitControls } from "control";
 
       /**
        * Base
@@ -73,8 +72,12 @@
       const doorAmbientOcclusionTexture = textureLoader.load(
         "./textures/door/ambientOcclusion.jpg"
       );
-      const doorHeightTexture = textureLoader.load("./textures/door/height.jpg");
-      const doorNormalTexture = textureLoader.load("./textures/door/normal.jpg");
+      const doorHeightTexture = textureLoader.load(
+        "./textures/door/height.jpg"
+      );
+      const doorNormalTexture = textureLoader.load(
+        "./textures/door/normal.jpg"
+      );
       const doorMetalnessTexture = textureLoader.load(
         "./textures/door/metalness.jpg"
       );
@@ -83,6 +86,18 @@
       );
       const matcapTexture = textureLoader.load("./textures/matcaps/1.png");
       const gradientTexture = textureLoader.load("./textures/gradients/3.jpg");
+
+      /**
+       * Fonts
+       */
+      const fontLoader = new FontLoader();
+      const fontElement = document.querySelector('#font').textContent;
+      console.log(fontElement)
+      // var fontStyle = JSON.parse(fontElement);
+
+      // fontLoader.load(fontStyle, (font) => {
+      //   console.log("loaded");
+      // });
 
       /**
        * Objects
