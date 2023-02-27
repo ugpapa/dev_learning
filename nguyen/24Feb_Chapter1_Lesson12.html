@@ -34,17 +34,17 @@
     <script type="importmap">
         {
             "imports": {
-                "three": "https://unpkg.com/three@0.147.0/build/three.module.js"
+                "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+                "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js"
             }
         }
     </script>
     <script type="module">
         import * as THREE from "three";
-        import { OrbitControls } from 'https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js';
-        // import * as dat from 'lil-gui'
-
+        import { OrbitControls } from "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js";
+        import * as dat from 'lil-gui'
         // Debug
-        // const gui = new dat.GUI()
+        const gui = new dat.GUI()
 
         // Canvas
         const canvas = document.querySelector('canvas.webgl')
@@ -52,7 +52,7 @@
         // Scene
         const scene = new THREE.Scene()
 
-                /**
+        /**
          * Textures
          */
         // Load door texture
@@ -71,15 +71,49 @@
         const matcapTexture = textureLoader.load('/textures/matcaps/1.png')
 
         // Load gradient
-        const gradientTexture = textureLoader.load('textures/gradients/3.png')
+        const gradientTexture = textureLoader.load('textures/gradients/3.jpg')
 
         /**
          * Material
          */
-        const material = new THREE.MeshBasicMaterial({
-            map: colorTexture
+        const basicMaterial = new THREE.MeshBasicMaterial({
+            map: colorTexture,
+            transparent: true,
+            alphaMap: alphaTexture,
+            side: THREE.DoubleSide
         })
-        // material.map = colorTexture
+        
+        const normalMaterial = new THREE.MeshNormalMaterial()
+        const lamberMaterial = new THREE.MeshLambertMaterial()
+        const meshPhong = new THREE.MeshPhongMaterial({
+            shininess: 100,
+            specular: new THREE.Color(0x1188ff)
+        })
+
+        const material = new THREE.MeshMatcapMaterial({
+            matcap: matcapTexture
+        })
+
+        const meshMaterial = new THREE.MeshStandardMaterial()
+        meshMaterial.metalness = 0.45
+        meshMaterial.roughness = 0.65
+        
+        const options = {
+            side: {
+                FrontSide: THREE.FrontSide,
+                BackSide: THREE.BackSide,
+                DoubleSide: THREE.DoubleSide,
+        },
+}
+        const materialFolder = gui.addFolder('THREE.MaterialTest')
+        materialFolder.add(material, 'transparent').onChange(() => material.needsUpdate = true)
+        materialFolder.add(material, 'opacity', 0, 1, 0.01)
+        materialFolder.add(material, 'depthTest')
+        materialFolder.add(material, 'depthWrite')
+        materialFolder
+            .add(material, 'side', options.side)
+            .onChange(() => updateMaterial())
+        materialFolder.open()
 
         // Generate objects
         const sphere = new THREE.Mesh(
@@ -87,6 +121,8 @@
             material
         )
         sphere.position.x = -2.1
+
+        //console.log(sphere.geometry.attributes)
 
         const plane = new THREE.Mesh(
             new THREE.PlaneBufferGeometry(1, 1), // Previous version use, not use anymore
@@ -172,8 +208,8 @@
             // Call tick again on the next frame
             window.requestAnimationFrame(tick)
         }
-
         tick()
+
     </script>
 </body>
 
