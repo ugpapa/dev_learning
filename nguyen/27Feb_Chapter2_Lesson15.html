@@ -38,7 +38,8 @@
                 "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
                 "orbitControl": "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js",
                 "fontLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/FontLoader.js",
-                "textGeometry": "https://unpkg.com/three@0.147.0/examples/jsm/geometries/TextGeometry.js"
+                "textGeometry": "https://unpkg.com/three@0.147.0/examples/jsm/geometries/TextGeometry.js",
+                "rectAreaLightHelper": "https://unpkg.com/three@0.115.0/examples/jsm/helpers/RectAreaLightHelper.js"
             }
         }
     </script>
@@ -48,6 +49,7 @@
         import { FontLoader } from "fontLoader";
         import { TextGeometry } from "textGeometry";
         import * as dat from "lil-gui";
+        import { RectAreaLightHelper } from "rectAreaLightHelper"
 
         // Debug
         const gui = new dat.GUI()
@@ -75,15 +77,18 @@
         rectLight.lookAt(new THREE.Vector3());
 
         const spotLight = new THREE.SpotLight(0xeeeeee);
-        spotLight.position.set(0, 5, 0);
-        spotLight.distance = 10; // 0 là vô hạn
-        spotLight.angle = Math.PI * 0.1;
         spotLight.castShadow = true;
-        spotLight.penumbra = 0.4;
-        
+
+        spotLight.shadow.mapSize.width = 2048;
+        spotLight.shadow.mapSize.height = 2048;
+
+        spotLight.shadow.camera.near = 1;
+        spotLight.shadow.camera.far = 1;
+        spotLight.shadow.camera.fov = 1;
+
         // Spot & rect light => Higher performance cost
         scene.add(pointLight, directionalLight, rectLight, spotLight)
-        
+        //scene.add(new RectAreaLightHelper(rectLight));
 
         // Material
         const material = new THREE.MeshStandardMaterial()

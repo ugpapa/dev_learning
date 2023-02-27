@@ -67,7 +67,6 @@
         fontLoader.load(
             '/fonts/helvetiker_regular.typeface.json',
             (font) => {
-                // console.log("Font loaded")
                 const textGeometry = new TextGeometry(
                     'Mysterio Flying Donut', {
                     font: font,
@@ -104,9 +103,7 @@
             }
         )
 
-        /**
-         * Sizes
-         */
+        // Size
         const sizes = {
             width: window.innerWidth,
             height: window.innerHeight

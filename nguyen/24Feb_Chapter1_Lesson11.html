@@ -56,24 +56,6 @@
         }
 
         const textureLoader = new THREE.TextureLoader(loadingManager)
-
-        // Test loader loading
-        /*
-        const texture = textureLoader.load(
-            '/textures/door/color.jpg',
-            () => {
-                console.log('loading finished')
-            },
-            () => {
-                console.log('loading progressing')
-            },
-            () => {
-                console.log('loading error')
-            }
-        )
-        */
-
-        // const colorTexture = textureLoader.load('/textures/checkerboard-1024x1024.png')
         const colorTexture = textureLoader.load('/textures/minecraft.png')
         const alphaTexture = textureLoader.load('/textures/door/alpha.jpg')
         const heightTexture = textureLoader.load('/textures/door/height.jpg')
@@ -83,7 +65,6 @@
         )
         const metalnessTexture = textureLoader.load('/textures/door/metalness.jpg')
         const roughnessTexture = textureLoader.load('/textures/door/roughness.jpg')
-
         colorTexture.generateMipmaps = false
         colorTexture.magFilter = THREE.NearestFilter
 
@@ -93,12 +74,9 @@
         // Scene
         const scene = new THREE.Scene()
 
-        /**
-         * Object
-         */
+        // Object
         const geometry = new THREE.BoxGeometry(1, 1, 1)
 
-        console.log(geometry.attributes)
 
         const material = new THREE.MeshBasicMaterial({
             map: colorTexture,
@@ -107,9 +85,7 @@
         const mesh = new THREE.Mesh(geometry, material)
         scene.add(mesh)
 
-        /**
-         * Sizes
-         */
+        // Size
         const sizes = {
             width: window.innerWidth,
             height: window.innerHeight,
@@ -129,10 +105,7 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         })
 
-        /**
-         * Camera
-         */
-        // Base camera
+        // Camera
         const camera = new THREE.PerspectiveCamera(
             75,
             sizes.width / sizes.height,
@@ -148,18 +121,14 @@
         const controls = new OrbitControls(camera, canvas)
         controls.enableDamping = true
 
-        /**
-         * Renderer
-         */
+        // Render
         const renderer = new THREE.WebGLRenderer({
             canvas: canvas,
         })
         renderer.setSize(sizes.width, sizes.height)
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-        /**
-         * Animate
-         */
+        // Animate
         const clock = new THREE.Clock()
 
         const tick = () => {
