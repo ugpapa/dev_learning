@@ -41,39 +41,22 @@
     <script type="module">
         import * as THREE from "three";
         import { OrbitControls } from 'https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js';
-        const loadingManager = new THREE.LoadingManager()
-        loadingManager.onStart = () => {
-            console.log('loading started')
-        }
-        loadingManager.onLoad = () => {
-            console.log('loading finished')
-        }
-        loadingManager.onProgress = () => {
-            console.log('loading progressing')
-        }
-        loadingManager.onError = () => {
-            console.log('loading error')
-        }
+        // import * as dat from 'lil-gui'
 
-        const textureLoader = new THREE.TextureLoader(loadingManager)
+        // Debug
+        // const gui = new dat.GUI()
 
-        // Test loader if load correctly
-        /*
-        const texture = textureLoader.load(
-            '/textures/door/color.jpg',
-            () => {
-                console.log('loading finished')
-            },
-            () => {
-                console.log('loading progressing')
-            },
-            () => {
-                console.log('loading error')
-            }
-        )
-        */
+        // Canvas
+        const canvas = document.querySelector('canvas.webgl')
 
-        // const colorTexture = textureLoader.load('/textures/checkerboard-1024x1024.png')
+        // Scene
+        const scene = new THREE.Scene()
+
+                /**
+         * Textures
+         */
+        // Load door texture
+        const textureLoader = new THREE.TextureLoader()
         const colorTexture = textureLoader.load('/textures/minecraft.png')
         const alphaTexture = textureLoader.load('/textures/door/alpha.jpg')
         const heightTexture = textureLoader.load('/textures/door/height.jpg')
@@ -84,35 +67,46 @@
         const metalnessTexture = textureLoader.load('/textures/door/metalness.jpg')
         const roughnessTexture = textureLoader.load('/textures/door/roughness.jpg')
 
-        colorTexture.generateMipmaps = false
-        colorTexture.magFilter = THREE.NearestFilter
+        // Load matcap
+        const matcapTexture = textureLoader.load('/textures/matcaps/1.png')
 
-        // Canvas
-        const canvas = document.querySelector('canvas.webgl')
-
-        // Scene
-        const scene = new THREE.Scene()
+        // Load gradient
+        const gradientTexture = textureLoader.load('textures/gradients/3.png')
 
         /**
-         * Object
+         * Material
          */
-        const geometry = new THREE.BoxGeometry(1, 1, 1)
-
-        console.log(geometry.attributes)
-
         const material = new THREE.MeshBasicMaterial({
-            map: colorTexture,
-            transparent: true,
+            map: colorTexture
         })
-        const mesh = new THREE.Mesh(geometry, material)
-        scene.add(mesh)
+        // material.map = colorTexture
+
+        // Generate objects
+        const sphere = new THREE.Mesh(
+            new THREE.SphereBufferGeometry(0.5, 16, 16 ),
+            material
+        )
+        sphere.position.x = -2.1
+
+        const plane = new THREE.Mesh(
+            new THREE.PlaneBufferGeometry(1, 1), // Previous version use, not use anymore
+            material
+        )
+
+        const torus = new THREE.Mesh(
+            new THREE.TorusBufferGeometry(0.3, 0.2, 16, 32),
+            material
+        )
+        torus.position.x = 2.1
+
+        scene.add(sphere, plane, torus)
 
         /**
          * Sizes
          */
         const sizes = {
             width: window.innerWidth,
-            height: window.innerHeight,
+            height: window.innerHeight
         }
 
         window.addEventListener('resize', () => {
@@ -133,15 +127,10 @@
          * Camera
          */
         // Base camera
-        const camera = new THREE.PerspectiveCamera(
-            75,
-            sizes.width / sizes.height,
-            0.1,
-            100
-        )
+        const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
         camera.position.x = 1
         camera.position.y = 1
-        camera.position.z = 1
+        camera.position.z = 2
         scene.add(camera)
 
         // Controls
@@ -152,7 +141,7 @@
          * Renderer
          */
         const renderer = new THREE.WebGLRenderer({
-            canvas: canvas,
+            canvas: canvas
         })
         renderer.setSize(sizes.width, sizes.height)
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -164,6 +153,15 @@
 
         const tick = () => {
             const elapsedTime = clock.getElapsedTime()
+
+            // Animate/ update objects
+            sphere.rotation.y = 0.15 * elapsedTime
+            plane.rotation.y = 0.15 * elapsedTime
+            torus.rotation.y = 0.15 * elapsedTime
+
+            sphere.rotation.x = 0.2 * elapsedTime
+            plane.rotation.x = 0.2 * elapsedTime
+            torus.rotation.x = 0.2 * elapsedTime
 
             // Update controls
             controls.update()
