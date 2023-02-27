@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Three sample </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            overflow: hidden;
+        }
+
+        .webgl {
+            position: fixed;
+            top: 0;
+            left: 0;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="webgl"></canvas>-- you can change this part as you wish -->
+
+    <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.147.0/build/three.module.js"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from 'https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js';
+        const loadingManager = new THREE.LoadingManager()
+        loadingManager.onStart = () => {
+            console.log('loading started')
+        }
+        loadingManager.onLoad = () => {
+            console.log('loading finished')
+        }
+        loadingManager.onProgress = () => {
+            console.log('loading progressing')
+        }
+        loadingManager.onError = () => {
+            console.log('loading error')
+        }
+
+        const textureLoader = new THREE.TextureLoader(loadingManager)
+        const texture = textureLoader.load(
+            '/textures/door/color.jpg',
+            () => {
+                console.log('loading finished')
+            },
+            () => {
+                console.log('loading progressing')
+            },
+            () => {
+                console.log('loading error')
+            }
+        )
+        // ...
+
+        // const colorTexture = textureLoader.load('/textures/checkerboard-1024x1024.png')
+        const colorTexture = textureLoader.load('/textures/minecraft.png')
+        const alphaTexture = textureLoader.load('/textures/door/alpha.jpg')
+        const heightTexture = textureLoader.load('/textures/door/height.jpg')
+        const normalTexture = textureLoader.load('/textures/door/normal.jpg')
+        const ambientOcclusionTexture = textureLoader.load(
+            '/textures/door/ambientOcclusion.jpg'
+        )
+        const metalnessTexture = textureLoader.load('/textures/door/metalness.jpg')
+        const roughnessTexture = textureLoader.load('/textures/door/roughness.jpg')
+
+        colorTexture.generateMipmaps = false
+        colorTexture.magFilter = THREE.NearestFilter
+
+        // Canvas
+        const canvas = document.querySelector('canvas.webgl')
+
+        // Scene
+        const scene = new THREE.Scene()
+
+        /**
+         * Object
+         */
+        const geometry = new THREE.BoxGeometry(1, 1, 1)
+
+        console.log(geometry.attributes)
+
+        const material = new THREE.MeshBasicMaterial({
+            map: colorTexture,
+            transparent: true,
+        })
+        const mesh = new THREE.Mesh(geometry, material)
+        scene.add(mesh)
+
+        /**
+         * Sizes
+         */
+        const sizes = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+        }
+
+        window.addEventListener('resize', () => {
+            // Update sizes
+            sizes.width = window.innerWidth
+            sizes.height = window.innerHeight
+
+            // Update camera
+            camera.aspect = sizes.width / sizes.height
+            camera.updateProjectionMatrix()
+
+            // Update renderer
+            renderer.setSize(sizes.width, sizes.height)
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        })
+
+        /**
+         * Camera
+         */
+        // Base camera
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            sizes.width / sizes.height,
+            0.1,
+            100
+        )
+        camera.position.x = 1
+        camera.position.y = 1
+        camera.position.z = 1
+        scene.add(camera)
+
+        // Controls
+        const controls = new OrbitControls(camera, canvas)
+        controls.enableDamping = true
+
+        /**
+         * Renderer
+         */
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
+        })
+        renderer.setSize(sizes.width, sizes.height)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+        /**
+         * Animate
+         */
+        const clock = new THREE.Clock()
+
+        const tick = () => {
+            const elapsedTime = clock.getElapsedTime()
+
+            // Update controls
+            controls.update()
+
+            // Render
+            renderer.render(scene, camera)
+
+            // Call tick again on the next frame
+            window.requestAnimationFrame(tick)
+        }
+
+        tick()
+    </script>
+</body>
+
+</html>

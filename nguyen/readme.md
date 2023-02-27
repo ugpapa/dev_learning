@@ -10,3 +10,7 @@ or
 25-Feb.html
 
 Have a nice day!!
+
+# To run and test local server
+
+npx serve
