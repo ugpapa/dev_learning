@@ -73,16 +73,13 @@
         // Load gradient
         const gradientTexture = textureLoader.load('textures/gradients/3.jpg')
 
-        /**
-         * Material
-         */
+        // Materials
         const basicMaterial = new THREE.MeshBasicMaterial({
             map: colorTexture,
             transparent: true,
             alphaMap: alphaTexture,
             side: THREE.DoubleSide
         })
-        
         const normalMaterial = new THREE.MeshNormalMaterial()
         const lamberMaterial = new THREE.MeshLambertMaterial()
         const meshPhong = new THREE.MeshPhongMaterial({
@@ -122,10 +119,8 @@
         )
         sphere.position.x = -2.1
 
-        //console.log(sphere.geometry.attributes)
-
         const plane = new THREE.Mesh(
-            new THREE.PlaneBufferGeometry(1, 1), // Previous version use, not use anymore
+            new THREE.PlaneBufferGeometry(1, 1),
             material
         )
 
@@ -137,9 +132,7 @@
 
         scene.add(sphere, plane, torus)
 
-        /**
-         * Sizes
-         */
+        // Size
         const sizes = {
             width: window.innerWidth,
             height: window.innerHeight
@@ -159,10 +152,7 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         })
 
-        /**
-         * Camera
-         */
-        // Base camera
+        // Camera
         const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
         camera.position.x = 1
         camera.position.y = 1
@@ -173,18 +163,14 @@
         const controls = new OrbitControls(camera, canvas)
         controls.enableDamping = true
 
-        /**
-         * Renderer
-         */
+        // Renderer
         const renderer = new THREE.WebGLRenderer({
             canvas: canvas
         })
         renderer.setSize(sizes.width, sizes.height)
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-        /**
-         * Animate
-         */
+        // Animate
         const clock = new THREE.Clock()
 
         const tick = () => {
