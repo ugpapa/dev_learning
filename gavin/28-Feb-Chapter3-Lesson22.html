@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>22 - Imported Models</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      overflow: hidden;
+    }
+
+    .webgl {
+      position: fixed;
+      top: 0;
+      left: 0;
+      outline: none;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas class="webgl"></canvas>
+
+  <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+
+
+  <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+          "OrbitControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js"
+        }
+      }
+    </script>
+  <script type="module">
+    import * as THREE from 'three'
+    import { OrbitControls } from "OrbitControls"
+    import { GLTFLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js'
+    import { DRACOLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js'
+
+    // console.log(OrbitControls);
+    // console.log(GLTFLoader);
+    // console.log(DRACOLoader);
+
+    /**
+     * Base
+     */
+    // Canvas
+    const canvas = document.querySelector('canvas.webgl')
+
+    // Scene
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color('lightgreen');
+
+    /**
+     * Models
+     */
+    // Provide a DRACOLoader instance to decode compressed mesh data
+    const dracoLoader = new DRACOLoader()
+    // path copied to 'static' from 'node_modules/three/examples/jsm/libs/draco/'
+    dracoLoader.setDecoderPath('/draco/')
+
+    const gltfLoader = new GLTFLoader()
+    // console.log(gltfLoader) // debug
+    gltfLoader.setDRACOLoader(dracoLoader)
+
+    let mixer = null
+
+    // // test load model
+    // gltfLoader.load(
+    //     // './models/Duck/glTF/Duck.gltf',  // test duck model
+    //     // './models/Duck/glTF-Binary/Duck.glb',    // test duck model
+    //     // './models/Duck/glTF-Embedded/Duck.gltf',    //test duck model
+    //     // './models/FlightHelmet/glTF/FlightHelmet.gltf', // helmet model
+    //     './models/Duck/glTF-Draco/Duck.gltf',
+    //     (gltf) => {
+    //         // console.log('success') // for debug
+    //         // console.log(gltf) // for debug
+
+    //         ///////////////
+    //         // add model //
+    //         ///////////////
+
+    //         // // while loop method
+    //         // while (gltf.scene.children.length) {
+    //         //     scene.add(gltf.scene.children[0])
+    //         // }
+
+    //         // // for loop method
+    //         // // duplicating the children array
+    //         // const children = [...gltf.scene.children]
+
+    //         // for (const child of children) {
+    //         //     scene.add(child)
+    //         // }
+
+    //         // simpler solution
+    //         scene.add(gltf.scene)
+    //     },
+    //     // (progress) => {
+    //     //     console.log('progress')
+    //     //     console.log(progress)
+    //     // },
+    //     // (error) => {
+    //     //     console.log('error')
+    //     //     console.log(error)
+    //     // }
+    // )
+
+    // load fox model and play animation
+    gltfLoader.load(
+      './models/Fox/glTF/Fox.gltf',
+      (gltf) => {
+        mixer = new THREE.AnimationMixer(gltf.scene)
+
+        // idling anim
+        // const action = mixer.clipAction(gltf.animations[0])
+
+        // walking anim
+        const action = mixer.clipAction(gltf.animations[1])
+
+        // running anim
+        // const action = mixer.clipAction(gltf.animations[2])
+
+        // console.log(action) // debug
+
+        action.play()
+
+        gltf.scene.scale.set(.025, .025, .025)
+        scene.add(gltf.scene)
+      }
+    )
+
+    /**
+     * Floor
+     */
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(10, 10),
+      new THREE.MeshStandardMaterial({
+        color: '#333333',
+        metalness: 0,
+        roughness: 0.5
+      })
+    )
+    floor.receiveShadow = true
+    floor.rotation.x = - Math.PI * 0.5
+    scene.add(floor)
+
+
+    /**
+     * Grass
+     * Source: https://discourse.threejs.org/t/simple-instanced-grass-example/26694
+     */
+
+    // MATERIALS
+    const vertexShader = `
+  varying vec2 vUv;
+  uniform float time;
+  
+	void main() {
+
+    vUv = uv;
+    
+    // VERTEX POSITION
+    
+    vec4 mvPosition = vec4( position, 1.0 );
+    #ifdef USE_INSTANCING
+    	mvPosition = instanceMatrix * mvPosition;
+    #endif
+    
+    // DISPLACEMENT
+    
+    // here the displacement is made stronger on the blades tips.
+    float dispPower = 1.0 - cos( uv.y * 3.1416 / 2.0 );
+    
+    float displacement = sin( mvPosition.z + time * 10.0 ) * ( 0.1 * dispPower );
+    mvPosition.z += displacement;
+    
+    //
+    
+    vec4 modelViewPosition = modelViewMatrix * mvPosition;
+    gl_Position = projectionMatrix * modelViewPosition;
+
+	}
+`;
+
+    const fragmentShader = `
+  varying vec2 vUv;
+  
+  void main() {
+  	vec3 baseColor = vec3( 0.41, 1.0, 0.5 );
+    float clarity = ( vUv.y * 0.5 ) + 0.5;
+    gl_FragColor = vec4( baseColor * clarity, 1 );
+  }
+`;
+
+    const uniforms = {
+      time: {
+        value: 0
+      }
+    }
+
+    const leavesMaterial = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms,
+      side: THREE.DoubleSide
+    });
+
+    // MESH
+    const instanceNumber = 5000;
+    const dummy = new THREE.Object3D();
+
+    const geometry = new THREE.PlaneGeometry(0.1, 1, 1, 4);
+    geometry.translate(0, 0.5, 0); // move grass blade geometry lowest point at 0.
+
+    const instancedMesh = new THREE.InstancedMesh(geometry, leavesMaterial, instanceNumber);
+
+    scene.add(instancedMesh);
+
+    // Position and scale the grass blade instances randomly.
+    for (let i = 0; i < instanceNumber; i++) {
+      dummy.position.set(
+        (Math.random() - 0.5) * 10,
+        0,
+        (Math.random() - 0.5) * 10
+      );
+
+      dummy.scale.setScalar(0.5 + Math.random() * 0.2);
+      dummy.rotation.y = Math.random() * Math.PI;
+
+      dummy.updateMatrix();
+      instancedMesh.setMatrixAt(i, dummy.matrix);
+    }
+
+    /**
+     * Lights
+     */
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8)
+    scene.add(ambientLight)
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6)
+    directionalLight.castShadow = true
+    directionalLight.shadow.mapSize.set(1024, 1024)
+    directionalLight.shadow.camera.far = 15
+    directionalLight.shadow.camera.left = - 7
+    directionalLight.shadow.camera.top = 7
+    directionalLight.shadow.camera.right = 7
+    directionalLight.shadow.camera.bottom = - 7
+    directionalLight.position.set(5, 5, 5)
+    scene.add(directionalLight)
+
+    /**
+     * Sizes
+     */
+    const sizes = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+
+    window.addEventListener('resize', () => {
+      // Update sizes
+      sizes.width = window.innerWidth
+      sizes.height = window.innerHeight
+
+      // Update camera
+      camera.aspect = sizes.width / sizes.height
+      camera.updateProjectionMatrix()
+
+      // Update renderer
+      renderer.setSize(sizes.width, sizes.height)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    })
+
+    /**
+     * Camera
+     */
+    // Base camera
+    const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+    camera.position.set(2, 2, 2)
+    scene.add(camera)
+
+    // Controls
+    const controls = new OrbitControls(camera, canvas)
+    controls.target.set(0, 0.75, 0)
+    controls.enableDamping = true
+
+    /**
+     * Renderer
+     */
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas
+    })
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+    /**
+     * Animate
+     */
+    const clock = new THREE.Clock()
+    let previousTime = 0
+
+    const tick = () => {
+      const elapsedTime = clock.getElapsedTime()
+      const deltaTime = elapsedTime - previousTime
+      previousTime = elapsedTime
+
+      // Animate grass
+      // Hand a time variable to vertex shader for wind displacement.
+      leavesMaterial.uniforms.time.value = clock.getElapsedTime();
+      leavesMaterial.uniformsNeedUpdate = true;
+
+      // Update mixer
+      if (mixer) mixer.update(deltaTime)
+
+      // Update controls
+      controls.update()
+
+      // Render
+      renderer.render(scene, camera)
+
+      // Call tick again on the next frame
+      window.requestAnimationFrame(tick)
+    }
+
+    tick()
+  </script>
+</body>
+
+</html>
