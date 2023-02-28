@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>18 - Particles</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            overflow: hidden;
+        }
+
+        .webgl {
+            position: fixed;
+            top: 0;
+            left: 0;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="webgl"></canvas>
+
+    <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+
+
+    <script type="importmap">
+      {
+        "imports": {
+            "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+            "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
+            "orbitControl": "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js"
+        }
+      }
+    </script>
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from "orbitControl";
+        import * as dat from "lil-gui";
+
+        let camera, controls, scene, renderer, gui, canvas;
+
+        // Init
+        gui = new dat.GUI()
+        canvas = document.querySelector('canvas.webgl')
+        scene = new THREE.Scene()
+        const textureLoader = new THREE.TextureLoader()
+        const particlesTexture = textureLoader.load('./textures/particles/5.png')
+
+        // Particle
+        const particlesGeometry = new THREE.SphereGeometry(1, 32, 32)
+        const count = 8888
+
+        const positions = new Float32Array(count * 3) 
+        const colors = new Float32Array(count * 4)
+
+        for (let i = 0; i < count * 3; i++) {
+            positions[i] = (Math.random() - .5) * 30  
+            colors[i] = Math.random()
+        }
+
+        particlesGeometry.setAttribute(
+            'position',
+            new THREE.BufferAttribute(positions, 3)
+        )
+
+        particlesGeometry.setAttribute(
+            'color',
+            new THREE.BufferAttribute(colors, 3)
+        )
+        console.log(particlesGeometry.attributes.position)
+
+        const particlesMaterial = new THREE.PointsMaterial()
+        particlesMaterial.size = .1
+        particlesMaterial.sizeAttenuation = true
+        particlesMaterial.color = new THREE.Color('#ff88cc') 
+        particlesMaterial.transparent = true
+        particlesMaterial.alphaMap = particlesTexture
+        particlesMaterial.alphaTest = 0.001
+        particlesMaterial.depthWrite = false
+        //particlesMaterial.blending = THREE.AdditiveBlending
+        particlesMaterial.vertexColors = true
+
+        const particles = new THREE.Points(particlesGeometry, particlesMaterial)
+        scene.add(particles)
+
+        // Size
+        const sizes = {
+            width: window.innerWidth,
+            height: window.innerHeight
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // Camera
+        camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 5, 100)
+        camera.position.z = -30
+        camera.position.x = 3
+        camera.position.y = 3
+        scene.add(camera)
+
+        // Controls
+        controls = new OrbitControls(camera, canvas)
+        controls.enableDamping = true
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({canvas: canvas})
+        renderer.setSize(sizes.width, sizes.height)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+        // Animate
+        const clock = new THREE.Clock()
+        const animate = () => {
+            const elapsedTime = clock.getElapsedTime()
+            for (let i = 0; i < count; i++) {
+                let i6 = i * 6
+                const x = particlesGeometry.attributes.position.array[i6]
+                particlesGeometry.attributes.position.array[i6 + 1] = Math.sin(elapsedTime + 4*x)
+            }
+            particlesGeometry.attributes.position.needsUpdate = true
+
+            controls.update()
+
+            render();
+
+            window.requestAnimationFrame(animate)
+        }
+
+        animate()
+
+        function onWindowResize() {
+            // Update sizes, camera, rendere
+            sizes.width = window.innerWidth
+            sizes.height = window.innerHeight
+
+            camera.aspect = sizes.width / sizes.height
+            camera.updateProjectionMatrix()
+
+            renderer.setSize(sizes.width, sizes.height)
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+
+</html>
