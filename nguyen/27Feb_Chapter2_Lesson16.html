@@ -107,6 +107,10 @@
         );
         scene.add(spotLightCameraHelper);
 
+        // Material
+        const material = new THREE.MeshStandardMaterial()
+        material.roughness = 0.7
+
         // Debug
         const config = {
             spotlightRadius: 4,
@@ -137,10 +141,6 @@
         // Material debug
         gui.add(material, "metalness").min(0).max(1).step(0.001);
         gui.add(material, "roughness").min(0).max(1).step(0.001);
-
-        // Material
-        const material = new THREE.MeshStandardMaterial()
-        material.roughness = 0.7
 
         // Objects
         const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), material)
