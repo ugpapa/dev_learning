@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scroll</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      /* html,
+body
+{
+    overflow: hidden;
+} */
+
+      .webgl {
+        position: fixed;
+        top: 0;
+        left: 0;
+        outline: none;
+      }
+
+      .section {
+        display: flex;
+        align-items: center;
+        height: 100vh;
+        position: relative;
+        font-family: "Cabin", sans-serif;
+        color: #ffeded;
+        text-transform: uppercase;
+        font-size: 7vmin;
+        padding-left: 10%;
+        padding-right: 10%;
+      }
+
+      section:nth-child(odd) {
+        justify-content: flex-end;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas class="webgl"></canvas>
+
+    <section class="section">
+      <h1>Hi i am Pauline</h1>
+    </section>
+    <section class="section">
+      <h2>Nice to</h2>
+    </section>
+    <section class="section">
+      <h2>Meet you</h2>
+    </section>
+    <script
+      defer
+      src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"
+    ></script>
+    <script async type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.148.0/build/three.module.js",
+          "control": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js",
+          "gsap": "https://cdn.skypack.dev/gsap@3.5.1"
+        }
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.17"></script>
+    <script type="module">
+      import * as THREE from "three";
+      import {gsap} from 'gsap'
+
+      /**
+       * Debug
+       */
+      const GUI = lil.GUI;
+      const gui = new GUI();
+      const parameters = {
+        materialColor: "#ffeded",
+      };
+
+      /**
+       * Base
+       */
+      // Canvas
+      const canvas = document.querySelector("canvas.webgl");
+
+      // Scene
+      const scene = new THREE.Scene();
+
+      /**
+       * Objects
+       */
+
+      // texture
+      const textureLoader = new THREE.TextureLoader();
+      const gradientTexture = textureLoader.load("./textures/gradients/3.jpg");
+      gradientTexture.magFilter = THREE.NearestFilter; // it will choose the color near each color instead of mixing 3 of them
+
+      // material
+      const material = new THREE.MeshNormalMaterial();
+
+      const objectDistance = 4;
+      // meshes
+      const mesh1 = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2), material);
+
+      const mesh2 = new THREE.Mesh(new THREE.TorusGeometry(1), material);
+
+      const mesh3 = new THREE.Mesh(
+        new THREE.TorusKnotGeometry(0.8, 0.35, 100, 16),
+        material
+      );
+      mesh1.rotation.z = Math.PI * 0.25;
+      mesh1.position.y = -objectDistance * 0;
+      mesh2.position.y = -objectDistance * 1;
+      mesh3.position.y = -objectDistance * 2;
+
+      mesh1.position.x = 2;
+      mesh2.position.x = -2;
+      mesh3.position.x = 2;
+
+      scene.add(mesh1, mesh2, mesh3);
+      const sectionMeshes = [mesh1, mesh2, mesh3];
+
+      /**
+       * Particles
+       */
+      // Geometry
+      const particleCount = 300;
+      const positions = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3 + 0] = (Math.random() - 0.5) * 10;
+        positions[i * 3 + 1] =
+          objectDistance * 0.5 - Math.random() * objectDistance * 3;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+      }
+      const particleGeometry = new THREE.BufferGeometry();
+      particleGeometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(positions, 3)
+      );
+
+      // material
+      const particleMaterial = new THREE.PointsMaterial({
+        color: parameters.materialColor,
+        sizeAttenuation: true,
+        size: 0.05,
+      });
+
+      // points
+      const particles = new THREE.Points(particleGeometry, particleMaterial);
+      scene.add(particles);
+
+      /**
+       * Lights
+       */
+      const directionalLight = new THREE.DirectionalLight("#ffffff", 1);
+      directionalLight.position.set(1, 1, 0);
+      scene.add(directionalLight);
+
+      /**
+       * Sizes
+       */
+      const sizes = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+
+      window.addEventListener("resize", () => {
+        // Update sizes
+        sizes.width = window.innerWidth;
+        sizes.height = window.innerHeight;
+
+        // Update camera
+        camera.aspect = sizes.width / sizes.height;
+        camera.updateProjectionMatrix();
+
+        // Update renderer
+        renderer.setSize(sizes.width, sizes.height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      });
+
+      /**
+       * Camera
+       */
+      //group
+      const cameraGroup = new THREE.Group();
+      scene.add(cameraGroup);
+
+      // Base camera
+      const camera = new THREE.PerspectiveCamera(
+        35,
+        sizes.width / sizes.height,
+        0.1,
+        100
+      );
+      camera.position.z = 6;
+      cameraGroup.add(camera);
+
+      /**
+       * Renderer
+       */
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+      });
+      renderer.setSize(sizes.width, sizes.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      /**
+       * Scroll
+       */
+      let scrollY = window.scrollY;
+      let currentSection = 0;
+
+      window.addEventListener("scroll", () => {
+        scrollY = window.scrollY;
+        // each section will be scroll value / view port heigh
+        const newSection = Math.round(scrollY / sizes.height);
+        if (newSection != currentSection) {
+          currentSection = newSection;
+          gsap.to(sectionMeshes[currentSection].rotation, {
+            duration: 1.5,
+            ease: "power2.inOut",
+            x: "+=6",
+            y: "+=3",
+            z: "+=1.5",
+          });
+        }
+      });
+
+      /**
+       * Cursor
+       */
+      const cursor = {
+        x: 0,
+        y: 0,
+      };
+      window.addEventListener("mousemove", (event) => {
+        cursor.x = event.clientX / sizes.width;
+        cursor.y = event.clientY / sizes.height;
+      });
+
+      /**
+       * Animate
+       */
+      const clock = new THREE.Clock();
+      let previousTime = 0;
+
+      const tick = () => {
+        const elapsedTime = clock.getElapsedTime();
+        const deltaTime = elapsedTime - previousTime;
+        previousTime = elapsedTime;
+
+        //animate particles
+        particles.rotation.x = Math.cos(elapsedTime);
+        particles.rotation.y = Math.sin(elapsedTime);
+
+        // animate camera
+        // take all the scroll value divide by view port and multiple with each object distance
+        camera.position.y = (-scrollY / sizes.height) * objectDistance;
+
+        const parallaxX = cursor.x * 0.5;
+        const parallaxY = -cursor.y * 0.5;
+        // put inside camera group so that it can be move around with scorlling
+        // to make it smoother, we use iteration instead of directly assigning the value
+        // to each object, then minus the distance from the camera to the object
+        cameraGroup.position.x +=
+          (parallaxX - cameraGroup.position.x) * 5 * deltaTime;
+        cameraGroup.position.y +=
+          (parallaxY - cameraGroup.position.y) * 5 * deltaTime;
+
+        // animate objects
+        for (const mesh of sectionMeshes) {
+          mesh.rotation.x += deltaTime * 0.1;
+          mesh.rotation.y += deltaTime * 0.5;
+        }
+
+        // Render
+        renderer.render(scene, camera);
+
+        // Call tick again on the next frame
+        window.requestAnimationFrame(tick);
+      };
+
+      tick();
+    </script>
+  </body>
+</html>
