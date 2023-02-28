@@ -57,21 +57,21 @@
          */
         // Load door texture
         const textureLoader = new THREE.TextureLoader()
-        const colorTexture = textureLoader.load('/textures/minecraft.png')
-        const alphaTexture = textureLoader.load('/textures/door/alpha.jpg')
-        const heightTexture = textureLoader.load('/textures/door/height.jpg')
-        const normalTexture = textureLoader.load('/textures/door/normal.jpg')
+        const colorTexture = textureLoader.load('./textures/minecraft.png')
+        const alphaTexture = textureLoader.load('./textures/door/alpha.jpg')
+        const heightTexture = textureLoader.load('./textures/door/height.jpg')
+        const normalTexture = textureLoader.load('./textures/door/normal.jpg')
         const ambientOcclusionTexture = textureLoader.load(
-            '/textures/door/ambientOcclusion.jpg'
+            './textures/door/ambientOcclusion.jpg'
         )
-        const metalnessTexture = textureLoader.load('/textures/door/metalness.jpg')
-        const roughnessTexture = textureLoader.load('/textures/door/roughness.jpg')
+        const metalnessTexture = textureLoader.load('./textures/door/metalness.jpg')
+        const roughnessTexture = textureLoader.load('./textures/door/roughness.jpg')
 
         // Load matcap
-        const matcapTexture = textureLoader.load('/textures/matcaps/1.png')
+        const matcapTexture = textureLoader.load('./textures/matcaps/1.png')
 
         // Load gradient
-        const gradientTexture = textureLoader.load('textures/gradients/3.jpg')
+        const gradientTexture = textureLoader.load('./textures/gradients/3.jpg')
 
         // Materials
         const basicMaterial = new THREE.MeshBasicMaterial({
