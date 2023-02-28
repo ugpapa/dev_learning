@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Particles</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        overflow: hidden;
+      }
+
+      .webgl {
+        position: fixed;
+        top: 0;
+        left: 0;
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas class="webgl"></canvas>
+    <script
+      defer
+      src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"
+    ></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+          "control": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js"
+        }
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.17"></script>
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "control";
+
+      /**
+       * Base
+       */
+      // Debug
+      const GUI = lil.GUI;
+      const gui = new GUI();
+
+      // Canvas
+      const canvas = document.querySelector("canvas.webgl");
+
+      // Scene
+      const scene = new THREE.Scene();
+
+      /**
+       * Textures
+       */
+      const textureLoader = new THREE.TextureLoader();
+      const starDustTexture = textureLoader.load("./particles/3.png");
+
+      /**
+       * Particles
+       */
+
+      // Geometry
+      const particleGeometry = new THREE.BufferGeometry(); // change to buffer geometry to create particles
+
+      const count = 2000;
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+
+      // Math random generate value from 0 to 1 if not specify
+      for (let i = 0; i < count * 3; i++) {
+        positions[i] = (Math.random() - 0.5) * 10;
+        colors[i] = Math.random(); // R,G,B can be created randomly
+      }
+
+      // 3 is item size which store 3-component vector (combination of 3 values)
+      // 3d-vector x, y, z
+      particleGeometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(positions, 3)
+      );
+
+      // 3d-vector color R, G, B
+      particleGeometry.setAttribute(
+        "color",
+        new THREE.BufferAttribute(colors, 3)
+      );
+
+      // Materials
+      const particleMaterial = new THREE.PointsMaterial({
+        sizeAttenuation: true, // far from the camera would be small and close to the camera would be big
+        size: 0.1,
+        alphaMap: starDustTexture,
+        // alphaTest: 0.001, // this can hide the background the texture, however, it can be overlapsed with the one behind
+        //   depthTest: true, // using this won't get the overlapsing of the one behind, however,
+        //   if we add an object, it can be override in the object
+        //   color: 'blue',
+        depthWrite: true, // activate this it will be overwritten the particles and the objects, so that the particles can overlapse the object
+        blending: THREE.AdditiveBlending, // blend the color of one pixel to another --> ENHANCE PERFORMANCE
+        vertexColors: true, // activate this will get random colors
+      });
+
+      // Points
+      const particles = new THREE.Points(particleGeometry, particleMaterial); // not using Mesh to combine but using Points
+      scene.add(particles);
+
+      /**
+       * Sizes
+       */
+      const sizes = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+
+      window.addEventListener("resize", () => {
+        // Update sizes
+        sizes.width = window.innerWidth;
+        sizes.height = window.innerHeight;
+
+        // Update camera
+        camera.aspect = sizes.width / sizes.height;
+        camera.updateProjectionMatrix();
+
+        // Update renderer
+        renderer.setSize(sizes.width, sizes.height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      });
+
+      /**
+       * Camera
+       */
+      // Base camera
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        sizes.width / sizes.height,
+        0.1,
+        100
+      );
+      camera.position.z = 3;
+      scene.add(camera);
+
+      // Controls
+      const controls = new OrbitControls(camera, canvas);
+      controls.enableDamping = true;
+
+      /**
+       * Renderer
+       */
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+      });
+      renderer.setSize(sizes.width, sizes.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      /**
+       * Animate
+       */
+      const clock = new THREE.Clock();
+
+      const tick = () => {
+        const elapsedTime = clock.getElapsedTime();
+
+        // moving stars
+        particles.position.y = -elapsedTime * 0.05;
+
+        // Update controls
+        controls.update();
+
+        // Render
+        renderer.render(scene, camera);
+
+        // Call tick again on the next frame
+        window.requestAnimationFrame(tick);
+      };
+
+      tick();
+    </script>
+  </body>
+</html>
