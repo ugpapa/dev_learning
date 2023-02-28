@@ -37,19 +37,21 @@
         "imports":
         {
           "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
-          "lil-gui": "https://unpkg.com/browse/lil-gui@0.16.1/dist/lil-gui.esm.js",
+          "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
+          "OrbitControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js",
+          "FontLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/FontLoader.js",
+          "TextGeometry": "https://unpkg.com/three@0.147.0/examples/jsm/geometries/TextGeometry.js",
           "typefaceFont": "https://unpkg.com/three@0.147.0/examples/fonts/helvetiker_regular.typeface.json"
         }
     }
     </script>
   <script type="module">
-    import * as THREE from 'three'
-    import { OrbitControls } from 'https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js'
-    import * as dat from 'lil-gui'
-    // import typefaceFont from 'https://unpkg.com/three@0.147.0/examples/fonts/helvetiker_regular.typeface.json' assert { type: "json" }
-    import { FontLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/FontLoader.js'
-    import { TextGeometry } from 'https://unpkg.com/three@0.147.0/examples/jsm/geometries/TextGeometry.js'
-
+    import * as THREE from "three"
+    import { OrbitControls } from "OrbitControls"
+    import * as dat from "lil-gui"
+    import typefaceFont from 'typefaceFont' assert { type: "json" }
+    import { FontLoader } from "FontLoader"
+    import { TextGeometry } from "TextGeometry"
     /**
      * Base
      */
