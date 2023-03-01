@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Physics</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      .webgl {
+        position: fixed;
+        top: 0;
+        left: 0;
+        outline: none;
+      }
+      .section {
+        display: flex;
+        align-items: center;
+        height: 100vh;
+        position: relative;
+        font-family: "Cabin", sans-serif;
+        color: #ffeded;
+        text-transform: uppercase;
+        font-size: 7vmin;
+        padding-left: 10%;
+        padding-right: 10%;
+      }
+      section:nth-child(odd) {
+        justify-content: flex-end;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas class="webgl"></canvas>
+    <script
+      defer
+      src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"
+    ></script>
+    <script async type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.148.0/build/three.module.js",
+          "control": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js",
+          "gltfLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js",
+          "dracoLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js"
+        }
+      }
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/lil-gui@0.17"></script>
+    <script
+      async
+      src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.js"
+    ></script>
+    <script async type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "control";
+      import { GLTFLoader } from "gltfLoader";
+      import { DRACOLoader } from "dracoLoader";
+      /**       * Base       */
+      // Debug
+      const GUI = lil.GUI;
+      const gui = new GUI();
+      // Canvas
+      const canvas = document.querySelector("canvas.webgl");
+      // Scene
+      const scene = new THREE.Scene();
+      /**       * Modules       */
+      let mixer = null;
+      // const dracoLoader = new DRACOLoader();
+      // use draco when the models taking longer way to load and
+      // also has a big size
+      // dracoLoader.setDecoderPath('/draco/');
+      const gltfLoader = new GLTFLoader();
+      // gltfLoader.setDRACOLoader(dracoLoader);
+      gltfLoader.load("./models/Fox/glTF/Fox.gltf", (gltf) => {
+        gltf.scene.scale.set(0.025, 0.025, 0.025);
+        scene.add(gltf.scene);
+        mixer = new THREE.AnimationMixer(gltf.scene);
+        const action = mixer.clipAction(gltf.animations[1]);
+        action.play();
+      });
+      /**       * Floor       */ 
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 10),
+        new THREE.MeshStandardMaterial({
+          color: "green",
+          metalness: 0,
+          roughness: 0.5,
+        })
+      );
+      floor.receiveShadow = true;
+      floor.rotation.x = -Math.PI * 0.5;
+      scene.add(floor);
+      /**       * Lights       */ 
+      const ambientLight = new THREE.AmbientLight(
+        0xffffff,
+        0.8
+      );
+      scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+      directionalLight.castShadow = true;
+      directionalLight.shadow.mapSize.set(1024, 1024);
+      directionalLight.shadow.camera.far = 15;
+      directionalLight.shadow.camera.left = -7;
+      directionalLight.shadow.camera.top = 7;
+      directionalLight.shadow.camera.right = 7;
+      directionalLight.shadow.camera.bottom = -7;
+      directionalLight.position.set(5, 5, 5);
+      scene.add(directionalLight);
+      /**       * Sizes       */
+      const sizes = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+      window.addEventListener("resize", () => {
+        // Update sizes        
+        sizes.width = window.innerWidth;
+        sizes.height = window.innerHeight;
+        // Update camera        
+        camera.aspect = sizes.width / sizes.height;
+        camera.updateProjectionMatrix();
+        // Update renderer        
+        renderer.setSize(sizes.width, sizes.height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      });
+      /**       * Camera       */
+      // Base camera
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        sizes.width / sizes.height,
+        0.1,
+        100
+      );
+      camera.position.set(2, 2, 2);
+      scene.add(camera);
+      // Controls
+      const controls = new OrbitControls(camera, canvas);
+      controls.target.set(0, 0.75, 0);
+      controls.enableDamping = true;
+      /**       * Renderer       */
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+      });
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.setSize(sizes.width, sizes.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      /**       * Animate       */ const clock = new THREE.Clock();
+      let previousTime = 0;
+      const tick = () => {
+        const elapsedTime = clock.getElapsedTime();
+        const deltaTime = elapsedTime - previousTime;
+        previousTime = elapsedTime;
+        // animate model
+        // condition because there would be a loading time for model
+        if (mixer !== null) {
+          mixer.update(deltaTime);
+        }
+        // Update controls
+        controls.update();
+        // Render
+        renderer.render(scene, camera);
+        // Call tick again on the next frame
+        window.requestAnimationFrame(tick);
+      };
+      tick();
+    </script>
+  </body>
+</html>
