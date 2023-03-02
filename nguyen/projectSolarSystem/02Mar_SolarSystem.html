@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title> Solar System Overhaul</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            overflow: hidden;
+        }
+
+        .webgl {
+            position: fixed;
+            top: 0;
+            left: 0;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="webgl"></canvas>
+
+    <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+
+
+    <script type="importmap">
+      {
+        "imports": {
+            "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+            "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
+            "orbitControl": "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js",
+            "fontLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/FontLoader.js",
+            "textGeometry": "https://unpkg.com/three@0.147.0/examples/jsm/geometries/TextGeometry.js"
+        }
+      }
+    </script>
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from "orbitControl";
+        import * as dat from "lil-gui";
+        import { FontLoader } from 'fontLoader';
+        import { TextGeometry } from 'textGeometry';
+
+        let camera, controls, scene, renderer, canvas;
+        let sun;
+        const planets = [
+            { name: 'mercury', sizeRatio: 100 / 277, position: 15, rotation: 0.0002 },
+            { name: 'venus', sizeRatio: 100 / 133, position: 20, rotation: 0.00075 },
+            { name: 'earth', sizeRatio: 100 / 103, position: 25, rotation: 0.0065 },
+            { name: 'mars', sizeRatio: 100 / 208, position: 30, rotation: 0.00025 },
+            { name: 'jupiter', sizeRatio: 30 / 9.68, position: 40, rotation: 0.00055 },
+            { name: 'saturn', sizeRatio: 30 / 11.4, position: 50, rotation: 0.0004 },
+            { name: 'uranus', sizeRatio: 30 / 26.8, position: 60, rotation: 0.0006 },
+            { name: 'neptune', sizeRatio: 30 / 27.7, position: 70, rotation: 0.0003 },
+        ];
+
+        const earthMoon = [
+            { name: 'luna', sizeRatio: 55 / 105, position: 3, rotation: 0.005 },
+        ];
+
+        const orbitRadius = [15, 20, 25, 30, 40, 50, 60, 70];
+        const orbitsObject3D = [];
+        const planetsObject3D = [];
+
+        // Config
+        const gui = new dat.GUI()
+        canvas = document.querySelector('canvas.webgl')
+        scene = new THREE.Scene()
+        const textureLoader = new THREE.TextureLoader()
+
+        // Size
+        const sizes = {
+            width: window.innerWidth,
+            height: window.innerHeight
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // Camera
+        camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 5, 20000)
+        camera.position.set(100, 50, 50)
+        scene.add(camera)
+
+        // Controls
+        controls = new OrbitControls(camera, canvas)
+        controls.enableDamping = true
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ canvas: canvas })
+        renderer.setSize(sizes.width, sizes.height)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+        function init() {
+            // Background
+            scene.background = new THREE.Color(0x000000);
+            const spaceLoader = new THREE.CubeTextureLoader();
+            const spaceTexture = spaceLoader.load([
+                "textures/background/space-xpos.jpg",
+                "textures/background/space-xneg.jpg",
+                "textures/background/space-ypos.jpg",
+                "textures/background/space-yneg.jpg",
+                "textures/background/space-zpos.jpg",
+                "textures/background/space-zneg.jpg",
+            ]);
+            scene.background = spaceTexture;
+
+            // Text
+            const loader = new FontLoader();
+            loader.load('fonts/helvetiker_regular.typeface.json', function (font) {
+                const textGeometry = new TextGeometry('3D Solar System', {
+                    font: font,
+                    size: 1,
+                    height: 0.2,
+                    curveSegments: 5,
+                    bevelEnabled: true,
+                    bevelThickness: 0.01,
+                    bevelSize: 0.004,
+                    bevelOffset: 0,
+                    bevelSegments: 5,
+                });
+                textGeometry.center();
+                const matcapTexture = textureLoader.load('./textures/matcaps/3.png')
+                const material = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
+                const textMesh = new THREE.Mesh(
+                    textGeometry,
+                    material
+                )
+                scene.add(textMesh)
+            })
+
+            // Solar system
+            // Create sun
+            generateSun()
+
+            // Create other planets
+            generatePlanets()
+
+            // Kuiper belt
+
+            // Debug 
+            debugConfiguration()
+        }
+        init()
+
+        function generateSun() {
+            sun = new THREE.Mesh(
+                new THREE.SphereGeometry(10, 32, 32),
+                new THREE.MeshStandardMaterial({ map: textureLoader.load('./textures/sun_detailed.jpg') }));
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
+            scene.add(sun, ambientLight, hemisphereLight)
+        }
+
+        function generatePlanets() {
+            const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            planets.forEach((planet, index) => {
+                const orbitGroup = new THREE.Group()
+                const orbit = new THREE.Mesh(
+                    new THREE.TorusGeometry(orbitRadius[index], 0.05, 16, 100),
+                    orbitMaterial
+                )
+
+                const texture = textureLoader.load(`./textures/${planet.name}.jpg`)
+                const planetObject = new THREE.Mesh(
+                    new THREE.SphereGeometry(planet.sizeRatio, 32, 32),
+                    new THREE.MeshStandardMaterial({ map: texture }))
+
+                planetObject.position.x = planet.position
+
+                // if (planet.name === 'saturn') {
+                //     saturnRing.position.x = planet.position
+                //     orbitGroup.add(saturnRing)
+                // }
+                orbitGroup.add(orbit, planetObject)
+                orbit.rotateZ(Math.PI / 2)
+                orbit.rotateY(Math.PI / 2)
+                orbitsObject3D.push(orbitGroup)
+                planetsObject3D.push(planetObject)
+                scene.add(orbitGroup)
+            })
+        }
+
+        function debugConfiguration() {
+            gui.add(camera.position, 'z', -250, 250, 1)
+            gui.add(camera.position, 'y', -250, 250, 1)
+            gui.add(camera.position, 'x', -250, 250, 1)
+        }
+
+        // Animate
+        const clock = new THREE.Clock()
+        const animate = () => {
+            const elapsedTime = clock.getElapsedTime()
+
+            sun.rotation.y += 0.001
+            sun.rotation.z += 0.001
+            orbitsObject3D.forEach((group, index) => {
+                group.rotation.y += planets[index].rotation
+                group.rotation.x += planets[index].rotation
+            })
+
+            planetsObject3D.forEach((planet, index) => {
+                planet.rotation.y += planets[index].rotation
+                planet.rotation.x += planets[index].rotation
+            })
+
+            controls.update()
+
+            render();
+
+            window.requestAnimationFrame(animate)
+        }
+
+        animate()
+
+        function onWindowResize() {
+            sizes.width = window.innerWidth
+            sizes.height = window.innerHeight
+            camera.aspect = sizes.width / sizes.height
+            camera.updateProjectionMatrix()
+            renderer.setSize(sizes.width, sizes.height)
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+
+</html>
