@@ -46,13 +46,13 @@
         import { OrbitControls } from "orbitControl";
         import * as dat from "lil-gui";
 
-        let camera, controls, scene, renderer, gui, canvas;
-        let geometry = null
-        let material = null
-        let points = null
+        let camera, controls, scene, renderer, canvas;
+        let geometry = null;
+        let material = null;
+        let points = null;
 
         // Init
-        gui = new dat.GUI()
+        const gui = new dat.GUI()
         canvas = document.querySelector('canvas.webgl')
         scene = new THREE.Scene()
         const textureLoader = new THREE.TextureLoader()
@@ -63,24 +63,22 @@
         parameters.size = 0.05
         parameters.radius = 5
         parameters.branches = 3
-        parameters.spin = 1
-        parameters.randomness = 0.2
-        parameters.randomnessPower = 3
+        parameters.spin = 3.279
+        parameters.randomness = 0.697
+        parameters.randomnessPower = 6.902
         parameters.insideColor = '#ec5300'
         parameters.outsideColor = '#2fb4fc'
 
         const generateGalary = () => {
-            if (points !== null) {
+            if (points !== null) {  
                 geometry.dispose()
-                material.dospose()
+                //material.dispose()
                 scene.remove(points)
             }
 
-            const geometry = new THREE.BufferGeometry()
+            geometry = new THREE.BufferGeometry()
             const colors = new Float32Array(parameters.count * 3)
             const positions = new Float32Array(parameters.count * 3)
-            const randomness = new Float32Array(parameters.count * 3)
-            const scales = new Float32Array(parameters.count);
             const insideColor = new THREE.Color(parameters.insideColor);
             const outsideColor = new THREE.Color(parameters.outsideColor);
 
@@ -99,11 +97,6 @@
                 positions[i3 + 1] = 0 + randomY
                 positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ
 
-                // Randomness
-                randomness[i3] = randomX;
-                randomness[i3 + 1] = randomY;
-                randomness[i3 + 2] = randomZ;
-
                 // Color
                 const mixedColor = insideColor.clone();
                 mixedColor.lerp(outsideColor, radius / parameters.radius);
@@ -111,17 +104,10 @@
                 colors[i3] = mixedColor.r;
                 colors[i3 + 1] = mixedColor.g;
                 colors[i3 + 2] = mixedColor.b;
-
-                // Scales
-                scales[i] = Math.random();
             }
 
             geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
             geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-            geometry.setAttribute("aScale", new THREE.BufferAttribute(scales, 1));
-            geometry.setAttribute(
-                "aRandomness",
-                new THREE.BufferAttribute(randomness, 3))
 
             // Material
             const material = new THREE.PointsMaterial({
