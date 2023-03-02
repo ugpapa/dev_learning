@@ -51,20 +51,20 @@
         import { TextGeometry } from 'textGeometry';
 
         let camera, controls, scene, renderer, canvas;
-        let sun;
+        let sun, planetRing;
         const planets = [
-            { name: 'mercury', sizeRatio: 100 / 277, position: 15, rotation: 0.0002 },
-            { name: 'venus', sizeRatio: 100 / 133, position: 20, rotation: 0.00075 },
-            { name: 'earth', sizeRatio: 100 / 103, position: 25, rotation: 0.0065 },
-            { name: 'mars', sizeRatio: 100 / 208, position: 30, rotation: 0.00025 },
-            { name: 'jupiter', sizeRatio: 30 / 9.68, position: 40, rotation: 0.00055 },
-            { name: 'saturn', sizeRatio: 30 / 11.4, position: 50, rotation: 0.0004 },
-            { name: 'uranus', sizeRatio: 30 / 26.8, position: 60, rotation: 0.0006 },
-            { name: 'neptune', sizeRatio: 30 / 27.7, position: 70, rotation: 0.0003 },
+            { name: 'mercury', sizeRatio: 100 / 277, position: 15, rotation: 0.0002, inclination: 7.0, moonNum: 0 },
+            { name: 'venus', sizeRatio: 100 / 133, position: 20, rotation: 0.00075, inclination: 3.4, moonNum: 0 },
+            { name: 'earth', sizeRatio: 100 / 103, position: 25, rotation: 0.00065, inclination: 0, moonNum: 1 },
+            { name: 'mars', sizeRatio: 100 / 208, position: 30, rotation: 0.00025, inclination: 1.8, moonNum: 2 },
+            { name: 'jupiter', sizeRatio: 30 / 9.68, position: 40, rotation: 0.00055, inclination: 1.3, moonNum: 92 },
+            { name: 'saturn', sizeRatio: 30 / 11.4, position: 50, rotation: 0.0004, inclination: 1.3, moonNum: 83 },
+            { name: 'uranus', sizeRatio: 30 / 26.8, position: 60, rotation: 0.0006, inclination: 0.8, moonNum: 27 },
+            { name: 'neptune', sizeRatio: 30 / 27.7, position: 70, rotation: 0.0003, inclination: 1.8, moonNum: 14 },
         ];
 
         const earthMoon = [
-            { name: 'luna', sizeRatio: 55 / 105, position: 3, rotation: 0.005 },
+            { name: 'luna', sizeRatio: 55 / 105, position: 3, rotation: 0.005, inclination: 5.1 },
         ];
 
         const orbitRadius = [15, 20, 25, 30, 40, 50, 60, 70];
@@ -117,13 +117,13 @@
             loader.load('fonts/helvetiker_regular.typeface.json', function (font) {
                 const textGeometry = new TextGeometry('3D Solar System', {
                     font: font,
-                    size: 1,
-                    height: 0.2,
+                    size: 4,
+                    height: 1,
                     curveSegments: 5,
                     bevelEnabled: true,
-                    bevelThickness: 0.01,
+                    bevelThickness: 0.3,
                     bevelSize: 0.004,
-                    bevelOffset: 0,
+                    bevelOffset: -0.1,
                     bevelSegments: 5,
                 });
                 textGeometry.center();
@@ -134,11 +134,16 @@
                     material
                 )
                 scene.add(textMesh)
+                textMesh.position.set(50, 55, 25);
+                textMesh.lookAt(camera.position);
             })
 
             // Solar system
             // Create sun
             generateSun()
+
+            // Ring system: Jupyter, Saturn, Uranus, Neptune
+            generatePlanetRing()
 
             // Create other planets
             generatePlanets()
@@ -164,7 +169,7 @@
             planets.forEach((planet, index) => {
                 const orbitGroup = new THREE.Group()
                 const orbit = new THREE.Mesh(
-                    new THREE.TorusGeometry(orbitRadius[index], 0.05, 16, 100),
+                    new THREE.TorusGeometry(orbitRadius[index], 0.03, 16, 100),
                     orbitMaterial
                 )
 
@@ -174,18 +179,27 @@
                     new THREE.MeshStandardMaterial({ map: texture }))
 
                 planetObject.position.x = planet.position
-
-                // if (planet.name === 'saturn') {
-                //     saturnRing.position.x = planet.position
-                //     orbitGroup.add(saturnRing)
-                // }
+                
+                if (planet.name === 'saturn' || planet.name === 'jupiter' 
+                || planet.name === 'uranus' || planet.name === 'neptune' ) {
+                    planetRing.position.x = planet.position
+                    orbitGroup.add(planetRing)
+                }
                 orbitGroup.add(orbit, planetObject)
                 orbit.rotateZ(Math.PI / 2)
                 orbit.rotateY(Math.PI / 2)
                 orbitsObject3D.push(orbitGroup)
                 planetsObject3D.push(planetObject)
+                //console.log(orbitsObject3D)
+                console.log(planetsObject3D)
                 scene.add(orbitGroup)
             })
+        }
+
+        function generatePlanetRing() {
+            const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            planetRing = new THREE.Mesh(new THREE.TorusGeometry(5, 0.02, 16, 100), orbitMaterial);
+            planetRing.rotateX(Math.PI / 2.5)
         }
 
         function debugConfiguration() {
@@ -199,16 +213,16 @@
         const animate = () => {
             const elapsedTime = clock.getElapsedTime()
 
-            sun.rotation.y += 0.001
-            sun.rotation.z += 0.001
+            sun.rotation.y += Math.abs(Math.sin(elapsedTime * 3)) * 0.001
+            sun.rotation.z += Math.sin(elapsedTime) * 1.5 * 0.001
             orbitsObject3D.forEach((group, index) => {
                 group.rotation.y += planets[index].rotation
                 group.rotation.x += planets[index].rotation
             })
 
             planetsObject3D.forEach((planet, index) => {
-                planet.rotation.y += planets[index].rotation
-                planet.rotation.x += planets[index].rotation
+                planet.rotation.y += planets[index].rotation * 2
+                planet.rotation.x += planets[index].rotation * 2
             })
 
             controls.update()
