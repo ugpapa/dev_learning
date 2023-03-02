@@ -1,43 +1,48 @@
+<!-- @format -->
+
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Three sample </title>
+    <title>Three sample</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+      }
 
-        html,
-        body {
-            overflow: hidden;
-        }
+      html,
+      body {
+        overflow: hidden;
+      }
 
-        .webgl {
-            position: fixed;
-            top: 0;
-            left: 0;
-            outline: none;
-        }
+      .webgl {
+        position: fixed;
+        top: 0;
+        left: 0;
+        outline: none;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <canvas class="webgl"></canvas>
 
-    <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+    <script
+      defer
+      src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"
+    ></script>
 
     <script type="importmap">
         {
             "imports": {
-                "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
-                "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js"
+                 "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+                 "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js"
             }
         }
+      }
     </script>
     <script type="module">
         import * as THREE from "three";
@@ -101,102 +106,107 @@
                 BackSide: THREE.BackSide,
                 DoubleSide: THREE.DoubleSide,
         },
-}
-        const materialFolder = gui.addFolder('THREE.MaterialTest')
-        materialFolder.add(material, 'transparent').onChange(() => material.needsUpdate = true)
-        materialFolder.add(material, 'opacity', 0, 1, 0.01)
-        materialFolder.add(material, 'depthTest')
-        materialFolder.add(material, 'depthWrite')
-        materialFolder
-            .add(material, 'side', options.side)
-            .onChange(() => updateMaterial())
-        materialFolder.open()
+      };
+      const materialFolder = gui.addFolder("THREE.MaterialTest");
+      materialFolder
+        .add(material, "transparent")
+        .onChange(() => (material.needsUpdate = true));
+      materialFolder.add(material, "opacity", 0, 1, 0.01);
+      materialFolder.add(material, "depthTest");
+      materialFolder.add(material, "depthWrite");
+      materialFolder
+        .add(material, "side", options.side)
+        .onChange(() => updateMaterial());
+      materialFolder.open();
 
-        // Generate objects
-        const sphere = new THREE.Mesh(
-            new THREE.SphereBufferGeometry(0.5, 16, 16 ),
-            material
-        )
-        sphere.position.x = -2.1
+      // Generate objects
+      const sphere = new THREE.Mesh(
+        new THREE.SphereBufferGeometry(0.5, 16, 16),
+        material
+      );
+      sphere.position.x = -2.1;
 
-        const plane = new THREE.Mesh(
-            new THREE.PlaneBufferGeometry(1, 1),
-            material
-        )
+      const plane = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(1, 1),
+        material
+      );
 
-        const torus = new THREE.Mesh(
-            new THREE.TorusBufferGeometry(0.3, 0.2, 16, 32),
-            material
-        )
-        torus.position.x = 2.1
+      const torus = new THREE.Mesh(
+        new THREE.TorusBufferGeometry(0.3, 0.2, 16, 32),
+        material
+      );
+      torus.position.x = 2.1;
 
-        scene.add(sphere, plane, torus)
+      scene.add(sphere, plane, torus);
 
-        // Size
-        const sizes = {
-            width: window.innerWidth,
-            height: window.innerHeight
-        }
+      // Size
+      const sizes = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
 
-        window.addEventListener('resize', () => {
-            // Update sizes
-            sizes.width = window.innerWidth
-            sizes.height = window.innerHeight
+      window.addEventListener("resize", () => {
+        // Update sizes
+        sizes.width = window.innerWidth;
+        sizes.height = window.innerHeight;
 
-            // Update camera
-            camera.aspect = sizes.width / sizes.height
-            camera.updateProjectionMatrix()
+        // Update camera
+        camera.aspect = sizes.width / sizes.height;
+        camera.updateProjectionMatrix();
 
-            // Update renderer
-            renderer.setSize(sizes.width, sizes.height)
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-        })
+        // Update renderer
+        renderer.setSize(sizes.width, sizes.height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      });
 
-        // Camera
-        const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-        camera.position.x = 1
-        camera.position.y = 1
-        camera.position.z = 2
-        scene.add(camera)
+      // Camera
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        sizes.width / sizes.height,
+        0.1,
+        100
+      );
+      camera.position.x = 1;
+      camera.position.y = 1;
+      camera.position.z = 2;
+      scene.add(camera);
 
-        // Controls
-        const controls = new OrbitControls(camera, canvas)
-        controls.enableDamping = true
+      // Controls
+      const controls = new OrbitControls(camera, canvas);
+      controls.enableDamping = true;
 
-        // Renderer
-        const renderer = new THREE.WebGLRenderer({
-            canvas: canvas
-        })
-        renderer.setSize(sizes.width, sizes.height)
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      // Renderer
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+      });
+      renderer.setSize(sizes.width, sizes.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-        // Animate
-        const clock = new THREE.Clock()
+      // Animate
+      const clock = new THREE.Clock();
 
-        const tick = () => {
-            const elapsedTime = clock.getElapsedTime()
+      const tick = () => {
+        const elapsedTime = clock.getElapsedTime();
 
-            // Animate/ update objects
-            sphere.rotation.y = 0.15 * elapsedTime
-            plane.rotation.y = 0.15 * elapsedTime
-            torus.rotation.y = 0.15 * elapsedTime
+        // Animate/ update objects
+        sphere.rotation.y = 0.15 * elapsedTime;
+        plane.rotation.y = 0.15 * elapsedTime;
+        torus.rotation.y = 0.15 * elapsedTime;
 
-            sphere.rotation.x = 0.2 * elapsedTime
-            plane.rotation.x = 0.2 * elapsedTime
-            torus.rotation.x = 0.2 * elapsedTime
+        sphere.rotation.x = 0.2 * elapsedTime;
+        plane.rotation.x = 0.2 * elapsedTime;
+        torus.rotation.x = 0.2 * elapsedTime;
 
-            // Update controls
-            controls.update()
+        // Update controls
+        controls.update();
 
-            // Render
-            renderer.render(scene, camera)
+        // Render
+        renderer.render(scene, camera);
 
-            // Call tick again on the next frame
-            window.requestAnimationFrame(tick)
-        }
-        tick()
-
+        // Call tick again on the next frame
+        window.requestAnimationFrame(tick);
+      };
+      tick();
     </script>
-</body>
-
+  </body>
 </html>
