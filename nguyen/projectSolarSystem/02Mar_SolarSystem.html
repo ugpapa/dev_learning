@@ -23,12 +23,32 @@
             left: 0;
             outline: none;
         }
+
+        sound {
+            width: 30px;
+            height: 25px;
+            top: 30px;
+            left: 30px;
+            background-color: transparent;
+            position: absolute;
+            background-position: center;
+            background-image: url(./textures/speaker_off.png);
+            background-position: left;
+            background-size: contain;
+            background-repeat: no-repeat;
+            cursor: pointer;
+            opacity: 0.6;
+        }
     </style>
 </head>
 
 <body>
     <canvas class="webgl"></canvas>
-
+    <div id="sound"></div>
+    <audio preload="auto" type="audio/ogg" loop src="./media/colossal_trailer_music_gaze.ogg">
+        Your browser does not support the
+        <code>audio</code> element.
+    </audio>
     <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
 
 
@@ -52,6 +72,7 @@
 
         let camera, controls, scene, renderer, canvas;
         let sun, planetRing, planetRing2, planetRing3, planetRing4, planetObject, moon;
+        //let count, particlesGeometry;
         const planets = [
             { name: 'mercury', sizeRatio: 100 / 277, position: 15, rotation: 0.0002, inclination: 7.0, moonNum: 0 },
             { name: 'venus', sizeRatio: 100 / 133, position: 20, rotation: 0.00075, inclination: 3.4, moonNum: 0 },
@@ -63,10 +84,7 @@
             { name: 'neptune', sizeRatio: 30 / 27.7, position: 70, rotation: 0.0003, inclination: 1.8, moonNum: 14 },
         ];
 
-        const earthMoon = [
-            { name: 'luna', sizeRatio: 55 / 105, position: 3, rotation: 0.005, inclination: 5.1 },
-        ];
-
+        const earthMoon = { name: 'luna', sizeRatio: 55 / 105, position: 3, rotation: 0.005, inclination: 5.1 }
         const orbitRadius = [15, 20, 25, 30, 40, 50, 60, 70];
         const orbitsObject3D = [];
         const planetsObject3D = [];
@@ -76,6 +94,12 @@
         canvas = document.querySelector('canvas.webgl')
         scene = new THREE.Scene()
         const textureLoader = new THREE.TextureLoader()
+
+        const particlesTexture = textureLoader.load('./textures/particles/5.png')
+        const particlesGeometry = new THREE.SphereGeometry(5, 25, 25)
+        const count = 8888
+        const positions = new Float32Array(count * 3)
+        const colors = new Float32Array(count * 4)
 
         // Size
         const sizes = {
@@ -150,12 +174,43 @@
 
             // Comet
 
-            // Asteriod - Kuiper belt
-
             // Debug 
             debugConfiguration()
         }
         init()
+
+
+        function MYsteRioBelly() {
+            for (let i = 0; i < count * 3; i++) {
+                positions[i] = (Math.random() - 1.5) * 300
+                colors[i] = Math.random()
+            }
+
+            particlesGeometry.setAttribute(
+                'position',
+                new THREE.BufferAttribute(positions, 3)
+            )
+
+            particlesGeometry.setAttribute(
+                'color',
+                new THREE.BufferAttribute(colors, 3)
+            )
+
+            const particlesMaterial = new THREE.PointsMaterial()
+            particlesMaterial.size = .1
+            particlesMaterial.sizeAttenuation = true
+            particlesMaterial.color = new THREE.Color('#ff88cc')
+            particlesMaterial.transparent = true
+            particlesMaterial.alphaMap = particlesTexture
+            particlesMaterial.alphaTest = 0.001
+            particlesMaterial.depthWrite = false
+            particlesMaterial.blending = THREE.AdditiveBlending
+            particlesMaterial.vertexColors = true
+
+            const particles = new THREE.Points(particlesGeometry, particlesMaterial)
+            scene.add(particles)
+        }
+        MYsteRioBelly()
 
         function generateSun() {
             sun = new THREE.Mesh(
@@ -213,13 +268,13 @@
                 orbit.rotateY(Math.PI / 2)
                 orbitsObject3D.push(orbitGroup)
                 planetsObject3D.push(planetObject)
-                
+
                 scene.add(orbitGroup)
             })
         }
 
         function generateMoon() {
-            const moonGeometry = new THREE.SphereGeometry(55/ 105, 50, 50);
+            const moonGeometry = new THREE.SphereGeometry(earthMoon.sizeRatio, 50, 50);
             const moonMaterial = new THREE.MeshPhongMaterial({
                 map: textureLoader.load("./textures/moon_texture.jpg")
             });
@@ -244,11 +299,40 @@
             gui.add(camera.position, 'x', -250, 250, 1)
         }
 
+
+        function initSound() {
+            let audioElement = document.querySelector('audio'),
+                speakerButton = document.getElementById('sound');
+
+            speakerButton.addEventListener('click', () => {
+                if (!this.soundOn) {
+                    audioElement.play();
+                    this.soundOn = true;
+                    speakerButton.style.opacity = 1;
+                    speakerButton.style.backgroundImage = 'url("./textures/speaker_on.png")'
+                } else {
+                    audioElement.pause();
+                    this.soundOn = false;
+                    speakerButton.style.opacity = 0.6;
+                    speakerButton.style.backgroundImage = 'url("./textures/speaker_off.png")'
+                }
+            })
+        }
+        initSound()
+
         // Animate
         const clock = new THREE.Clock()
         const animate = () => {
+            // Asteroids
             const elapsedTime = clock.getElapsedTime()
+            for (let i = 0; i < count; i++) {
+                let i3 = i * 3
+                const x = particlesGeometry.attributes.position.array[i3]
+                particlesGeometry.attributes.position.array[i3 + 3] = Math.sin(elapsedTime + 4 * x)
+            }
+            particlesGeometry.attributes.position.needsUpdate = true
 
+            // Planet rotations
             sun.rotation.y += Math.abs(Math.sin(elapsedTime * 3)) * 0.001
             sun.rotation.z += Math.sin(elapsedTime) * 1.5 * 0.001
             moon.rotation.y += Math.abs(Math.sin(elapsedTime * 30)) * 0.001
@@ -270,9 +354,8 @@
             camera.position.z += -.05;
 
             if (camera.position.z < -100) {
-                camera.position.set(0, 35, 70);
+                camera.position.set(100, 50, 50);
             }
-
 
             controls.update()
 
