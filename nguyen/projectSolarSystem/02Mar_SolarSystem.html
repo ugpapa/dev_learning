@@ -51,7 +51,7 @@
         import { TextGeometry } from 'textGeometry';
 
         let camera, controls, scene, renderer, canvas;
-        let sun, planetRing;
+        let sun, planetRing, planetRing2, planetRing3, planetRing4, planetObject, moon;
         const planets = [
             { name: 'mercury', sizeRatio: 100 / 277, position: 15, rotation: 0.0002, inclination: 7.0, moonNum: 0 },
             { name: 'venus', sizeRatio: 100 / 133, position: 20, rotation: 0.00075, inclination: 3.4, moonNum: 0 },
@@ -148,7 +148,9 @@
             // Create other planets
             generatePlanets()
 
-            // Kuiper belt
+            // Comet
+
+            // Asteriod - Kuiper belt
 
             // Debug 
             debugConfiguration()
@@ -174,32 +176,66 @@
                 )
 
                 const texture = textureLoader.load(`./textures/${planet.name}.jpg`)
-                const planetObject = new THREE.Mesh(
+                planetObject = new THREE.Mesh(
                     new THREE.SphereGeometry(planet.sizeRatio, 32, 32),
                     new THREE.MeshStandardMaterial({ map: texture }))
 
                 planetObject.position.x = planet.position
-                
-                if (planet.name === 'saturn' || planet.name === 'jupiter' 
-                || planet.name === 'uranus' || planet.name === 'neptune' ) {
+
+                if (planet.name === 'saturn') {
                     planetRing.position.x = planet.position
                     orbitGroup.add(planetRing)
                 }
+
+                if (planet.name === 'jupiter') {
+                    planetRing2.position.x = planet.position
+                    orbitGroup.add(planetRing2)
+                }
+
+                if (planet.name === 'uranus') {
+                    planetRing3.position.x = planet.position
+                    orbitGroup.add(planetRing3)
+                }
+
+                if (planet.name === 'neptune') {
+                    planetRing4.position.x = planet.position
+                    orbitGroup.add(planetRing4)
+                }
+
+                if (planet.name === 'earth') {
+                    generateMoon()
+                    moon.position.x = planet.position + 3;
+                    orbitGroup.add(moon)
+                }
+
                 orbitGroup.add(orbit, planetObject)
                 orbit.rotateZ(Math.PI / 2)
                 orbit.rotateY(Math.PI / 2)
                 orbitsObject3D.push(orbitGroup)
                 planetsObject3D.push(planetObject)
-                //console.log(orbitsObject3D)
-                console.log(planetsObject3D)
+                
                 scene.add(orbitGroup)
             })
+        }
+
+        function generateMoon() {
+            const moonGeometry = new THREE.SphereGeometry(55/ 105, 50, 50);
+            const moonMaterial = new THREE.MeshPhongMaterial({
+                map: textureLoader.load("./textures/moon_texture.jpg")
+            });
+            moon = new THREE.Mesh(moonGeometry, moonMaterial);
         }
 
         function generatePlanetRing() {
             const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
             planetRing = new THREE.Mesh(new THREE.TorusGeometry(5, 0.02, 16, 100), orbitMaterial);
             planetRing.rotateX(Math.PI / 2.5)
+            planetRing2 = new THREE.Mesh(new THREE.TorusGeometry(5, 0.02, 16, 100), orbitMaterial);
+            planetRing2.rotateX(Math.PI / 3)
+            planetRing3 = new THREE.Mesh(new THREE.TorusGeometry(5, 0.02, 16, 100), orbitMaterial);
+            planetRing3.rotateX(Math.PI / 3.5)
+            planetRing4 = new THREE.Mesh(new THREE.TorusGeometry(5, 0.02, 16, 100), orbitMaterial);
+            planetRing4.rotateX(Math.PI / 4.5)
         }
 
         function debugConfiguration() {
@@ -215,6 +251,9 @@
 
             sun.rotation.y += Math.abs(Math.sin(elapsedTime * 3)) * 0.001
             sun.rotation.z += Math.sin(elapsedTime) * 1.5 * 0.001
+            moon.rotation.y += Math.abs(Math.sin(elapsedTime * 30)) * 0.001
+            moon.rotation.z += Math.sin(elapsedTime) * 15 * 0.001
+
             orbitsObject3D.forEach((group, index) => {
                 group.rotation.y += planets[index].rotation
                 group.rotation.x += planets[index].rotation
@@ -224,6 +263,16 @@
                 planet.rotation.y += planets[index].rotation * 2
                 planet.rotation.x += planets[index].rotation * 2
             })
+
+            // Flyby camera
+            camera.position.x += .01;
+            camera.position.y += -.01;
+            camera.position.z += -.05;
+
+            if (camera.position.z < -100) {
+                camera.position.set(0, 35, 70);
+            }
+
 
             controls.update()
 
