@@ -1,0 +1,658 @@
+c<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gavin's solar system</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      overflow: hidden;
+    }
+
+    .webgl {
+      position: fixed;
+      top: 0;
+      left: 0;
+      outline: none;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas class="webgl"></canvas>
+
+  <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+
+
+  <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+          "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
+          "OrbitControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js",
+          "FirstPersonControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/FirstPersonControls.js"
+        }
+      }
+    </script>
+  <script type="module">
+    import * as THREE from 'three'
+    import { OrbitControls } from "OrbitControls"
+    import { FirstPersonControls } from "FirstPersonControls"
+    import * as dat from "lil-gui"
+
+    /**
+     * Base
+     */
+    // Debug
+    const gui = new dat.GUI()
+    let lookAtEarth, lookAtMercury, lookAtVenus,
+      lookAtMars, lookAtJupiter, lookAtSaturn, lookAtUranus, lookAtNeptune = null
+
+    // Canvas
+    const canvas = document.querySelector('canvas.webgl')
+
+    // Loaders
+    const textureLoader = new THREE.TextureLoader()
+    const cubeTextureLoader = new THREE.CubeTextureLoader()
+
+    /**
+     * Environment map
+     */
+    const environmentMap = cubeTextureLoader.load([
+      './textures/environmentMaps/px.png',
+      './textures/environmentMaps/nx.png',
+      './textures/environmentMaps/py.png',
+      './textures/environmentMaps/ny.png',
+      './textures/environmentMaps/pz.png',
+      './textures/environmentMaps/nz.png'
+    ])
+    environmentMap.encoding = THREE.sRGBEncoding
+
+    // Scene
+    const scene = new THREE.Scene()
+    scene.background = environmentMap
+    scene.environment = environmentMap
+
+    /**
+     * Textures
+     */
+    const sunColorTexture = textureLoader.load('./textures/2k_sun.jpg')
+    const mercuryColorTexture = textureLoader.load('./textures/2k_mercury.jpg')
+    const venusColorTexture = textureLoader.load('./textures/2k_venus_surface.jpg')
+    const earthColorTexture = textureLoader.load('./textures/2k_earth_daymap.jpg')
+    const marsColorTexture = textureLoader.load('./textures/2k_mars.jpg')
+    const jupiterColorTexture = textureLoader.load('./textures/2k_jupiter.jpg')
+    const saturnColorTexture = textureLoader.load('./textures/2k_saturn.jpg')
+    const saturnRingAlphaTexture = textureLoader.load('./textures/2k_saturn_ring_alpha.png')
+    const uranusColorTexture = textureLoader.load('./textures/2k_uranus.jpg')
+    const neptuneColorTexture = textureLoader.load('./textures/2k_neptune.jpg')
+    const earthMoonColorTexture = textureLoader.load('./textures/2k_moon.jpg')
+
+    const earthNormalTexture = textureLoader.load('./textures/2k_earth_normal_map.tif')
+    const earthSpecularTexture = textureLoader.load('./textures/2k_earth_specular_map.tif')
+
+    // Fix moon texture
+    earthMoonColorTexture.offset.x = Math.PI * .725
+    earthMoonColorTexture.wrapS = THREE.RepeatWrapping;
+
+    /**
+     * Objects
+     *
+    */
+    const params = {
+      earthRotationSpeed: Math.PI * 0.01,
+      earthOrbitalSpeed: 1,
+      rotationSpeed: 1,
+      orbitalSpeed: 1,
+      distanceGap: 1,
+      earthSize: 1,
+      sunSize: 10,
+
+      createOrbitalLines: () => {
+        createOrbitalLines()
+      },
+
+      removeOrbitalLines: () => {
+        removeOrbitalLines()
+      },
+
+      topCameraView: () => {
+        topCameraView()
+      },
+
+      defaultCameraView: () => {
+        defaultCameraView()
+      },
+
+      // observeEarth: () => {
+
+      // },
+    }
+
+    const planets = {
+      mercury: {
+        name: "Mercury",
+        size: params.earthSize * 0.383,
+        distance: 20,
+        colorTexture: textureLoader.load('./textures/2k_mercury.jpg'),
+        rotationSpeed: params.earthRotationSpeed * 0.588,
+        orbitalSpeed: params.earthOrbitalSpeed * 1.59
+      },
+      venus: {
+        name: "Venus",
+        size: params.earthSize * 0.949,
+        distance: 35,
+        colorTexture: textureLoader.load('./textures/2k_venus_surface.jpg'),
+        rotationSpeed: params.earthRotationSpeed * -0.0244,
+        orbitalSpeed: params.earthOrbitalSpeed * 1.18
+      },
+      earth: {
+        name: "Earth",
+        size: params.earthSize,
+        distance: 50,
+        colorTexture: textureLoader.load('./textures/2k_earth_daymap.jpg'),
+        normalTexture: textureLoader.load('./textures/2k_earth_normal_map.tif'),
+        specularTexture: textureLoader.load('./textures/2k_earth_specular_map.tif'),
+        rotationSpeed: params.earthRotationSpeed,
+        orbitalSpeed: params.earthOrbitalSpeed,
+
+        moon: {
+          distanceToEarth: 2,
+          height: 0.6,
+          sizeToEarth: 0.2724
+        }
+      },
+      mars: {
+        name: "Mars",
+        size: params.earthSize * 0.532,
+        distance: 65,
+        colorTexture: textureLoader.load('./textures/2k_mars.jpg'),
+        rotationSpeed: params.earthRotationSpeed * 1.03,
+        orbitalSpeed: params.earthOrbitalSpeed * 0.808
+      },
+      jupiter: {
+        name: "Jupiter",
+        size: params.earthSize * 5,
+        distance: 85,
+        colorTexture: textureLoader.load('./textures/2k_jupiter.jpg'),
+        rotationSpeed: params.earthRotationSpeed * 0.415,
+        orbitalSpeed: params.earthOrbitalSpeed * 0.439
+      },
+      saturn: {
+        name: "Saturn",
+        size: params.earthSize * 3.8,
+        ringInnerSize: params.earthSize * 3.6,
+        ringOuterSize: params.earthSize * 9,
+        distance: 115,
+        colorTexture: textureLoader.load('./textures/2k_saturn.jpg'),
+        rotationSpeed: params.earthRotationSpeed * 0.445,
+        orbitalSpeed: params.earthOrbitalSpeed * 0.325,
+      },
+      uranus: {
+        name: "Uranus",
+        size: params.earthSize * 3.6,
+        distance: 145,
+        colorTexture: textureLoader.load('./textures/2k_uranus.jpg'),
+        rotationSpeed: params.earthRotationSpeed * -0.720,
+        orbitalSpeed: params.earthOrbitalSpeed * 0.228
+      },
+      neptune: {
+        name: "Neptune",
+        size: params.earthSize * 2.8,
+        distance: 175,
+        colorTexture: textureLoader.load('./textures/2k_neptune.jpg'),
+        rotationSpeed: params.earthRotationSpeed * 0.673,
+        orbitalSpeed: params.earthOrbitalSpeed * 0.182
+      },
+    }
+
+    const sunPos = 0
+    const sunHexColor = '#FDB813'
+
+    gui
+      .add(params, 'orbitalSpeed')
+      .min(0)
+      .max(50)
+      .step(1)
+      .name('Orbital speed')
+
+    gui
+      .add(params, 'rotationSpeed')
+      .min(0)
+      .max(500)
+      .step(10)
+      .name('Rotation Speed')
+
+    gui
+      .add(params, 'distanceGap')
+      .min(0.6)
+      .max(5.0)
+      .step(0.1)
+      .name('Planet distance')
+
+
+    gui.add(params, 'createOrbitalLines').name('Create orbital lines')
+    gui.add(params, 'removeOrbitalLines').name('Remove orbital lines')
+    gui.add(params, 'topCameraView').name('Camera top view')
+    gui.add(params, 'defaultCameraView').name('Default camera view')
+
+    /**
+     * Create planets
+     *
+    */
+    const sun = new THREE.Mesh(
+      new THREE.SphereGeometry(params.sunSize, 32, 32),
+      new THREE.MeshLambertMaterial({
+        map: sunColorTexture,
+        emissive: new THREE.Color(sunHexColor),
+        emissiveIntensity: .65
+      })
+    )
+
+    const earth = new THREE.Mesh(
+      new THREE.SphereGeometry(planets.earth.size, 32, 16),
+      new THREE.MeshLambertMaterial({
+        map: earthColorTexture,
+        // normalMap: earthNormalTexture,
+        // normalScale: (0.5, 0.5),
+        specularMap: earthSpecularTexture,
+        // normalBias: 0.2
+      })
+    )
+    earth.rotation.y = 23.4
+
+    const earthMoon = new THREE.Mesh(
+      new THREE.SphereGeometry(planets.earth.size * planets.earth.moon.sizeToEarth, 32, 16),
+      new THREE.MeshLambertMaterial({
+        map: earthMoonColorTexture
+      })
+    )
+    earthMoon.position.y = 1
+    earth.add(earthMoon)
+
+    const mercury = new THREE.Mesh(
+      new THREE.SphereGeometry(planets.mercury.size, 32, 16),
+      new THREE.MeshLambertMaterial({
+        map: mercuryColorTexture
+      })
+    )
+    mercury.rotation.y = 0
+
+    const venus = new THREE.Mesh(
+      new THREE.SphereGeometry(planets.venus.size, 32, 16),
+      new THREE.MeshLambertMaterial({
+        map: venusColorTexture
+      })
+    )
+    venus.rotation.y = 177.4
+
+    const mars = new THREE.Mesh(
+      new THREE.SphereGeometry(planets.mars.size, 32, 16),
+      new THREE.MeshLambertMaterial({
+        map: marsColorTexture
+      })
+    )
+    mars.rotation.y = 25.2
+
+    const jupiter = new THREE.Mesh(
+      new THREE.SphereGeometry(planets.jupiter.size, 32, 16),
+      new THREE.MeshLambertMaterial({
+        map: jupiterColorTexture
+      })
+    )
+    jupiter.rotation.y = 3.1
+
+    const saturnGroup = new THREE.Group()
+
+    const saturn = new THREE.Mesh(
+      new THREE.SphereGeometry(planets.saturn.size, 32, 16),
+      new THREE.MeshLambertMaterial({
+        map: saturnColorTexture
+      })
+    )
+    saturn.rotation.y = 26.7
+
+    // Create Saturn's ring
+    // UV mapping code from: https://discourse.threejs.org/t/applying-a-texture-to-a-ringgeometry/9990/3
+    const saturnRingGeometry = new THREE.RingGeometry(
+      planets.saturn.ringInnerSize,
+      planets.saturn.ringOuterSize,
+      64
+    )
+    const pos = saturnRingGeometry.attributes.position
+    const v3 = new THREE.Vector3()
+    for (let i = 0; i < pos.count; i++) {
+      v3.fromBufferAttribute(pos, i)
+      saturnRingGeometry.attributes.uv.setXY(i, v3.length() < 4 ? 0 : 1, 1)
+    }
+
+    const saturnRingMaterial = new THREE.MeshLambertMaterial({
+      map: saturnRingAlphaTexture,
+      // alphaMap: saturnRingAlphaTexture,
+      transparent: true,
+      side: THREE.DoubleSide,
+    })
+
+    const saturnRing = new THREE.Mesh(saturnRingGeometry, saturnRingMaterial)
+    saturnRing.rotation.x = Math.PI * 0.5
+    saturnRing.rotation.y = -2.7
+    saturn.add(saturnRing)
+
+    saturnGroup.add(saturn, saturnRing)
+
+    const uranus = new THREE.Mesh(
+      new THREE.SphereGeometry(planets.uranus.size, 32, 16),
+      new THREE.MeshLambertMaterial({
+        map: uranusColorTexture
+      })
+    )
+    uranus.rotation.y = 97.8
+
+    const neptune = new THREE.Mesh(
+      new THREE.SphereGeometry(planets.neptune.size, 32, 16),
+      new THREE.MeshLambertMaterial({
+        map: neptuneColorTexture
+      })
+    )
+    neptune.rotation.y = 28.3
+
+    // Allow shadows
+    mercury.castShadow = true
+    mercury.receiveShadow = true
+
+    venus.castShadow = true
+    venus.receiveShadow = true
+
+    earth.castShadow = true
+    earth.receiveShadow = true
+
+    earthMoon.castShadow = true
+    earthMoon.receiveShadow = true
+
+    mars.castShadow = true
+    mars.receiveShadow = true
+
+    jupiter.castShadow = true
+    jupiter.receiveShadow = true
+
+    saturn.castShadow = true
+    saturn.receiveShadow = true
+
+    uranus.castShadow = true
+    uranus.receiveShadow = true
+
+    neptune.castShadow = true
+    neptune.receiveShadow = true
+
+    // Make default planet's position
+    earth.position.x = planets.earth.distance
+    earthMoon.position.x = planets.earth.distance + planets.earth.moon.distanceToEarth
+    mercury.position.x = planets.mercury.distance
+    venus.position.x = planets.venus.distance
+    mars.position.x = planets.mars.distance
+    jupiter.position.x = planets.jupiter.distance
+    // saturn.position.x = saturnPos
+    saturnGroup.position.x = planets.saturn.distance
+    uranus.position.x = planets.uranus.distance
+    neptune.position.x = planets.neptune.distance
+
+
+    scene.add(sun)
+    scene.add(mercury)
+    scene.add(venus)
+    scene.add(earth)
+    scene.add(earthMoon)
+    scene.add(mars)
+    scene.add(jupiter)
+    scene.add(saturnGroup)
+    scene.add(uranus)
+    scene.add(neptune)
+
+
+    // Orbital lines
+    let orbitalLine = null
+    let orbitalLineGeometry = null
+    let orbitalLineMaterial = null
+    const orbitalLines = []
+    const orbitalLineGeometries = []
+
+    const createOrbitalLines = () => {
+      // Remove all lines
+      if (orbitalLine !== null) {
+        orbitalLineMaterial.dispose()
+        for (let i = 0; i < orbitalLineGeometries.length; i++) {
+          orbitalLineGeometries[i].dispose()
+          scene.remove(orbitalLines[i])
+        }
+      }
+
+      orbitalLineMaterial = new THREE.MeshBasicMaterial({
+        color: 0x2e2e2e,
+        transparent: true
+      });
+
+      for (const planetObj of Object.entries(planets)) {
+        orbitalLineGeometry = new THREE.TorusGeometry(
+          planetObj[1].distance, // radius
+          0.15, // tube
+          16, // radialSegments
+          100 // tubularSegments 
+        )
+        orbitalLine = new THREE.Mesh(orbitalLineGeometry, orbitalLineMaterial)
+        orbitalLine.rotation.x = Math.PI * 0.5
+
+        orbitalLines.push(orbitalLine)
+        orbitalLineGeometries.push(orbitalLineGeometry)
+
+        scene.add(orbitalLine)
+      }
+    }
+    const removeOrbitalLines = () => {
+      // Remove all lines
+      if (orbitalLine !== null) {
+        orbitalLineMaterial.dispose()
+        for (let i = 0; i < orbitalLineGeometries.length; i++) {
+          orbitalLineGeometries[i].dispose()
+          scene.remove(orbitalLines[i])
+        }
+      }
+    }
+
+    createOrbitalLines()
+
+    /**
+     * Lights
+     */
+
+    // make all objects in the scene slightly lighted up
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1)
+    scene.add(ambientLight)
+
+    // set a very intense light for the sun with very little decay
+    const pointLight = new THREE.PointLight(0xffffff, 20, 1000, 0.5)
+    pointLight.position.set(0, 0, 0)
+    pointLight.castShadow = true
+    scene.add(pointLight)
+
+    // const pointLight2 = new THREE.PointLight(0xffffff, 20, 1000, 0.5)
+    // pointLight2.position.set(0, -1, 0)
+    // pointLight2.castShadow = true
+
+    // const pointLight3 = new THREE.PointLight(0xffffff, 20, 1000, 0.5)
+    // pointLight3.position.set(0, 1, 0)
+    // pointLight3.castShadow = true
+
+    // scene.add(pointLight2)
+    // scene.add(pointLight3)
+
+    // const pointLightHelper = new THREE.PointLightHelper(pointLight, sunSize * 1.25)
+    // scene.add(pointLightHelper)
+
+    /**
+     * Sizes
+     */
+    const sizes = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+
+    window.addEventListener('resize', () => {
+      // Update sizes
+      sizes.width = window.innerWidth
+      sizes.height = window.innerHeight
+
+      // Update camera
+      camera.aspect = sizes.width / sizes.height
+      camera.updateProjectionMatrix()
+
+      // Update renderer
+      renderer.setSize(sizes.width, sizes.height)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    })
+
+    /**
+     * Camera
+     */
+    // Base camera
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      sizes.width / sizes.height,
+      0.1,
+      900)
+    camera.position.set(-30, 50, 70)
+    camera.lookAt(sun.position)
+
+
+    // camera.position.x = saturnGroup.position.x + 10
+    // camera.position.y = saturnGroup.position.y + 10
+    // camera.position.z = saturnGroup.position.z + 10
+
+    // camera.lookAt(saturnGroup.position)
+
+    scene.add(camera)
+
+    const topCameraView = () => {
+      camera.position.set(0, 240, 0)
+      camera.lookAt(sun.position)
+    }
+
+    const defaultCameraView = () => {
+      camera.position.set(-30, 50, 70)
+      camera.lookAt(sun.position)
+    }
+
+    // Controls
+    const orbitControls = new OrbitControls(camera, canvas)
+    orbitControls.enableDamping = true
+
+    // const fpsControls = new FirstPersonControls(camera, canvas);
+    // fpsControls.movementSpeed = 300;
+    // fpsControls.lookSpeed = 0.2;
+
+    /**
+     * Renderer
+     */
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas
+    })
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap // default THREE.PCFShadowMap
+    renderer.physicallyCorrectLights = true
+    renderer.antialias = true
+
+    /**
+     * Animate
+     */
+    const clock = new THREE.Clock()
+
+    const tick = () => {
+      const elapsedTime = clock.getElapsedTime()
+
+      /////////////////////////////
+      // Make sun and planets spin
+      /////////////////////////////
+      sun.rotation.y = elapsedTime * planets.earth.rotationSpeed * .25 * params.rotationSpeed
+      earth.rotation.y = elapsedTime * planets.earth.rotationSpeed * params.rotationSpeed
+      mercury.rotation.y = elapsedTime * planets.mercury.rotationSpeed * params.rotationSpeed
+      venus.rotation.y = elapsedTime * planets.venus.rotationSpeed * params.rotationSpeed
+      mars.rotation.y = elapsedTime * planets.mars.rotationSpeed * params.rotationSpeed
+      jupiter.rotation.y = elapsedTime * planets.jupiter.rotationSpeed * params.rotationSpeed
+      saturn.rotation.y = elapsedTime * planets.saturn.rotationSpeed * params.rotationSpeed
+      uranus.rotation.y = elapsedTime * planets.uranus.rotationSpeed * params.rotationSpeed
+      neptune.rotation.y = elapsedTime * planets.neptune.rotationSpeed * params.rotationSpeed
+
+      /////////////////////////////////////////
+      // Make planets orbit around the sound //
+      /////////////////////////////////////////
+      const orbit = (obj, pos, speed) => {
+        obj.position.x = Math.cos(elapsedTime * 0.5 * speed * params.orbitalSpeed) * params.distanceGap * pos
+        obj.position.z = -(Math.sin(elapsedTime * 0.5 * speed * params.orbitalSpeed) * params.distanceGap * pos)
+      }
+
+      orbit(earth, planets.earth.distance, planets.earth.orbitalSpeed)
+      orbit(mercury, planets.mercury.distance, planets.mercury.orbitalSpeed)
+      orbit(venus, planets.venus.distance, planets.venus.orbitalSpeed)
+      orbit(mars, planets.mars.distance, planets.mars.orbitalSpeed)
+      orbit(jupiter, planets.jupiter.distance, planets.jupiter.orbitalSpeed)
+      orbit(saturnGroup, planets.saturn.distance, planets.saturn.orbitalSpeed)
+      orbit(uranus, planets.uranus.distance, planets.uranus.orbitalSpeed)
+      orbit(neptune, planets.neptune.distance, planets.neptune.orbitalSpeed)
+
+      //////////////////////////
+      // Make moon orbits Earth
+      //////////////////////////
+      const updatedEarthMoonPos = earthMoon.position.copy(earth.position)
+      earthMoon.position.x = updatedEarthMoonPos.x + planets.earth.moon.distanceToEarth
+      earthMoon.position.y = updatedEarthMoonPos.y + planets.earth.moon.height
+      earthMoon.position.z = updatedEarthMoonPos.z
+      earthMoon.lookAt(earth.position)
+
+      // Update controls
+      orbitControls.update()
+      // fpsControls.update()
+      // console.log(fpsControls);
+
+      // Update camera
+      const observe = (planetObj, planet) => {
+        const planetPos = planetObj.position
+        camera.position.x = Math.cos(elapsedTime * 0.5 * planet.orbitalSpeed * planet.orbitalSpeed) * (params.distanceGap * (planet.distance + 5))
+        camera.position.y = planetPos.y - 0.5
+        camera.position.z = -(Math.sin(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed) * (params.distanceGap * (planet.distance + 5)))
+        camera.lookAt(sun.position)
+      }
+
+      // observe(earth, planets.earth)
+      // camera.position.x = saturnGroup.position.x + 5
+      // camera.position.y = saturnGroup.position.y - 2
+      // camera.position.z = saturnGroup.position.z - 3
+      // camera.lookAt(sun.position)
+
+      // Look at moon from earth's POV
+      // camera.position.x = earth.position.x
+      // camera.position.y = earth.position.y
+      // camera.position.z = earth.position.z
+
+      // camera.lookAt(earthMoon.position)
+
+      // Render
+      renderer.render(scene, camera)
+
+      // Call tick again on the next frame
+      window.requestAnimationFrame(tick)
+    }
+
+    tick()
+  </script>
+</body>
+
+</html>
