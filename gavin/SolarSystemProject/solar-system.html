@@ -134,6 +134,7 @@ c
       toggleOrbitalLines: () => {
         toggleOrbitalLines()
       },
+
       topCameraView: () => {
         topCameraView()
       },
@@ -144,9 +145,9 @@ c
         cinematicCameraView()
       },
 
-      // observeEarth: () => {
-
-      // },
+      observePlanet: (val) => {
+        observePlanet(val)
+      }
     }
 
     const planets = {
@@ -430,6 +431,24 @@ c
     scene.add(neptune)
 
 
+    gui
+      .add(params, 'observePlanet', {
+        Sun: [sun, params.sunSize],
+        Mercury: [mercury, planets.mercury],
+        Venus: [venus, planets.venus],
+        Earth: [earth, planets.earth],
+        Mars: [mars, planets.mars],
+        Jupiter: [jupiter, planets.jupiter],
+        Saturn: [saturnGroup, planets.saturn],
+        Uranus: [uranus, planets.uranus],
+        Neptune: [neptune, planets.neptune],
+      })
+      .name('Observe')
+      .setValue('Select planet / sun')
+      .onChange((val) => {
+        observePlanet(val)
+      })
+
     // Orbital lines
     let orbitalLine = null
     let orbitalLineGeometry = null
@@ -594,22 +613,36 @@ c
 
     scene.add(camera)
 
-    let cinematicView = true
-
     const topCameraView = () => {
       cinematicView = false
+      isObservingPlanet = false
       camera.position.set(0, 240, 0)
       camera.lookAt(sun.position)
     }
 
     const wideAngleCameraView = () => {
       cinematicView = false
+      isObservingPlanet = false
       camera.position.set(-30, 50, 70)
       camera.lookAt(sun.position)
     }
 
+    // Cinematic view
+    let cinematicView = true
     const cinematicCameraView = () => {
       cinematicView = true
+      isObservingPlanet = false
+    }
+
+    // Observe planets
+    let isObservingPlanet = false
+    let observingObject = null
+    let observingObjectParams = null
+    const observePlanet = (planet) => {
+      cinematicView = false
+      isObservingPlanet = true
+      observingObject = planet[0]
+      observingObjectParams = planet[1]
     }
 
     // Controls
@@ -782,14 +815,14 @@ c
 
       // WIP: Obeserve planet function
       const observe = (planetObj, planet) => {
-        const planetPos = planetObj.position
-        camera.position.x = Math.cos(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed) * (params.distanceGap * (planet.distance + 3))
-        camera.position.y = planetPos.y - 0.5
-        camera.position.z = -(Math.sin(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed) * (params.distanceGap * (planet.distance + 1)))
-        camera.lookAt(sun.position)
+        camera.position.x = Math.cos(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed) * params.distanceGap * planet.distance - planet.size * 4
+        camera.position.y = planetObj.position.y + planet.size * 3
+        camera.position.z = -(Math.sin(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed)) * params.distanceGap * planet.distance - planet.size * 4
+        camera.lookAt(planetObj.position)
       }
 
-      // observe(earth, planets.earth)
+      if (isObservingPlanet) observe(observingObject, observingObjectParams)
+
       // camera.position.x = saturnGroup.position.x + 5
       // camera.position.y = saturnGroup.position.y - 2
       // camera.position.z = saturnGroup.position.z - 3
@@ -799,12 +832,13 @@ c
       // camera.position.x = earth.position.x
       // camera.position.y = earth.position.y
       // camera.position.z = earth.position.z
+      // camera.lookAt(earthMoon.position)
 
       if (cinematicView) {
         camera.position.x = Math.sin(elapsedTime * 0.3) * 70
         camera.position.y = Math.sin(elapsedTime * 0.3) * 30
         camera.position.z = Math.cos(elapsedTime * 0.3) * 30
-        if (target) camera.lookAt(target.position)
+        // if (target) camera.lookAt(target.position)
         camera.lookAt(sun.position)
       }
 
