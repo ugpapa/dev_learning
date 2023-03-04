@@ -48,6 +48,8 @@ const jupiterColorTexture = textureLoader.load(
 const uranusColorTexture = textureLoader.load(
   "./resources/textures/uranus/2k_uranus.jpg"
 );
+const uranusRingTexture = textureLoader.load(  "./resources/textures/uranus/uranus_ring.png"
+)
 
 // neptune texture
 const neptuneColorTexture = textureLoader.load(
@@ -58,8 +60,8 @@ const neptuneColorTexture = textureLoader.load(
 const saturnColorTexture = textureLoader.load(
   "./resources/textures/saturn/2k_saturn.jpg"
 );
-const saturnAlphaTexture = textureLoader.load(
-  "./resources/textures/saturn/2k_saturn_ring_alpha.png"
+const saturnRingTexture = textureLoader.load(
+  "./resources/textures/saturn/saturn_ring.png"
 );
 
 // venus texture
@@ -72,31 +74,81 @@ const venusCloudTexture = textureLoader.load(
 
 // milkyway texture
 const cubeTextureLoader = new THREE.CubeTextureLoader();
-const starsTexture = "./resources/textures/background/2k_stars_milky_way.jpg"
+const starsTexture = "./resources/textures/background/stars.jpg";
 const milkywayColorTexture = cubeTextureLoader.load([
   starsTexture,
   starsTexture,
   starsTexture,
   starsTexture,
   starsTexture,
-  starsTexture
+  starsTexture,
 ]);
 
 // planets
 const planets = [
-  { name: "mercury", texture: mercuryColorTexture, orbitRadius: 30, radius: 3 },
-  { name: "venus", texture: venusColorTexture, orbitRadius: 60, radius: 3 },
-  { name: "mars", texture: marsColorTexture, orbitRadius: 70, radius: 3 },
+  {
+    name: "mercury",
+    texture: mercuryColorTexture,
+    orbitRadius: 28,
+    radius: 2.8,
+    ring: null,
+    rotationMesh: 0.05,
+    rotationObj: 0.009
+  },
+  {
+    name: "venus",
+    texture: venusColorTexture,
+    orbitRadius: 50,
+    radius: 4,
+    ring: null,
+    rotationMesh: 0.04,
+    rotationObj: 0.004
+  },
   {
     name: "earth",
     texture: earthColorTexture,
-    orbitRadius: 80,
-    radius: 3,
+    orbitRadius: 70,
+    radius: 4,
+    ring: null,
+    rotationMesh: 0.035,
+    rotationObj: 0.009
   },
-  { name: "moon", texture: moonColorTexture, orbitRadius: 40, radius: 1.5 },
-  { name: "jupiter", texture: jupiterColorTexture, orbitRadius: 50, radius: 5 },
-  { name: "saturn", texture: saturnColorTexture, orbitRadius: 150, radius: 5 },
-  { name: "uranus", texture: uranusColorTexture, orbitRadius: 200, radius: 5 },
+  {
+    name: "mars",
+    texture: marsColorTexture,
+    orbitRadius: 90,
+    radius: 3.5,
+    ring: null,
+    rotationMesh: 0.045,
+    rotationObj: 0.0045
+  },
+  {
+    name: "jupiter",
+    texture: jupiterColorTexture,
+    orbitRadius: 120,
+    radius: 7,
+    ring: null,
+    rotationMesh: 0.038,
+    rotationObj: 0.0009
+  },
+  {
+    name: "saturn",
+    texture: saturnColorTexture,
+    orbitRadius: 150,
+    radius: 7,
+    ring: {innerRadius: 7, outerRadius: 12, texture: saturnRingTexture},
+    rotationMesh: 0.035,
+    rotationObj: 0.001
+  },
+  {
+    name: "uranus",
+    texture: uranusColorTexture,
+    orbitRadius: 200,
+    radius: 6,
+    ring: {innerRadius: 7, outerRadius: 12, texture: uranusRingTexture},
+    rotationMesh: 0.05,
+    rotationObj: 0.002
+  },
 ];
 
 const sizes = {
@@ -104,4 +156,4 @@ const sizes = {
   height: window.innerHeight,
 };
 
-export { planets, milkywayColorTexture, sunColorTexture, sizes };
+export { planets, milkywayColorTexture, sunColorTexture, sizes, moonColorTexture };
