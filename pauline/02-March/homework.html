@@ -5,6 +5,24 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Homework</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        overflow: hidden;
+      }
+
+      .webgl {
+        position: fixed;
+        top: 0;
+        left: 0;
+        outline: none;
+      }
+    </style>
   </head>
   <body>
     <canvas class="webgl"></canvas>
@@ -17,7 +35,8 @@
       {
         "imports": {
           "three": "https://unpkg.com/three@0.148.0/build/three.module.js",
-          "control": "https://unpkg.com/three@0.148.0/examples/jsm/controls/OrbitControls.js"
+          "control": "https://unpkg.com/three@0.148.0/examples/jsm/controls/OrbitControls.js",
+          "gsap": "https://cdn.skypack.dev/gsap@3.5.1"
         }
       }
     </script>
