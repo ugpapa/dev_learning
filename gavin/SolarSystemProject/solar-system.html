@@ -151,6 +151,14 @@ c
     }
 
     const planets = {
+      // Sun is not a planet but whatever
+      sun: {
+        name: "Sun",
+        size: params.sunSize,
+        distance: 0,
+        rotationSpeed: params.earthRotationSpeed * 0.25,
+        sunHexColor: '#FDB813'
+      },
       mercury: {
         name: "Mercury",
         size: params.earthSize * 0.383,
@@ -228,9 +236,6 @@ c
       },
     }
 
-    const sunPos = 0
-    const sunHexColor = '#FDB813'
-
     gui
       .add(params, 'orbitalSpeed')
       .min(0)
@@ -266,7 +271,7 @@ c
       new THREE.SphereGeometry(params.sunSize, 32, 32),
       new THREE.MeshLambertMaterial({
         map: sunColorTexture,
-        emissive: new THREE.Color(sunHexColor),
+        emissive: new THREE.Color(planets.sun.sunHexColor),
         emissiveIntensity: .65
       })
     )
@@ -433,7 +438,7 @@ c
 
     gui
       .add(params, 'observePlanet', {
-        Sun: [sun, params.sunSize],
+        Sun: [sun, planets.sun],
         Mercury: [mercury, planets.mercury],
         Venus: [venus, planets.venus],
         Earth: [earth, planets.earth],
@@ -777,7 +782,7 @@ c
       /////////////////////////////
       // Make sun and planets spin
       /////////////////////////////
-      sun.rotation.y = elapsedTime * planets.earth.rotationSpeed * .25 * (params.rotationSpeed * 100)
+      sun.rotation.y = elapsedTime * planets.sun.rotationSpeed * (params.rotationSpeed * 100)
       earth.rotation.y = elapsedTime * planets.earth.rotationSpeed * (params.rotationSpeed * 100)
       mercury.rotation.y = elapsedTime * planets.mercury.rotationSpeed * (params.rotationSpeed * 100)
       venus.rotation.y = elapsedTime * planets.venus.rotationSpeed * (params.rotationSpeed * 100)
