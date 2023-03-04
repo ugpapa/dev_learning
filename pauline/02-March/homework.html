@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Homework</title>
+  </head>
+  <body>
+    <canvas class="webgl"></canvas>
+    <script
+      async
+      defer
+      src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"
+    ></script>
+    <script async type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.148.0/build/three.module.js",
+          "control": "https://unpkg.com/three@0.148.0/examples/jsm/controls/OrbitControls.js"
+        }
+      }
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/lil-gui@0.17"></script>
+    <script
+      async
+      src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.js"
+    ></script>
+    <script async src="./constant.js" type="module"></script>
+    <script async src="./script.js" type="module"></script>
+  </body>
+</html>

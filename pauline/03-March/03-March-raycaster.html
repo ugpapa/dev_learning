@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Raycaster</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      .webgl {
+        position: fixed;
+        top: 0;
+        left: 0;
+        outline: none;
+      }
+      .section {
+        display: flex;
+        align-items: center;
+        height: 100vh;
+        position: relative;
+        font-family: "Cabin", sans-serif;
+        color: #ffeded;
+        text-transform: uppercase;
+        font-size: 7vmin;
+        padding-left: 10%;
+        padding-right: 10%;
+      }
+      section:nth-child(odd) {
+        justify-content: flex-end;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas class="webgl"></canvas>
+    <script
+      defer
+      src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"
+    ></script>
+    <script async type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.148.0/build/three.module.js",
+          "control": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js",
+          "gltfLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js"
+        }
+      }
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/lil-gui@0.17"></script>
+    <script async type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "control";
+      import { GLTFLoader } from "gltfLoader";
+
+      /**
+       * Base
+       */
+      // Debug
+      const GUI = lil.GUI;
+      const gui = new GUI();
+
+      // Canvas
+      const canvas = document.querySelector("canvas.webgl");
+
+      // Scene
+      const scene = new THREE.Scene();
+
+      /**
+       * Lights
+       */
+      // Ambient light
+      const ambientLight = new THREE.AmbientLight("#ffffff", 0.3);
+      scene.add(ambientLight);
+
+      // Directional light
+      const directionalLight = new THREE.DirectionalLight("#ffffff", 0.7);
+      directionalLight.position.set(1, 2, 3);
+      scene.add(directionalLight);
+
+      /**
+       * Model
+       */
+      let model = null;
+      const gltfLoader = new GLTFLoader();
+      gltfLoader.load("./models/Duck/glTF-Binary/Duck.glb", (gltf) => {
+        model = gltf.scene;
+        model.position.y = -1.2;
+        scene.add(model);
+      });
+
+      /**
+       * Objects
+       */
+      const object1 = new THREE.Mesh(
+        new THREE.SphereGeometry(0.5, 16, 16),
+        new THREE.MeshBasicMaterial({ color: "#ff0000" })
+      );
+      object1.position.x = -2;
+
+      const object2 = new THREE.Mesh(
+        new THREE.SphereGeometry(0.5, 16, 16),
+        new THREE.MeshBasicMaterial({ color: "#ff0000" })
+      );
+
+      const object3 = new THREE.Mesh(
+        new THREE.SphereGeometry(0.5, 16, 16),
+        new THREE.MeshBasicMaterial({ color: "#ff0000" })
+      );
+      object3.position.x = 2;
+
+      scene.add(object1, object2, object3);
+
+      /**
+       * Raycaster
+       */
+      // to shoot a line --> need an origin point and a direction
+      // NOTE: the performance of raycaster depends on the complexity of the geomtry
+      const raycaster = new THREE.Raycaster();
+
+      /**
+       * Sizes
+       */
+      const sizes = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+
+      window.addEventListener("resize", () => {
+        // Update sizes
+        sizes.width = window.innerWidth;
+        sizes.height = window.innerHeight;
+
+        // Update camera
+        camera.aspect = sizes.width / sizes.height;
+        camera.updateProjectionMatrix();
+
+        // Update renderer
+        renderer.setSize(sizes.width, sizes.height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      });
+
+      /**
+       * Mouse
+       */
+      const mouse = new THREE.Vector2();
+      window.addEventListener("mousemove", (event) => {
+        mouse.x = (event.clientX / sizes.width) * 2 - 1;
+        mouse.y = -(event.clientY / sizes.height) * 2 + 1;
+      });
+
+      /**
+       * Camera
+       */
+      // Base camera
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        sizes.width / sizes.height,
+        0.1,
+        100
+      );
+      camera.position.z = 3;
+      scene.add(camera);
+
+      // Controls
+      const controls = new OrbitControls(camera, canvas);
+      controls.enableDamping = true;
+
+      /**
+       * Renderer
+       */
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+      });
+      renderer.setSize(sizes.width, sizes.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      /**
+       * Animate
+       */
+      const clock = new THREE.Clock();
+      let currentIntersect = null;
+
+      window.addEventListener("click", () => {
+        if (currentIntersect) {
+          switch (currentIntersect.object) {
+            case object1:
+              console.log("click on object 1");
+              break;
+
+            case object2:
+              console.log("click on object 2");
+              break;
+
+            case object3:
+              console.log("click on object 3");
+              break;
+          }
+        }
+      });
+
+      const tick = () => {
+        const elapsedTime = clock.getElapsedTime();
+
+        // animate objects
+        object1.position.y = Math.sin(elapsedTime * 0.5) * 1.5;
+        object2.position.y = Math.sin(elapsedTime * 0.75) * 1.5;
+        object3.position.y = Math.sin(elapsedTime * 1.5) * 1.5;
+
+        // intersect objects
+        //   const rayOrigin = new THREE.Vector3(-3, 0, 0);
+        //   const rayDirection = new THREE.Vector3(10, 0, 0);
+        //   rayDirection.normalize(); // gain the same direction but length is always 1
+        //   raycaster.set(rayOrigin, rayDirection);
+
+        // intersect objects by mouse hover
+        raycaster.setFromCamera(mouse, camera);
+
+        // intersect models
+        // since model would take time to load --> carried through asynchronously
+        if (model) {
+          const modelIntersects = raycaster.intersectObject(model); // model is a group of meshes so it is only one object --> RETURN an array of object
+          // however, there are some angles, there would be a lot of intersections, so it would be an array of objects
+          // because it can contains a lot of meshes that can be intersected together
+          if (modelIntersects.length) {
+            model.scale.set(1.2, 1.2, 1.2);
+          } else {
+            model.scale.set(1, 1, 1);
+          }
+        }
+        const objectsToTest = [object1, object2, object3];
+
+        const intersects = raycaster.intersectObjects(objectsToTest);
+
+        for (const object of objectsToTest) {
+          object.material.color.set("red");
+        }
+
+        for (const intersect of intersects) {
+          intersect.object.material.color.set("blue");
+        }
+
+        if (intersects.length) {
+          if (!currentIntersect) {
+            console.log("mouse enter");
+          }
+
+          currentIntersect = intersects[0];
+        } else {
+          if (currentIntersect) {
+            console.log("mouse leave");
+          }
+
+          currentIntersect = null;
+        }
+
+        // Update controls
+        controls.update();
+
+        // Render
+        renderer.render(scene, camera);
+
+        // Call tick again on the next frame
+        window.requestAnimationFrame(tick);
+      };
+
+      tick();
+    </script>
+  </body>
+</html>
