@@ -7,6 +7,7 @@ import {
   sizes,
   moonColorTexture,
 } from "./constant.js";
+import { gsap } from "gsap";
 
 /**
  * Base
@@ -38,7 +39,6 @@ const sun = new THREE.Mesh(
   })
 );
 
-let moon = null;
 const createPlanets = () => {
   const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
   return planets.map((planet) => {
@@ -54,7 +54,7 @@ const createPlanets = () => {
     });
     const planetObj = new THREE.Mesh(geometry, material);
     if (planet.name === "earth") {
-      moon = new THREE.Mesh(
+      const moon = new THREE.Mesh(
         new THREE.SphereGeometry(2.5),
         new THREE.MeshStandardMaterial({
           map: moonColorTexture,
@@ -78,6 +78,7 @@ const createPlanets = () => {
       ringMesh.rotation.x = -0.5 * Math.PI;
       planetObj.add(ringMesh);
     }
+    planetObj.receiveShadow = true;
     planetObj.position.x =
       Math.floor(Math.random() * 10) % 2 === 0
         ? planet.orbitRadius
@@ -128,7 +129,7 @@ window.addEventListener("resize", () => {
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(
-  75,
+  30,
   sizes.width / sizes.height,
   0.1,
   1000
@@ -136,12 +137,12 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.x = -90;
 camera.position.y = 140;
 camera.position.z = 140;
+camera.lookAt(0, 0, 0);
 scene.add(camera);
 
 // Controls
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
-controls.update();
 
 /**
  * Renderer
@@ -152,16 +153,30 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
-
 sun.castShadow = true;
 
 /**
  * Animate
  */
 const clock = new THREE.Clock();
+const worldPosition = new THREE.Vector3();
+let index = 0;
+
+window.addEventListener("load", () => {
+  gsap.to(camera.position, {
+    z: 10,
+    duration: 3,
+    delay: 3,
+    onUpdate: () => {
+        camera.lookAt(0, 0, sun.position.z + 30);
+    },
+  });
+});
+
 
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
+  console.log(elapsedTime );
 
   // rotate sun
   sun.rotation.y = -Math.PI * (elapsedTime / 10);
@@ -170,8 +185,7 @@ const tick = () => {
   planet3DObjects.forEach((planet, index) => {
     planet.planetObj.rotateY(planets[index].rotationMesh);
     planet.planet3DObject.rotateY(planets[index].rotationObj);
-  });
-
+  });  
   // Update controls
   controls.update();
 
