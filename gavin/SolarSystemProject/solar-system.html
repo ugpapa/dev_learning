@@ -831,9 +831,15 @@ c
 
       // WIP: Obeserve planet function
       const observe = (planetObj, planet) => {
-        camera.position.x = Math.cos(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed) * params.distanceGap * planet.distance - planet.size * 4
-        camera.position.y = planetObj.position.y + planet.size * 3
-        camera.position.z = -(Math.sin(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed)) * params.distanceGap * planet.distance - planet.size * 4
+        if (planetObj == sun) {
+          camera.position.x = Math.cos(elapsedTime * 0.3) * (planet.size * 2.5)
+          camera.position.y = 10
+          camera.position.z = -(Math.sin(elapsedTime * 0.3)) * (planet.size * 2.5)
+        } else {
+          camera.position.x = Math.cos(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed) * (params.distanceGap * planet.distance) - (planet.size * 4)
+          camera.position.y = planetObj.position.y + planet.size * 3
+          camera.position.z = -(Math.sin(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed)) * (params.distanceGap * planet.distance) - (planet.size * 4)
+        }
         camera.lookAt(planetObj.position)
       }
 
