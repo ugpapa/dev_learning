@@ -41,6 +41,7 @@ c
 
           "OrbitControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js",
           "FirstPersonControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/FirstPersonControls.js",
+          "FlyControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/FlyControls.js",
 
           "FontLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/FontLoader.js",
           "TextGeometry": "https://unpkg.com/three@0.147.0/examples/jsm/geometries/TextGeometry.js",
@@ -54,6 +55,7 @@ c
 
     import { OrbitControls } from "OrbitControls"
     import { FirstPersonControls } from "FirstPersonControls"
+    // import { FlyControls } from "FlyControls"
 
     import typefaceFont from 'typefaceFont' assert { type: "json" }
     import { FontLoader } from "FontLoader"
@@ -68,8 +70,6 @@ c
      */
     // Debug
     const gui = new dat.GUI()
-    let lookAtEarth, lookAtMercury, lookAtVenus,
-      lookAtMars, lookAtJupiter, lookAtSaturn, lookAtUranus, lookAtNeptune = null
 
     // Canvas
     const canvas = document.querySelector('canvas.webgl')
@@ -147,6 +147,10 @@ c
 
       observePlanet: (val) => {
         observePlanet(val)
+      },
+
+      changeCamera: (val) => {
+        changeCamera(val)
       }
     }
 
@@ -260,6 +264,13 @@ c
         createOrbitalLines()
       })
 
+    // gui
+    //   .add(params, 'earthSize')
+    //   .min(1)
+    //   .max(10)
+    //   .step(0.5)
+    //   .name('Change Planet Size')
+
 
     gui.add(params, 'toggleOrbitalLines').name('Toggle Orbital Lines')
     gui.add(params, 'topCameraView').name('Camera Top View')
@@ -275,7 +286,8 @@ c
       new THREE.MeshLambertMaterial({
         map: sunColorTexture,
         emissive: new THREE.Color(planets.sun.sunHexColor),
-        emissiveIntensity: .65
+        emissiveIntensity: .65,
+        wireframe: false
       })
     )
 
@@ -555,7 +567,8 @@ c
         text = new THREE.Mesh(textGeometry, material);
         scene.add(text);
         text.position.y = 13
-      });
+      }
+    );
 
     /**
      * Lights
@@ -570,17 +583,6 @@ c
     pointLight.position.set(0, 0, 0)
     pointLight.castShadow = true
     scene.add(pointLight)
-
-    // const pointLight2 = new THREE.PointLight(0xffffff, 20, 1000, 0.5)
-    // pointLight2.position.set(0, -1, 0)
-    // pointLight2.castShadow = true
-
-    // const pointLight3 = new THREE.PointLight(0xffffff, 20, 1000, 0.5)
-    // pointLight3.position.set(0, 1, 0)
-    // pointLight3.castShadow = true
-
-    // scene.add(pointLight2)
-    // scene.add(pointLight3)
 
     // const pointLightHelper = new THREE.PointLightHelper(pointLight, sunSize * 1.25)
     // scene.add(pointLightHelper)
@@ -611,28 +613,20 @@ c
      * Camera
      */
     // Base camera
-    const camera = new THREE.PerspectiveCamera(
+    let camera = new THREE.PerspectiveCamera(
       75,
       sizes.width / sizes.height,
       0.1,
-      900)
-    camera.position.set(-30, 50, 70)
-    camera.lookAt(sun.position)
-
-
-    // camera.position.x = saturnGroup.position.x + 10
-    // camera.position.y = saturnGroup.position.y + 10
-    // camera.position.z = saturnGroup.position.z + 10
-
-    // camera.lookAt(saturnGroup.position)
-
+      1000)
     scene.add(camera)
+    // camera.position.set(-30, 50, 70)
+    // camera.lookAt(sun.position)
 
     const topCameraView = () => {
       cinematicView = false
       isObservingPlanet = false
 
-      orbitControls.reset();
+      if (controlMode == 0) controls.reset()
 
       camera.position.set(0, 240, 0)
       camera.lookAt(sun.position)
@@ -642,7 +636,7 @@ c
       cinematicView = false
       isObservingPlanet = false
 
-      orbitControls.reset();
+      if (controlMode == 0) controls.reset()
 
       camera.position.set(-30, 50, 70)
       camera.lookAt(sun.position)
@@ -654,7 +648,7 @@ c
       cinematicView = true
       isObservingPlanet = false
 
-      orbitControls.reset();
+      if (controlMode == 0) controls.reset()
     }
 
     // Observe planets
@@ -665,20 +659,72 @@ c
       cinematicView = false
       isObservingPlanet = true
 
-      orbitControls.reset();
+      if (controlMode == 0) controls.reset()
 
       observingObject = planet[0]
       observingObjectParams = planet[1]
     }
 
     // Controls
-    const orbitControls = new OrbitControls(camera, canvas)
-    orbitControls.enableDamping = true
+    let controlMode = 0
+    let controls = new OrbitControls(camera, canvas)
+    controls.enableDamping = true
 
-    // WIP
-    // const fpsControls = new FirstPersonControls(camera, canvas);
-    // fpsControls.movementSpeed = 300;
-    // fpsControls.lookSpeed = 0.2;
+    const changeCamera = (mode) => {
+      if (controls) controls.dispose()
+
+      const prevCamera = camera;
+
+      scene.remove(camera)
+
+      camera = new THREE.PerspectiveCamera(
+        75,
+        sizes.width / sizes.height,
+        0.1,
+        1000)
+      camera.position.copy(prevCamera.position)
+      camera.rotation.copy(prevCamera.rotation)
+
+      switch (mode) {
+        case 'Orbit':
+          controls = new OrbitControls(camera, canvas)
+          controls.enableDamping = true
+
+          controlMode = 0
+          break
+
+        case 'FPS':
+          controls.dispose()
+
+          controls = new FirstPersonControls(camera, canvas)
+          controls.movementSpeed = 50;
+          controls.lookSpeed = 0.14;
+
+          controlMode = 1
+          break
+
+        // case 'Fly':
+        //   controls.dispose()
+
+        //   controls = new FlyControls(camera, canvas)
+        //   controls.movementSpeed = 1;
+
+        //   controlMode = 2
+        //   break
+      }
+    }
+
+    gui
+      .add(params, 'changeCamera', {
+        Orbit: 'Orbit',
+        FPS: 'FPS',
+        // Fly: 'Fly'
+      })
+      .name('Camera Control')
+      .setValue('Orbit')
+      .onChange((val) => {
+        changeCamera(val)
+      })
 
     /**
      * Returns a random integer between min (inclusive) and max (inclusive).
@@ -736,6 +782,9 @@ c
     // }
     // changeCameraTarget()
 
+    ///////////////////////////////
+    // Camera animation (SCRAPPED)
+    ///////////////////////////////
     // gsap.to(camera.position, {
     //   duration: 6,
     //   delay: 0,
@@ -785,9 +834,12 @@ c
      * Animate
      */
     const clock = new THREE.Clock()
+    let oldElapsedTime = 0
 
     const tick = () => {
       const elapsedTime = clock.getElapsedTime()
+      const deltaTime = elapsedTime - oldElapsedTime
+      oldElapsedTime = elapsedTime
 
       /////////////////////////////
       // Make sun and planets spin
@@ -832,12 +884,9 @@ c
       earthMoon.position.z = -(Math.sin(elapsedTime * 0.5 * planets.earth.orbitalSpeed * params.orbitalSpeed) * params.distanceGap * planets.earth.distance + planets.earth.moon.distanceToEarth)
       earthMoon.lookAt(earth.position)
 
-      // Update controls
-      orbitControls.update()
-      // fpsControls.update()
-      // console.log(fpsControls);
-
-      // Update camera
+      // Update orbit controls
+      if (controlMode == 0) controls.update()
+      else controls.update(deltaTime)
 
       // WIP: Obeserve planet function
       const observe = (planetObj, planet) => {
