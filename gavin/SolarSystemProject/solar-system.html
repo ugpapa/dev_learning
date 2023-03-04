@@ -256,6 +256,9 @@ c
       .max(5.0)
       .step(0.1)
       .name('Planet distance')
+      .onChange(() => {
+        createOrbitalLines()
+      })
 
 
     gui.add(params, 'toggleOrbitalLines').name('Toggle Orbital Lines')
@@ -462,20 +465,7 @@ c
     const orbitalLineGeometries = []
     let linesOn = false
 
-    const toggleOrbitalLines = () => {
-      if (linesOn) {
-        // Remove all lines
-        if (orbitalLine !== null) {
-          orbitalLineMaterial.dispose()
-          for (let i = 0; i < orbitalLineGeometries.length; i++) {
-            orbitalLineGeometries[i].dispose()
-            scene.remove(orbitalLines[i])
-          }
-        }
-        linesOn = false
-        return
-      }
-
+    const createOrbitalLines = () => {
       // Remove all lines
       if (orbitalLine !== null) {
         orbitalLineMaterial.dispose()
@@ -492,7 +482,7 @@ c
 
       for (const planetObj of Object.entries(planets)) {
         orbitalLineGeometry = new THREE.TorusGeometry(
-          planetObj[1].distance, // radius
+          planetObj[1].distance * params.distanceGap, // radius
           0.15, // tube
           16, // radialSegments
           100 // tubularSegments 
@@ -505,6 +495,26 @@ c
 
         scene.add(orbitalLine)
       }
+    }
+
+    const removeOrbitalLines = () => {
+      // Remove all lines
+      if (orbitalLine !== null) {
+        orbitalLineMaterial.dispose()
+        for (let i = 0; i < orbitalLineGeometries.length; i++) {
+          orbitalLineGeometries[i].dispose()
+          scene.remove(orbitalLines[i])
+        }
+      }
+    }
+
+    const toggleOrbitalLines = () => {
+      if (linesOn) {
+        removeOrbitalLines()
+        linesOn = false
+        return
+      }
+      createOrbitalLines()
       linesOn = true
     }
 
