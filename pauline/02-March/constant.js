@@ -71,10 +71,16 @@ const venusCloudTexture = textureLoader.load(
 );
 
 // milkyway texture
-const spaceLoader = new THREE.CubeTextureLoader();
-const milkywayColorTexture = spaceLoader.load(
-  "./resources/textures/milkyway/galaxy.png"
-);
+const cubeTextureLoader = new THREE.CubeTextureLoader();
+const starsTexture = "./resources/textures/background/2k_stars_milky_way.jpg"
+const milkywayColorTexture = cubeTextureLoader.load([
+  starsTexture,
+  starsTexture,
+  starsTexture,
+  starsTexture,
+  starsTexture,
+  starsTexture
+]);
 
 // planets
 const planets = [
@@ -93,4 +99,9 @@ const planets = [
   { name: "uranus", texture: uranusColorTexture, orbitRadius: 200, radius: 5 },
 ];
 
-export { planets, milkywayColorTexture, sunColorTexture };
+const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight,
+};
+
+export { planets, milkywayColorTexture, sunColorTexture, sizes };

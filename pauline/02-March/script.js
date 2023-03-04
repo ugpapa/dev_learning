@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "control";
-import { planets, milkywayColorTexture, sunColorTexture } from "./constant.js";
+import { planets, milkywayColorTexture, sunColorTexture, sizes } from "./constant.js";
 
 /**
  * Base
@@ -14,7 +14,6 @@ const canvas = document.querySelector("canvas.webgl");
 
 // Scene
 const scene = new THREE.Scene();
-
 scene.background = milkywayColorTexture;
 
 /**
@@ -30,16 +29,15 @@ const sun = new THREE.Mesh(
   new THREE.SphereGeometry(10),
   new THREE.MeshBasicMaterial({
     map: sunColorTexture,
-    transparent: true,
-    displacementScale: 0.3,
+    transparent: true
   })
 );
 
-let planet3DObject = [];
+let planet3DObjects = [];
 
 const createPlanets = () => {
   const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  planet3DObject = planets.map((planet)=>{
+  planet3DObjects = planets.map((planet)=>{
     const geometry = new THREE.SphereGeometry(planet.radius);
     const orbit = new THREE.Mesh(
         new THREE.TorusGeometry(planet.orbitRadius, 0.03, 16, 100),
@@ -66,7 +64,7 @@ scene.add(solarSystem);
  * Lights
  */
 // ambient light
-const ambientLight = new THREE.AmbientLight("#ffffff", 0.3);
+const ambientLight = new THREE.AmbientLight("#0x333333");
 scene.add(ambientLight);
 
 // sun light
@@ -77,10 +75,6 @@ solarSystem.add(sunLight);
 /**
  * Sizes
  */
-const sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight,
-};
 
 window.addEventListener("resize", () => {
   // Update sizes
@@ -104,16 +98,17 @@ const camera = new THREE.PerspectiveCamera(
   75,
   sizes.width / sizes.height,
   0.1,
-  100
+  1000
 );
-camera.position.x = 10;
-camera.position.y = 5;
-camera.position.z = 100;
+camera.position.x = -90;
+camera.position.y = 140;
+camera.position.z = 140;
 scene.add(camera);
 
 // Controls
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
+controls.update();
 
 /**
  * Renderer
@@ -138,10 +133,11 @@ const tick = () => {
   // rotate sun
     sun.rotation.y = - Math.PI * (elapsedTime / 10);
 
-  // rotate earth
-  //   earth.rotation.y = - Math.PI * (elapsedTime / 5);
-
-  // rotate moon
+  // rotate planets
+//   planet3DObject.forEach((planet) => {
+//     planet.rotation.y += Math.random() - 0.5 * 2
+//     planet.rotation.x += Math.random() - 0.5 * 2
+// })
 
   // Update controls
   controls.update();
