@@ -616,6 +616,9 @@ c
     const topCameraView = () => {
       cinematicView = false
       isObservingPlanet = false
+
+      orbitControls.reset();
+
       camera.position.set(0, 240, 0)
       camera.lookAt(sun.position)
     }
@@ -623,6 +626,9 @@ c
     const wideAngleCameraView = () => {
       cinematicView = false
       isObservingPlanet = false
+
+      orbitControls.reset();
+
       camera.position.set(-30, 50, 70)
       camera.lookAt(sun.position)
     }
@@ -632,6 +638,8 @@ c
     const cinematicCameraView = () => {
       cinematicView = true
       isObservingPlanet = false
+
+      orbitControls.reset();
     }
 
     // Observe planets
@@ -641,6 +649,9 @@ c
     const observePlanet = (planet) => {
       cinematicView = false
       isObservingPlanet = true
+
+      orbitControls.reset();
+
       observingObject = planet[0]
       observingObjectParams = planet[1]
     }
