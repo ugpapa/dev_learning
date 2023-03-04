@@ -1,4 +1,5 @@
-c<!DOCTYPE html>
+c
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -37,16 +38,30 @@ c<!DOCTYPE html>
         "imports": {
           "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
           "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
+
           "OrbitControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js",
-          "FirstPersonControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/FirstPersonControls.js"
+          "FirstPersonControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/FirstPersonControls.js",
+
+          "FontLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/FontLoader.js",
+          "TextGeometry": "https://unpkg.com/three@0.147.0/examples/jsm/geometries/TextGeometry.js",
+          "typefaceFont": "https://unpkg.com/three@0.147.0/examples/fonts/helvetiker_bold.typeface.json"
         }
       }
     </script>
   <script type="module">
     import * as THREE from 'three'
+    import * as dat from "lil-gui"
+
     import { OrbitControls } from "OrbitControls"
     import { FirstPersonControls } from "FirstPersonControls"
-    import * as dat from "lil-gui"
+
+    import typefaceFont from 'typefaceFont' assert { type: "json" }
+    import { FontLoader } from "FontLoader"
+    import { TextGeometry } from "TextGeometry"
+
+    import { gsap } from 'https://cdn.skypack.dev/gsap';
+
+    // import * as TWEEN from 'https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.esm.min.js';
 
     /**
      * Base
@@ -116,20 +131,17 @@ c<!DOCTYPE html>
       earthSize: 1,
       sunSize: 10,
 
-      createOrbitalLines: () => {
-        createOrbitalLines()
+      toggleOrbitalLines: () => {
+        toggleOrbitalLines()
       },
-
-      removeOrbitalLines: () => {
-        removeOrbitalLines()
-      },
-
       topCameraView: () => {
         topCameraView()
       },
-
-      defaultCameraView: () => {
-        defaultCameraView()
+      wideAngleCameraView: () => {
+        wideAngleCameraView()
+      },
+      cinematicCameraView: () => {
+        cinematicCameraView()
       },
 
       // observeEarth: () => {
@@ -167,7 +179,8 @@ c<!DOCTYPE html>
         moon: {
           distanceToEarth: 2,
           height: 0.6,
-          sizeToEarth: 0.2724
+          sizeToEarth: 0.2724,
+          orbitalSpeed: params.earthOrbitalSpeed * 1.3,
         }
       },
       mars: {
@@ -239,10 +252,10 @@ c<!DOCTYPE html>
       .name('Planet distance')
 
 
-    gui.add(params, 'createOrbitalLines').name('Create orbital lines')
-    gui.add(params, 'removeOrbitalLines').name('Remove orbital lines')
+    gui.add(params, 'toggleOrbitalLines').name('Toggle orbital lines')
     gui.add(params, 'topCameraView').name('Camera top view')
-    gui.add(params, 'defaultCameraView').name('Default camera view')
+    gui.add(params, 'wideAngleCameraView').name('Wide angle camera view')
+    gui.add(params, 'cinematicCameraView').name('Cinematic camera view')
 
     /**
      * Create planets
@@ -423,8 +436,22 @@ c<!DOCTYPE html>
     let orbitalLineMaterial = null
     const orbitalLines = []
     const orbitalLineGeometries = []
+    let linesOn = false
 
-    const createOrbitalLines = () => {
+    const toggleOrbitalLines = () => {
+      if (linesOn) {
+        // Remove all lines
+        if (orbitalLine !== null) {
+          orbitalLineMaterial.dispose()
+          for (let i = 0; i < orbitalLineGeometries.length; i++) {
+            orbitalLineGeometries[i].dispose()
+            scene.remove(orbitalLines[i])
+          }
+        }
+        linesOn = false
+        return
+      }
+
       // Remove all lines
       if (orbitalLine !== null) {
         orbitalLineMaterial.dispose()
@@ -454,19 +481,47 @@ c<!DOCTYPE html>
 
         scene.add(orbitalLine)
       }
-    }
-    const removeOrbitalLines = () => {
-      // Remove all lines
-      if (orbitalLine !== null) {
-        orbitalLineMaterial.dispose()
-        for (let i = 0; i < orbitalLineGeometries.length; i++) {
-          orbitalLineGeometries[i].dispose()
-          scene.remove(orbitalLines[i])
-        }
-      }
+      linesOn = true
     }
 
-    createOrbitalLines()
+    toggleOrbitalLines()
+
+    /**
+     * Fonts
+     */
+    const matcapTexture = textureLoader.load('./textures/matcaps/red-yellow.png')
+    let text = null
+    // add font for text
+    const fontLoader = new FontLoader()
+    fontLoader.load(
+      './fonts/helvetiker_bold.typeface.json',
+      (font) => {
+        const textGeometry = new TextGeometry(
+          "Gavin's Solar System", {
+          font: font,
+          size: 2,
+          height: 0.6,
+          curveSegments: 5,
+          bevelEnabled: true,
+          bevelThickness: 0.03,
+          bevelSize: 0.02,
+          bevelOffset: 0,
+          bevelSegments: 4,
+        });
+
+        // Center text
+        textGeometry.center();
+
+        // Add map cap texture to object material
+        const material = new THREE.MeshMatcapMaterial();
+        material.matcap = matcapTexture;
+        // material.wireframe = true  // test
+
+        // Add text to scene
+        text = new THREE.Mesh(textGeometry, material);
+        scene.add(text);
+        text.position.y = 13
+      });
 
     /**
      * Lights
@@ -539,23 +594,120 @@ c<!DOCTYPE html>
 
     scene.add(camera)
 
+    let cinematicView = true
+
     const topCameraView = () => {
+      cinematicView = false
       camera.position.set(0, 240, 0)
       camera.lookAt(sun.position)
     }
 
-    const defaultCameraView = () => {
+    const wideAngleCameraView = () => {
+      cinematicView = false
       camera.position.set(-30, 50, 70)
       camera.lookAt(sun.position)
+    }
+
+    const cinematicCameraView = () => {
+      cinematicView = true
     }
 
     // Controls
     const orbitControls = new OrbitControls(camera, canvas)
     orbitControls.enableDamping = true
 
+    // WIP
     // const fpsControls = new FirstPersonControls(camera, canvas);
     // fpsControls.movementSpeed = 300;
     // fpsControls.lookSpeed = 0.2;
+
+    /**
+     * Returns a random integer between min (inclusive) and max (inclusive).
+     * The value is no lower than min (or the next integer greater than min
+     * if min isn't an integer) and no greater than max (or the next integer
+     * lower than max if max isn't an integer).
+     * Using Math.round() will give you a non-uniform distribution!
+     */
+    const getRandomInt = (min, max) => {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    let target = 0
+
+    // const changeCameraTarget = () => {
+    //   let timerRunning = false
+    //   setTimeout(() => {
+    //     if (!timerRunning) {
+    //       const num = getRandomInt(0, 8)
+    //       switch (num) {
+    //         case 0:
+    //           target = sun
+    //           break
+    //         case 1:
+    //           target = mercury
+    //           break
+    //         case 2:
+    //           target = venus
+    //           break
+    //         case 3:
+    //           target = earth
+    //           break
+    //         case 4:
+    //           target = mars
+    //           break
+    //         case 5:
+    //           target = jupiter
+    //           break
+    //         case 6:
+    //           target = saturn
+    //           break
+    //         case 7:
+    //           target = uranus
+    //           break
+    //         case 8:
+    //           target = neptune
+    //           break
+    //       }
+    //     }
+    //     timerRunning = true
+    //     changeCameraTarget()
+    //   }, 10000);  // change every 10 seconds
+    // }
+    // changeCameraTarget()
+
+    // gsap.to(camera.position, {
+    //   duration: 6,
+    //   delay: 0,
+    //   x: 70,
+    //   y: 80,
+    //   z: -60
+    // })
+
+    // gsap.to(camera.position, {
+    //   duration: 6,
+    //   delay: 5,
+    //   x: -60,
+    //   y: 10,
+    //   z: 10
+    // })
+
+    // gsap.to(camera.position, {
+    //   duration: 6,
+    //   delay: 11,
+    //   x: 40,
+    //   y: -30,
+    //   z: 10
+    // })
+
+    // gsap.to(camera.position, {
+    //   duration: 6,
+    //   delay: 17,
+    //   x: -30,
+    //   y: 50,
+    //   z: 70
+    // })
 
     /**
      * Renderer
@@ -591,6 +743,9 @@ c<!DOCTYPE html>
       uranus.rotation.y = elapsedTime * planets.uranus.rotationSpeed * params.rotationSpeed
       neptune.rotation.y = elapsedTime * planets.neptune.rotationSpeed * params.rotationSpeed
 
+      if (text)
+        text.rotation.y = elapsedTime * 0.5
+
       /////////////////////////////////////////
       // Make planets orbit around the sound //
       /////////////////////////////////////////
@@ -611,10 +766,12 @@ c<!DOCTYPE html>
       //////////////////////////
       // Make moon orbits Earth
       //////////////////////////
-      const updatedEarthMoonPos = earthMoon.position.copy(earth.position)
-      earthMoon.position.x = updatedEarthMoonPos.x + planets.earth.moon.distanceToEarth
-      earthMoon.position.y = updatedEarthMoonPos.y + planets.earth.moon.height
-      earthMoon.position.z = updatedEarthMoonPos.z
+      // const updatedEarthMoonPos = earthMoon.position.copy(earth.position)
+      // earthMoon.position.x = updatedEarthMoonPos.x + planets.earth.moon.distanceToEarth
+      // earthMoon.position.y = updatedEarthMoonPos.y + planets.earth.moon.height
+      // earthMoon.position.z = updatedEarthMoonPos.z
+      earthMoon.position.x = Math.cos(elapsedTime * 0.5 * planets.earth.orbitalSpeed * params.orbitalSpeed) * params.distanceGap * planets.earth.distance + planets.earth.moon.distanceToEarth
+      earthMoon.position.z = -(Math.sin(elapsedTime * 0.5 * planets.earth.orbitalSpeed * params.orbitalSpeed) * params.distanceGap * planets.earth.distance + planets.earth.moon.distanceToEarth)
       earthMoon.lookAt(earth.position)
 
       // Update controls
@@ -623,11 +780,13 @@ c<!DOCTYPE html>
       // console.log(fpsControls);
 
       // Update camera
+
+      // WIP: Obeserve planet function
       const observe = (planetObj, planet) => {
         const planetPos = planetObj.position
-        camera.position.x = Math.cos(elapsedTime * 0.5 * planet.orbitalSpeed * planet.orbitalSpeed) * (params.distanceGap * (planet.distance + 5))
+        camera.position.x = Math.cos(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed) * (params.distanceGap * (planet.distance + 3))
         camera.position.y = planetPos.y - 0.5
-        camera.position.z = -(Math.sin(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed) * (params.distanceGap * (planet.distance + 5)))
+        camera.position.z = -(Math.sin(elapsedTime * 0.5 * planet.orbitalSpeed * params.orbitalSpeed) * (params.distanceGap * (planet.distance + 1)))
         camera.lookAt(sun.position)
       }
 
@@ -642,7 +801,13 @@ c<!DOCTYPE html>
       // camera.position.y = earth.position.y
       // camera.position.z = earth.position.z
 
-      // camera.lookAt(earthMoon.position)
+      if (cinematicView) {
+        camera.position.x = Math.sin(elapsedTime * 0.3) * 70
+        camera.position.y = Math.sin(elapsedTime * 0.3) * 30
+        camera.position.z = Math.cos(elapsedTime * 0.3) * 30
+        if (target) camera.lookAt(target.position)
+        camera.lookAt(sun.position)
+      }
 
       // Render
       renderer.render(scene, camera)
