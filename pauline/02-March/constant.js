@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { FontLoader } from 'fontLoader';
 
 const textureLoader = new THREE.TextureLoader();
 
@@ -92,7 +93,7 @@ const planets = [
     orbitRadius: 28,
     radius: 2.8,
     ring: null,
-    rotationMesh: 0.05,
+    rotationMesh: 0.004,
     rotationObj: 0.009
   },
   {
@@ -101,7 +102,7 @@ const planets = [
     orbitRadius: 50,
     radius: 4,
     ring: null,
-    rotationMesh: 0.04,
+    rotationMesh: 0.004,
     rotationObj: 0.004
   },
   {
@@ -110,7 +111,7 @@ const planets = [
     orbitRadius: 70,
     radius: 4,
     ring: null,
-    rotationMesh: 0.035,
+    rotationMesh: 0.0035,
     rotationObj: 0.009
   },
   {
@@ -119,7 +120,7 @@ const planets = [
     orbitRadius: 90,
     radius: 3.5,
     ring: null,
-    rotationMesh: 0.045,
+    rotationMesh: 0.0045,
     rotationObj: 0.0045
   },
   {
@@ -128,7 +129,7 @@ const planets = [
     orbitRadius: 120,
     radius: 7,
     ring: null,
-    rotationMesh: 0.038,
+    rotationMesh: 0.0038,
     rotationObj: 0.0009
   },
   {
@@ -137,7 +138,7 @@ const planets = [
     orbitRadius: 150,
     radius: 7,
     ring: {innerRadius: 7, outerRadius: 12, texture: saturnRingTexture},
-    rotationMesh: 0.035,
+    rotationMesh: 0.0035,
     rotationObj: 0.001
   },
   {
@@ -146,14 +147,19 @@ const planets = [
     orbitRadius: 200,
     radius: 6,
     ring: {innerRadius: 7, outerRadius: 12, texture: uranusRingTexture},
-    rotationMesh: 0.05,
+    rotationMesh: 0.005,
     rotationObj: 0.002
   },
 ];
+
+// font loader
+const textLoader = new FontLoader();
+const matcapTexture = textureLoader.load('./resources/textures/matcaps/3.png')
+
 
 const sizes = {
   width: window.innerWidth,
   height: window.innerHeight,
 };
 
-export { planets, milkywayColorTexture, sunColorTexture, sizes, moonColorTexture };
+export { planets, milkywayColorTexture, sunColorTexture, sizes, moonColorTexture, textLoader, matcapTexture };
