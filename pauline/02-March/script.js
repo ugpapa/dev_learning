@@ -346,7 +346,6 @@ const changePlanetView = (elapsedTime) => {
     const worldPosition = new THREE.Vector3();
     const delayTime = Math.round(elapsedTime / 5);
     if (delayTime < 7) {
-      console.log("hi");
       const { x, y, z } =
         planet3DObjects[delayTime].planetObj.getWorldPosition(worldPosition);
       camera.position.x = x + 30;
