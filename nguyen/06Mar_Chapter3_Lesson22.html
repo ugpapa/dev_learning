@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>18 - Particles</title>
+    <title>22 - Load model</title>
     <style>
         * {
             margin: 0;
@@ -28,10 +28,7 @@
 
 <body>
     <canvas class="webgl"></canvas>
-
     <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
-
-
     <script type="importmap">
       {
         "imports": {
@@ -89,8 +86,10 @@
             
             // Add light
             generateLight()
-        }
 
+            // Add debug
+            debugConfiguration()
+        }
         init()
 
         function generateWorldMap(){
@@ -135,9 +134,9 @@
         }
  
         function debugConfiguration() {
-            gui.add(camera.position, 'z', -250, 250, 1)
-            gui.add(camera.position, 'y', -250, 250, 1)
-            gui.add(camera.position, 'x', -250, 250, 1)
+            gui.add(camera.position, 'z', -15, 15, 1)
+            gui.add(camera.position, 'y', -15, 15, 1)
+            gui.add(camera.position, 'x', -15, 15, 1)
         }
 
         // Animate
