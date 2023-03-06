@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>23 - Load model</title>
+    <title>23 - Ray caster</title>
     <style>
         * {
             margin: 0;
@@ -49,6 +49,8 @@
 
         let camera, controls, scene, renderer, gui, canvas, gltfLoader, raycaster, mouse;
         let object1, object2, object3;
+        let model;
+        let mixer = null;
 
         // Init
         gui = new dat.GUI()
@@ -74,7 +76,7 @@
 
         // Camera
         camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-        camera.position.set(3, 5, 15);
+        camera.position.set(3, 10, 15);
         scene.add(camera)
 
         // Controls
@@ -93,6 +95,27 @@
         })
 
         function init() {
+            // Add the cube contains 9 circles shape
+            addCubeShape()
+
+            // Add debug
+            debugConfiguration()
+
+            // Add three circles
+            createThreeCircles()
+
+            // Create floor
+            generateWorldMap()
+
+            // Light, mesh material needs light otherwise you could not see anything
+            generateLight()
+
+            // Load model
+            loadFox()
+        }
+        init()
+
+        function addCubeShape(){
             // top row
             addCircleObject(0, 2, 0);
             addCircleObject(2, 2, 0);
@@ -125,14 +148,7 @@
             addCircleObject(0, -2, 2);
             addCircleObject(2, -2, 2);
             addCircleObject(-2, -2, 2);
-
-            // Add debug
-            debugConfiguration()
-
-            // Add three circles
-            createThreeCircles()
         }
-        init()
 
         function createThreeCircles() {
             object1 = new THREE.Mesh(
@@ -167,6 +183,56 @@
             if (intersects.length > 0) {
                 intersects[0].object.material.color.set(0xfffffff);
             }
+
+            if (model) {
+                const modelIntersect = raycaster.intersectObjects(model);
+                // console.log(modelIntersect);
+            }
+        }
+
+        function generateWorldMap(){
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(10, 10),
+                new THREE.MeshStandardMaterial({
+                    color: "grey",
+                    metalness: 0.05,
+                    roughness: 0.1,
+                })
+            );
+            floor.position.set(0, 5, 0)
+            
+            floor.receiveShadow = true;
+            floor.rotation.x = -Math.PI * 2.5;
+            scene.add(floor);
+        }
+
+        function loadFox() {
+            gltfLoader = new GLTFLoader();
+            gltfLoader.load("./models/Fox/glTF/Fox.gltf", (gltf) => {
+                gltf.scene.scale.set(0.025, 0.025, 0.025);
+                gltf.scene.position.y = 5;
+                gltf.scene.position.x = 1;
+                model = gltf.scene;
+                // console.log(model)
+                scene.add(gltf.scene);
+                mixer = new THREE.AnimationMixer(gltf.scene);
+                const action = mixer.clipAction(gltf.animations[1]);
+                action.play();
+            });
+        }
+
+        function generateLight() {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.95)
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6)
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.set(1024, 1024)
+            directionalLight.shadow.camera.far = 50
+            directionalLight.shadow.camera.left = 20
+            directionalLight.shadow.camera.top = 19
+            directionalLight.shadow.camera.right = 7
+            directionalLight.shadow.camera.bottom = -7
+            directionalLight.position.set(5, 5, 5)
+            scene.add(ambientLight, directionalLight)
         }
 
         function debugConfiguration() {
