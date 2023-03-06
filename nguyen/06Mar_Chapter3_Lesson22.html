@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>22 - Load model</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            overflow: hidden;
+        }
+
+        .webgl {
+            position: fixed;
+            top: 0;
+            left: 0;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="webgl"></canvas>
+    <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+            "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+            "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
+            "orbitControl": "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js",
+            "gltfLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js",
+            "dracoLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js"
+        }
+      }
+    </script>
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from "orbitControl";
+        import * as dat from "lil-gui";
+        import { GLTFLoader } from "gltfLoader";
+        import { DRACOLoader } from "dracoLoader";
+
+        let camera, controls, scene, renderer, gui, canvas, gltfLoader;
+        let mixer = null;
+
+        // Init
+        gui = new dat.GUI()
+        canvas = document.querySelector('canvas.webgl')
+        scene = new THREE.Scene()
+
+        // Size
+        const sizes = {
+            width: window.innerWidth,
+            height: window.innerHeight
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // Camera
+        camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+        camera.position.set(3, 3, 5);
+        scene.add(camera)
+
+        // Controls
+        controls = new OrbitControls(camera, canvas)
+        controls.target.set(0, 0.75, 0);
+        controls.enableDamping = true
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ canvas: canvas })
+        renderer.setSize(sizes.width, sizes.height)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+        function init() {
+            // Load model
+            loadFox()
+
+            // Create map
+            generateWorldMap()
+            
+            // Add light
+            generateLight()
+
+            // Add debug
+            debugConfiguration()
+        }
+        init()
+
+        function generateWorldMap(){
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(10, 10),
+                new THREE.MeshStandardMaterial({
+                    color: "grey",
+                    metalness: 0.05,
+                    roughness: 0.1,
+                })
+            );
+            floor.receiveShadow = true;
+            floor.rotation.x = -Math.PI * 2.5;
+            console.log(-Math.PI * 2.5)
+            scene.add(floor);
+        }
+
+        function loadFox() {
+            gltfLoader = new GLTFLoader();
+            gltfLoader.load("./models/Fox/glTF/Fox.gltf", (gltf) => {
+                gltf.scene.scale.set(0.025, 0.025, 0.025);
+                scene.add(gltf.scene);
+                mixer = new THREE.AnimationMixer(gltf.scene);
+                const action = mixer.clipAction(gltf.animations[1]);
+                action.play();
+            });
+        }
+
+        function generateLight() {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.95)
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6)
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.set(1024, 1024)
+            directionalLight.shadow.camera.far = 50
+            directionalLight.shadow.camera.left = 20
+            directionalLight.shadow.camera.top = 19
+            directionalLight.shadow.camera.right = 7
+            directionalLight.shadow.camera.bottom = -7
+            directionalLight.position.set(5, 5, 5)
+            scene.add(ambientLight, directionalLight)
+        }
+ 
+        function debugConfiguration() {
+            gui.add(camera.position, 'z', -15, 15, 1)
+            gui.add(camera.position, 'y', -15, 15, 1)
+            gui.add(camera.position, 'x', -15, 15, 1)
+        }
+
+        // Animate
+        let previousTime = 0;
+        const clock = new THREE.Clock()
+        const animate = () => {
+            const elapsedTime = clock.getElapsedTime();
+            const deltaTime = elapsedTime - previousTime;
+            previousTime = elapsedTime;
+
+            if (mixer !== null) {
+                mixer.update(deltaTime);
+            }
+
+            controls.update()
+
+            render();
+
+            window.requestAnimationFrame(animate)
+        }
+        animate()
+
+        function onWindowResize() {
+            // Update sizes, camera, renderer
+            sizes.width = window.innerWidth
+            sizes.height = window.innerHeight
+
+            camera.aspect = sizes.width / sizes.height
+            camera.updateProjectionMatrix()
+
+            renderer.setSize(sizes.width, sizes.height)
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+
+</html>
