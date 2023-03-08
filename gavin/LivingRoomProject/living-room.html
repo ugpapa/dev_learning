@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gavin's living room</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      overflow: hidden;
+    }
+
+    .webgl {
+      position: fixed;
+      top: 0;
+      left: 0;
+      outline: none;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas class="webgl"></canvas>
+  <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+
+
+  <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+          "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
+
+          "OrbitControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js"
+        }
+      }
+    </script>
+  <script type="module">
+    import * as THREE from 'three'
+    // import * as dat from "lil-gui"
+
+    import { OrbitControls } from "OrbitControls"
+    import { GLTFLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js'
+    import { DRACOLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js'
+
+    /**
+     * Base
+     */
+    // Debug
+    // const gui = new dat.GUI()
+
+    // Canvas
+    const canvas = document.querySelector('canvas.webgl')
+
+    // Loaders
+    const textureLoader = new THREE.TextureLoader()
+    const cubeTextureLoader = new THREE.CubeTextureLoader()
+    const gltfLoader = new GLTFLoader()
+
+    /**
+     * Environment map
+     */
+    const environmentMap = cubeTextureLoader.load([
+      './textures/envMaps/px.png',
+      './textures/envMaps/nx.png',
+      './textures/envMaps/py.png',
+      './textures/envMaps/ny.png',
+      './textures/envMaps/pz.png',
+      './textures/envMaps/nz.png'
+    ])
+    environmentMap.encoding = THREE.sRGBEncoding
+
+    // Scene
+    const scene = new THREE.Scene()
+    scene.background = environmentMap
+    scene.environment = environmentMap
+
+    /**
+     * Floor
+     */
+    const floorDimensions = {
+      width: 5,
+      height: 6
+    }
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(floorDimensions.width, floorDimensions.height),
+      new THREE.MeshStandardMaterial({
+        color: '#ffffff'
+      })
+    )
+    floor.receiveShadow = true
+    floor.rotation.x = - Math.PI * 0.5
+    scene.add(floor)
+
+    /**
+     * Walls
+     */
+    const wallDimensions = {
+      width: floorDimensions.height,
+      height: 4.5,
+    }
+    const wallGeometry = new THREE.PlaneGeometry(wallDimensions.width, wallDimensions.height)
+    const wallMaterial = new THREE.MeshLambertMaterial({
+      color: '#cde9f7'
+    })
+
+    // left wall (from camera's POV)
+    const wallLeft = new THREE.Mesh(wallGeometry, wallMaterial)
+    wallLeft.rotation.y = Math.PI * 0.5
+    wallLeft.position.x = -floorDimensions.width / 2
+    wallLeft.position.y = wallDimensions.height / 2;
+
+    // right wall (from camera's POV)
+    const wallRight = new THREE.Mesh(wallGeometry, wallMaterial)
+    wallRight.rotation.y = -Math.PI * 0.5
+    wallRight.position.x = floorDimensions.width / 2
+    wallRight.position.y = wallDimensions.height / 2;
+
+    // back wall
+    const wallBack = new THREE.Mesh(wallGeometry, wallMaterial)
+    wallBack.position.z = -floorDimensions.height / 2
+    wallBack.position.y = wallDimensions.height / 2;
+
+    wallLeft.receiveShadow = true
+    wallBack.receiveShadow = true
+    wallRight.receiveShadow = true
+    wallLeft.castShadow = false
+    wallBack.castShadow = false
+    wallRight.castShadow = false
+
+    scene.add(wallLeft)
+    scene.add(wallBack)
+    scene.add(wallRight)
+
+    /**
+     * Pictures
+     */
+    const pictureFrameThickness = 0.03
+    const pictureFrameDimensions = {
+      huge: {
+        width: 3,
+        height: 3
+      },
+      bigger: {
+        width: 0.9,
+        height: 1.6
+      },
+      big: {
+        width: 0.72,
+        height: 1.28
+      }
+    }
+    const frameMaterial = new THREE.MeshStandardMaterial({ color: '#1f1f1f' })
+
+    const pictureFrameLeft1 = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        pictureFrameDimensions.big.width,
+        pictureFrameDimensions.big.height,
+        pictureFrameThickness),
+      frameMaterial
+    )
+    const pictureLeft1 = new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        pictureFrameDimensions.big.width * 0.92,
+        pictureFrameDimensions.big.height * 0.95
+      ),
+      new THREE.MeshStandardMaterial({
+        map: textureLoader.load('./textures/ketnipz-wallpaper.jpg')
+      })
+    )
+    pictureFrameLeft1.position.z = -(0.03 / 2) - 0.001
+    pictureLeft1.add(pictureFrameLeft1)
+
+    pictureLeft1.castShadow = false
+    pictureLeft1.receiveShadow = true
+    pictureFrameLeft1.castShadow = true
+    pictureFrameLeft1.receiveShadow = true
+
+    scene.add(pictureLeft1)
+
+    // set position on the wall
+    pictureLeft1.rotation.y = Math.PI * 0.5
+    pictureLeft1.position.x = -(floorDimensions.width / 2) + pictureFrameThickness
+    pictureLeft1.position.y = 1.2
+    pictureLeft1.position.z = 2
+
+    const pictureFrameLeft2 = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        pictureFrameDimensions.bigger.height,
+        pictureFrameDimensions.bigger.width,
+        pictureFrameThickness),
+      frameMaterial
+    )
+    const pictureLeft2 = new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        pictureFrameDimensions.bigger.height * 0.93,
+        pictureFrameDimensions.bigger.width * 0.90
+      ),
+      new THREE.MeshStandardMaterial({
+        map: textureLoader.load('./textures/magikarp-waiting-for-owner.jpg')
+      })
+    )
+    pictureFrameLeft2.position.z = -(0.03 / 2) - 0.001
+    pictureLeft2.add(pictureFrameLeft2)
+
+    pictureLeft2.castShadow = false
+    pictureLeft2.receiveShadow = true
+    pictureFrameLeft2.castShadow = true
+    pictureFrameLeft2.receiveShadow = true
+
+    scene.add(pictureLeft2)
+
+    // set position on the wall
+    pictureLeft2.rotation.y = Math.PI * 0.5
+    pictureLeft2.position.x = -(floorDimensions.width / 2) + pictureFrameThickness
+    pictureLeft2.position.y = 1.2
+    pictureLeft2.position.z = -1.3
+
+    const pictureFrameBack = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        pictureFrameDimensions.huge.width,
+        pictureFrameDimensions.huge.height,
+        pictureFrameThickness),
+      frameMaterial
+    )
+
+    const pictureBack = new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        pictureFrameDimensions.huge.width * 0.95,
+        pictureFrameDimensions.huge.height * 0.95
+      ),
+      new THREE.MeshStandardMaterial({
+        map: textureLoader.load('./textures/newyork.jpg')
+      })
+    )
+    pictureFrameBack.position.z = -(0.03 / 2) - 0.001
+    pictureBack.add(pictureFrameBack)
+
+    pictureBack.castShadow = false
+    pictureBack.receiveShadow = true
+    pictureFrameBack.castShadow = true
+    pictureFrameBack.receiveShadow = true
+
+    scene.add(pictureBack)
+
+    // set position on the wall
+    pictureBack.position.y = 1.8
+    pictureBack.position.z = -(floorDimensions.height / 2) + pictureFrameThickness
+
+    const pictureFrameRight1 = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        pictureFrameDimensions.big.width,
+        pictureFrameDimensions.big.height,
+        pictureFrameThickness),
+      frameMaterial
+    )
+    const pictureRight1 = new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        pictureFrameDimensions.big.width * 0.92,
+        pictureFrameDimensions.big.height * 0.95
+      ),
+      new THREE.MeshStandardMaterial({
+        map: textureLoader.load('./textures/doge.jpg')
+      })
+    )
+    pictureFrameRight1.position.z = -(0.03 / 2) - 0.001
+    pictureRight1.add(pictureFrameRight1)
+
+    pictureRight1.castShadow = false
+    pictureRight1.receiveShadow = true
+    pictureFrameRight1.castShadow = true
+    pictureFrameRight1.receiveShadow = true
+
+    scene.add(pictureRight1)
+
+    // set position on the wall
+    pictureRight1.rotation.y = -Math.PI * 0.5
+    pictureRight1.position.x = (floorDimensions.width / 2) - pictureFrameThickness
+    pictureRight1.position.y = 1.2
+    pictureRight1.position.z = -1.3
+
+    const pictureFrameRight2 = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        pictureFrameDimensions.bigger.height,
+        pictureFrameDimensions.bigger.width,
+        pictureFrameThickness),
+      frameMaterial
+    )
+    const pictureRight2 = new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        pictureFrameDimensions.bigger.height * 0.97,
+        pictureFrameDimensions.bigger.width * 0.96
+      ),
+      new THREE.MeshStandardMaterial({
+        map: textureLoader.load('./textures/mountains.jpg')
+      })
+    )
+    pictureFrameRight2.position.z = -(0.03 / 2) - 0.001
+    pictureRight2.add(pictureFrameRight2)
+
+    pictureRight2.castShadow = false
+    pictureRight2.receiveShadow = true
+    pictureFrameRight2.castShadow = true
+    pictureFrameRight2.receiveShadow = true
+
+    scene.add(pictureRight2)
+
+    // set position on the wall
+    pictureRight2.rotation.y = -Math.PI * 0.5
+    pictureRight2.position.x = (floorDimensions.width / 2) - pictureFrameThickness
+    pictureRight2.position.y = 1.2
+    pictureRight2.position.z = 2
+
+    // load models
+    // gltfLoader.load(
+    //   './models/Chair_005.glb',
+    //   (gltf) => {
+    //     gltf.scene.scale.set(.5, .5, .5)
+    //     scene.add(gltf.scene)
+    //   }
+    // )
+    // gltfLoader.load(
+    //   './models/table_005.glb',
+    //   (gltf) => {
+    //     gltf.scene.scale.set(.5, .5, .5)
+    //     scene.add(gltf.scene)
+    //   }
+    // )
+    gltfLoader.load(
+      './models/sofa_001.glb',
+      (gltf) => {
+        gltf.scene.scale.set(.5, .5, .5)
+        // gltf.scene.castShadow = true
+        // gltf.scene.receiveShadow = true
+
+        const children = [...gltf.scene.children]
+        for (const child of children) {
+          child.castShadow = true
+          child.receiveShadow = true
+          child.material.needsUpdate = true
+        }
+        scene.add(gltf.scene)
+      }
+    )
+
+    /**
+     * Lights
+     */
+    const ambientLight = new THREE.AmbientLight(0xe3f2fa, 0.7)
+    scene.add(ambientLight)
+
+    const pointLight = new THREE.PointLight(0xffffff, .5, 50);
+    pointLight.position.set(2, wallDimensions.height + 2, 0);
+    scene.add(pointLight);
+
+    const pointLightHelper = new THREE.PointLightHelper(pointLight, 1);
+    scene.add(pointLightHelper);
+
+    /**
+     * Sizes
+     */
+    const sizes = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+
+    window.addEventListener('resize', () => {
+      // Update sizes
+      sizes.width = window.innerWidth
+      sizes.height = window.innerHeight
+
+      // Update camera
+      camera.aspect = sizes.width / sizes.height
+      camera.updateProjectionMatrix()
+
+      // Update renderer
+      renderer.setSize(sizes.width, sizes.height)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    })
+
+    /**
+     * Camera
+     */
+    // Base camera
+    const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 100)
+    camera.position.set(0, 2, 7)
+    scene.add(camera)
+
+    // Controls
+    const controls = new OrbitControls(camera, canvas)
+    controls.target.set(0, 2.1, 0)
+    controls.enableDamping = true
+
+    /**
+     * Renderer
+     */
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
+      antialias: true
+    })
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+    /**
+     * Animate
+     */
+    const clock = new THREE.Clock()
+    let previousTime = 0
+
+    const tick = () => {
+      const elapsedTime = clock.getElapsedTime()
+      const deltaTime = elapsedTime - previousTime
+      previousTime = elapsedTime
+
+      // Update controls
+      controls.update()
+
+      // Render
+      renderer.render(scene, camera)
+
+      // Call tick again on the next frame
+      window.requestAnimationFrame(tick)
+    }
+
+    tick()
+  </script>
+</body>
+
+</html>
