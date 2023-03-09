@@ -43,17 +43,17 @@
     </script>
   <script type="module">
     import * as THREE from 'three'
-    // import * as dat from "lil-gui"
+    import * as dat from "lil-gui"
 
     import { OrbitControls } from "OrbitControls"
     import { GLTFLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js'
-    import { DRACOLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js'
+    // import { DRACOLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js'
 
     /**
      * Base
      */
     // Debug
-    // const gui = new dat.GUI()
+    const gui = new dat.GUI()
 
     // Canvas
     const canvas = document.querySelector('canvas.webgl')
@@ -67,19 +67,42 @@
      * Environment map
      */
     const environmentMap = cubeTextureLoader.load([
-      './textures/envMaps/px.png',
-      './textures/envMaps/nx.png',
-      './textures/envMaps/py.png',
-      './textures/envMaps/ny.png',
-      './textures/envMaps/pz.png',
-      './textures/envMaps/nz.png'
+      './textures/envMaps/sky-and-ground/px.png',
+      './textures/envMaps/sky-and-ground/nx.png',
+      './textures/envMaps/sky-and-ground/py.png',
+      './textures/envMaps/sky-and-ground/ny.png',
+      './textures/envMaps/sky-and-ground/pz.png',
+      './textures/envMaps/sky-and-ground/nz.png'
     ])
     environmentMap.encoding = THREE.sRGBEncoding
 
     // Scene
     const scene = new THREE.Scene()
-    scene.background = environmentMap
     scene.environment = environmentMap
+    // scene.background = new THREE.Color(0xffffff)
+
+    /**
+     * Update all materials
+     */
+    const updateAllMaterials = () => {
+      // make all objects have shadows
+      scene.traverse((child) => {
+        if (child.isObject3D && child instanceof THREE.Group) {
+          if (child.children[0].name == 'Table_005' || child.children[0].name == 'Table_002') {
+            child.children[0].material.metalness = 0.7
+            child.children[0].material.roughness = 0.1
+          } else {
+            child.children[0].material.metalness = 0
+            child.children[0].material.roughness = 1
+          }
+        }
+        if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+          child.material.needsUpdate = true
+          child.castShadow = true
+          child.receiveShadow = true
+        }
+      })
+    }
 
     /**
      * Floor
@@ -88,15 +111,65 @@
       width: 5,
       height: 6
     }
+    // const woodFloorDiffuse = textureLoader.load('./floor/textures/laminate_floor_02_diff_1k.jpg')
+    // const woodFloorDisplacement = textureLoader.load('./floor/textures/laminate_floor_02_disp_1k.png')
+    // const woodFloorRough = textureLoader.load('./floor/textures/laminate_floor_02_rough_1k.png')
+    // const woodFloorNormal = textureLoader.load('./floor/textures/laminate_floor_02_nor_dx_1k.png')
+    // const woodFloorAmbientOcc = textureLoader.load('./floor/textures/laminate_floor_02_ao_1k.jpg')
+
+    // woodFloorDiffuse.wrapS = THREE.RepeatWrapping
+    // woodFloorDiffuse.wrapT = THREE.RepeatWrapping
+    // woodFloorDiffuse.repeat.set(5, 5)
+
+    // const woodFloorMaterial = new THREE.MeshStandardMaterial()
+    // woodFloorMaterial.map = woodFloorDiffuse
+    // woodFloorMaterial.metalness = 0.8
+    // woodFloorMaterial.roughness = 0.5
+    // woodFloorMaterial.aoMap = woodFloorAmbientOcc
+    // woodFloorMaterial.aoMapIntensity = 1.0
+    // woodFloorMaterial.displacementMap = woodFloorDisplacement
+    // woodFloorMaterial.displacementScale = 0.005
+    // woodFloorMaterial.normalMap = woodFloorNormal
+    // woodFloorMaterial.normalScale.set(0.3, 0.3)
+    // woodFloorMaterial.transparent = true
+
+    // const floor = new THREE.Mesh(
+    //   new THREE.PlaneGeometry(floorDimensions.width, floorDimensions.height),
+    //   woodFloorMaterial
+    // )
+
+    const marbleFloorDiffuse = textureLoader.load('./textures/floor-pattern.png')
+
+    const marbleFloorMaterial = new THREE.MeshStandardMaterial()
+    marbleFloorMaterial.map = marbleFloorDiffuse
+    marbleFloorMaterial.metalness = 0.6
+    marbleFloorMaterial.roughness = 0.1
+    marbleFloorMaterial.transparent = false
+
+    // const marbleFloorMaterial = new THREE.MeshLambertMaterial()
+    // marbleFloorMaterial.map = marbleFloorDiffuse
+    // marbleFloorMaterial.reflectivity = 0.6
+    // marbleFloorMaterial.transparent = false
+
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(floorDimensions.width, floorDimensions.height),
-      new THREE.MeshStandardMaterial({
-        color: '#ffffff'
-      })
+      marbleFloorMaterial
     )
-    floor.receiveShadow = true
+    floor.name = 'floor'
     floor.rotation.x = - Math.PI * 0.5
+
+    floor.castShadow = false
+    floor.receiveShadow = true
+
     scene.add(floor)
+
+    // const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.5, 64, 64), floorMaterial)
+    // sphere.position.y = 2
+    // sphere.position.z = -0.7
+    // sphere.position.x = 0.5
+    // sphere.castShadow = true
+    // sphere.receiveShadow = true
+    // scene.add(sphere)
 
     /**
      * Walls
@@ -114,18 +187,18 @@
     const wallLeft = new THREE.Mesh(wallGeometry, wallMaterial)
     wallLeft.rotation.y = Math.PI * 0.5
     wallLeft.position.x = -floorDimensions.width / 2
-    wallLeft.position.y = wallDimensions.height / 2;
+    wallLeft.position.y = wallDimensions.height / 2
 
     // right wall (from camera's POV)
     const wallRight = new THREE.Mesh(wallGeometry, wallMaterial)
     wallRight.rotation.y = -Math.PI * 0.5
     wallRight.position.x = floorDimensions.width / 2
-    wallRight.position.y = wallDimensions.height / 2;
+    wallRight.position.y = wallDimensions.height / 2
 
     // back wall
     const wallBack = new THREE.Mesh(wallGeometry, wallMaterial)
     wallBack.position.z = -floorDimensions.height / 2
-    wallBack.position.y = wallDimensions.height / 2;
+    wallBack.position.y = wallDimensions.height / 2
 
     wallLeft.receiveShadow = true
     wallBack.receiveShadow = true
@@ -134,9 +207,85 @@
     wallBack.castShadow = false
     wallRight.castShadow = false
 
+    wallLeft.name = 'wallLeft'
+    wallBack.name = 'wallBack'
+    wallRight.name = 'wallRight'
+
     scene.add(wallLeft)
     scene.add(wallBack)
     scene.add(wallRight)
+
+    /**
+     * Pillars
+     */
+    const pillarDimensions = {
+      height: wallDimensions.height * 0.8,
+      radius: 0.3,
+      standWidth: 0.7,
+      standHeight: 0.3,
+      topRadius: 0.3
+    }
+    const pillarMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff })
+
+    const pillarMiddleGeometry = new THREE.CylinderGeometry(
+      pillarDimensions.radius, pillarDimensions.radius,
+      pillarDimensions.height,
+      32, 16
+    )
+    const pillarStandGeometry = new THREE.BoxGeometry(
+      pillarDimensions.standWidth,
+      pillarDimensions.standHeight,
+      pillarDimensions.standWidth
+    )
+    const pillarTopGeometry = new THREE.DodecahedronGeometry(pillarDimensions.topRadius, 2)
+
+    const pillar1 = new THREE.Mesh(pillarMiddleGeometry, pillarMaterial)
+    const pillarStand1 = new THREE.Mesh(pillarStandGeometry, pillarMaterial)
+    const pillarTop1 = new THREE.Mesh(pillarTopGeometry, pillarMaterial)
+    pillarTop1.material.flatShading = true
+
+    pillarStand1.position.y = -(pillarDimensions.height - pillarDimensions.standHeight) / 2
+    pillarTop1.position.y = pillarDimensions.height / 2 + pillarDimensions.topRadius
+
+    pillar1.add(pillarStand1)
+    pillar1.add(pillarTop1)
+
+    // left pillar (from camera's POV)
+    pillar1.position.y = pillarDimensions.height / 2
+    pillar1.position.z = -(floorDimensions.height / 2) + pillarDimensions.radius + 0.1
+    pillar1.position.x = -floorDimensions.width / 2 + 0.5
+
+    pillarTop1.castShadow = true
+    pillarTop1.receiveShadow = true
+    pillarStand1.castShadow = true
+    pillarStand1.receiveShadow = true
+    pillar1.castShadow = true
+    pillar1.receiveShadow = true
+    scene.add(pillar1)
+
+
+    const pillar2 = new THREE.Mesh(pillarMiddleGeometry, pillarMaterial)
+    const pillarStand2 = new THREE.Mesh(pillarStandGeometry, pillarMaterial)
+    const pillarTop2 = new THREE.Mesh(pillarTopGeometry, pillarMaterial)
+
+    pillarStand2.position.y = -(pillarDimensions.height - pillarDimensions.standHeight) / 2
+    pillarTop2.position.y = pillarDimensions.height / 2 + pillarDimensions.topRadius
+
+    pillar2.add(pillarStand2)
+    pillar2.add(pillarTop2)
+
+    // right pillar (from camera's POV)
+    pillar2.position.y = pillarDimensions.height / 2
+    pillar2.position.z = -(floorDimensions.height / 2) + pillarDimensions.radius + 0.1
+    pillar2.position.x = floorDimensions.width / 2 - 0.5
+
+    pillarTop2.castShadow = true
+    pillarTop2.receiveShadow = true
+    pillarStand2.castShadow = true
+    pillarStand2.receiveShadow = true
+    pillar2.castShadow = true
+    pillar2.receiveShadow = true
+    scene.add(pillar2)
 
     /**
      * Pictures
@@ -156,21 +305,30 @@
         height: 1.28
       }
     }
-    const frameMaterial = new THREE.MeshStandardMaterial({ color: '#1f1f1f' })
-
-    const pictureFrameLeft1 = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        pictureFrameDimensions.big.width,
-        pictureFrameDimensions.big.height,
-        pictureFrameThickness),
-      frameMaterial
+    const frameMaterial = new THREE.MeshLambertMaterial({ color: '#1f1f1f' })
+    const frameGeometryBigVertical = new THREE.BoxGeometry(
+      pictureFrameDimensions.big.width,
+      pictureFrameDimensions.big.height,
+      pictureFrameThickness
     )
+    const frameGeometryBigHorizontal = new THREE.BoxGeometry(
+      pictureFrameDimensions.bigger.height,
+      pictureFrameDimensions.bigger.width,
+      pictureFrameThickness
+    )
+    const pictureGeometryBigVertical = new THREE.PlaneGeometry(
+      pictureFrameDimensions.big.width * 0.92,
+      pictureFrameDimensions.big.height * 0.95
+    )
+    const pictureGeometryBigHorizontal = new THREE.PlaneGeometry(
+      pictureFrameDimensions.bigger.height * 0.97,
+      pictureFrameDimensions.bigger.width * 0.96
+    )
+
+    const pictureFrameLeft1 = new THREE.Mesh(frameGeometryBigVertical, frameMaterial)
     const pictureLeft1 = new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        pictureFrameDimensions.big.width * 0.92,
-        pictureFrameDimensions.big.height * 0.95
-      ),
-      new THREE.MeshStandardMaterial({
+      pictureGeometryBigVertical,
+      new THREE.MeshLambertMaterial({
         map: textureLoader.load('./textures/ketnipz-wallpaper.jpg')
       })
     )
@@ -182,6 +340,9 @@
     pictureFrameLeft1.castShadow = true
     pictureFrameLeft1.receiveShadow = true
 
+    pictureLeft1.name = 'pictureLeft1'
+    pictureFrameLeft1.name = 'pictureFrameLeft1'
+
     scene.add(pictureLeft1)
 
     // set position on the wall
@@ -190,19 +351,10 @@
     pictureLeft1.position.y = 1.2
     pictureLeft1.position.z = 2
 
-    const pictureFrameLeft2 = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        pictureFrameDimensions.bigger.height,
-        pictureFrameDimensions.bigger.width,
-        pictureFrameThickness),
-      frameMaterial
-    )
+    const pictureFrameLeft2 = new THREE.Mesh(frameGeometryBigHorizontal, frameMaterial)
     const pictureLeft2 = new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        pictureFrameDimensions.bigger.height * 0.93,
-        pictureFrameDimensions.bigger.width * 0.90
-      ),
-      new THREE.MeshStandardMaterial({
+      pictureGeometryBigHorizontal,
+      new THREE.MeshLambertMaterial({
         map: textureLoader.load('./textures/magikarp-waiting-for-owner.jpg')
       })
     )
@@ -213,6 +365,9 @@
     pictureLeft2.receiveShadow = true
     pictureFrameLeft2.castShadow = true
     pictureFrameLeft2.receiveShadow = true
+
+    pictureLeft2.name = 'pictureLeft2'
+    pictureFrameLeft2.name = 'pictureFrameLeft2'
 
     scene.add(pictureLeft2)
 
@@ -235,7 +390,7 @@
         pictureFrameDimensions.huge.width * 0.95,
         pictureFrameDimensions.huge.height * 0.95
       ),
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshLambertMaterial({
         map: textureLoader.load('./textures/newyork.jpg')
       })
     )
@@ -247,25 +402,19 @@
     pictureFrameBack.castShadow = true
     pictureFrameBack.receiveShadow = true
 
+    pictureBack.name = 'pictureBack'
+    pictureFrameBack.name = 'pictureFrameBack'
+
     scene.add(pictureBack)
 
     // set position on the wall
     pictureBack.position.y = 1.8
     pictureBack.position.z = -(floorDimensions.height / 2) + pictureFrameThickness
 
-    const pictureFrameRight1 = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        pictureFrameDimensions.big.width,
-        pictureFrameDimensions.big.height,
-        pictureFrameThickness),
-      frameMaterial
-    )
+    const pictureFrameRight1 = new THREE.Mesh(frameGeometryBigVertical, frameMaterial)
     const pictureRight1 = new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        pictureFrameDimensions.big.width * 0.92,
-        pictureFrameDimensions.big.height * 0.95
-      ),
-      new THREE.MeshStandardMaterial({
+      pictureGeometryBigVertical,
+      new THREE.MeshLambertMaterial({
         map: textureLoader.load('./textures/doge.jpg')
       })
     )
@@ -277,6 +426,9 @@
     pictureFrameRight1.castShadow = true
     pictureFrameRight1.receiveShadow = true
 
+    pictureRight1.name = 'pictureRight1'
+    pictureFrameRight1.name = 'pictureFrameRight1'
+
     scene.add(pictureRight1)
 
     // set position on the wall
@@ -285,19 +437,10 @@
     pictureRight1.position.y = 1.2
     pictureRight1.position.z = -1.3
 
-    const pictureFrameRight2 = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        pictureFrameDimensions.bigger.height,
-        pictureFrameDimensions.bigger.width,
-        pictureFrameThickness),
-      frameMaterial
-    )
+    const pictureFrameRight2 = new THREE.Mesh(frameGeometryBigHorizontal, frameMaterial)
     const pictureRight2 = new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        pictureFrameDimensions.bigger.height * 0.97,
-        pictureFrameDimensions.bigger.width * 0.96
-      ),
-      new THREE.MeshStandardMaterial({
+      pictureGeometryBigHorizontal,
+      new THREE.MeshLambertMaterial({
         map: textureLoader.load('./textures/mountains.jpg')
       })
     )
@@ -309,6 +452,9 @@
     pictureFrameRight2.castShadow = true
     pictureFrameRight2.receiveShadow = true
 
+    pictureRight2.name = 'pictureRight2'
+    pictureFrameRight2.name = 'pictureFrameRight2'
+
     scene.add(pictureRight2)
 
     // set position on the wall
@@ -318,49 +464,174 @@
     pictureRight2.position.z = 2
 
     // load models
-    // gltfLoader.load(
-    //   './models/Chair_005.glb',
-    //   (gltf) => {
-    //     gltf.scene.scale.set(.5, .5, .5)
-    //     scene.add(gltf.scene)
-    //   }
-    // )
-    // gltfLoader.load(
-    //   './models/table_005.glb',
-    //   (gltf) => {
-    //     gltf.scene.scale.set(.5, .5, .5)
-    //     scene.add(gltf.scene)
-    //   }
-    // )
+    gltfLoader.load(
+      './models/Chair_004.glb',
+      (gltf) => {
+        gltf.scene.name = 'Chair_004'
+        gltf.scene.scale.set(.5, .5, .5)
+        gltf.scene.position.x = -2
+        gltf.scene.position.y = 0.105
+        gltf.scene.position.z = 1.6
+        gltf.scene.rotation.y = Math.PI * 0.25
+        gltf.scene.rotation.z = -(Math.PI * 0.47)
+        scene.add(gltf.scene)
+
+        updateAllMaterials()
+      }
+    )
+    gltfLoader.load(
+      './models/Table_002.glb',
+      (gltf) => {
+        gltf.scene.name = 'Table_002'
+        gltf.scene.scale.set(.5, .5, .5)
+        gltf.scene.position.x = -2.1
+        gltf.scene.position.z = 1.8
+        scene.add(gltf.scene)
+
+        updateAllMaterials()
+      }
+    )
+
+    gltfLoader.load(
+      './models/table_005.glb',
+      (gltf) => {
+        gltf.scene.name = 'Table_005'
+        gltf.scene.scale.set(.5, .5, .5)
+        gltf.scene.rotation.y = Math.PI
+        scene.add(gltf.scene)
+
+        updateAllMaterials()
+      }
+    )
     gltfLoader.load(
       './models/sofa_001.glb',
       (gltf) => {
+        gltf.scene.name = 'Sofa_001'
         gltf.scene.scale.set(.5, .5, .5)
-        // gltf.scene.castShadow = true
-        // gltf.scene.receiveShadow = true
-
-        const children = [...gltf.scene.children]
-        for (const child of children) {
-          child.castShadow = true
-          child.receiveShadow = true
-          child.material.needsUpdate = true
-        }
+        gltf.scene.rotation.y = Math.PI
+        // gltf.scene.position.x = -1
+        gltf.scene.position.z = 1
         scene.add(gltf.scene)
+
+        updateAllMaterials()
       }
     )
 
     /**
      * Lights
      */
-    const ambientLight = new THREE.AmbientLight(0xe3f2fa, 0.7)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
     scene.add(ambientLight)
+    const ambientLight2 = new THREE.AmbientLight(0xffffff, 0.7)
+    scene.add(ambientLight2)
 
-    const pointLight = new THREE.PointLight(0xffffff, .5, 50);
-    pointLight.position.set(2, wallDimensions.height + 2, 0);
-    scene.add(pointLight);
+    // sky color ground color intensity 
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1.0)
+    hemiLight.color.setHSL(0.6, 1, 0.6)
+    hemiLight.groundColor.setHSL(0.095, 1, 0.75)
+    hemiLight.position.set(0, 5, 0)
+    scene.add(hemiLight)
 
-    const pointLightHelper = new THREE.PointLightHelper(pointLight, 1);
-    scene.add(pointLightHelper);
+    const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 1)
+    scene.add(hemiLightHelper)
+
+
+    const pointLight = new THREE.PointLight(0xffffff, 10, 50)
+    pointLight.position.set(1, 9, -1.8)
+    pointLight.castShadow = true // default false
+
+    pointLight.shadow.mapSize.width = 1024 // default
+    pointLight.shadow.mapSize.height = 1024 // default
+    pointLight.shadow.camera.near = 0.5 // default
+    pointLight.shadow.camera.far = 500 // default
+    pointLight.shadow.normalBias = .05
+
+    scene.add(pointLight)
+
+    const pointLightHelper = new THREE.PointLightHelper(pointLight, 1)
+    scene.add(pointLightHelper)
+
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0)
+    dirLight.color.setHSL(0.1, 1, 0.95)
+    dirLight.position.set(1, 15, -0.5)
+    scene.add(dirLight)
+
+    dirLight.castShadow = true
+
+    dirLight.shadow.mapSize.width = 512
+    dirLight.shadow.mapSize.height = 512
+    dirLight.shadow.camera.near = 0.5; // default
+    dirLight.shadow.camera.far = 500; // default
+
+    const d = 3
+    dirLight.shadow.camera.left = - d
+    dirLight.shadow.camera.right = d
+    dirLight.shadow.camera.top = d
+    dirLight.shadow.camera.bottom = - d
+
+    dirLight.shadow.camera.far = 30
+    // dirLight.shadow.bias = - 0.0001
+    dirLight.shadow.normalBias = .05  // prevent shadow acne
+
+    const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 1, 100)
+    scene.add(dirLightHelper)
+
+    const params = {
+      toggleAmbientLight: () => {
+        ambientLight.visible = !ambientLight.visible
+      },
+      toggleHemisphereLight: () => {
+        hemiLight.visible = !hemiLight.visible
+        hemiLightHelper.visible = !hemiLightHelper.visible
+      },
+      toggleDirectionalLight: () => {
+        dirLight.visible = !dirLight.visible
+        dirLightHelper.visible = !dirLightHelper.visible
+      },
+      togglePointLight: () => {
+        pointLight.visible = !pointLight.visible
+        pointLightHelper.visible = !pointLightHelper.visible
+      },
+      toggleAllLights: () => {
+        if (ambientLight.visible || hemiLight.visible || dirLight.visible || pointLight.visible) {
+          ambientLight.visible = false
+
+          hemiLight.visible = false
+          hemiLightHelper.visible = false
+
+          dirLight.visible = false
+          dirLightHelper.visible = false
+
+          pointLight.visible = false
+          pointLightHelper.visible = false
+        } else {
+          ambientLight.visible = true
+
+          hemiLight.visible = true
+          hemiLightHelper.visible = true
+
+          dirLight.visible = true
+          dirLightHelper.visible = true
+
+          pointLight.visible = true
+          pointLightHelper.visible = true
+        }
+      },
+      resetCameraView: () => {
+        controls.reset()
+        camera.position.set(0, 2, 7)
+        controls.target.set(0, 2.1, 0)
+      }
+    }
+
+    gui.add(params, 'toggleAmbientLight').name('Toggle Ambient Light')
+    gui.add(params, 'toggleHemisphereLight').name('Toggle Hemisphere Light')
+    gui.add(params, 'toggleDirectionalLight').name('Toggle Directional Light')
+    gui.add(params, 'togglePointLight').name('Toggle Point Light')
+    gui.add(params, 'toggleAllLights').name('Toggle All Lights')
+    gui.add(params, 'resetCameraView').name('Reset Camera View')
+    gui.open()
 
     /**
      * Sizes
@@ -404,10 +675,18 @@
       canvas: canvas,
       antialias: true
     })
-    renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap // default THREE.PCFShadowMap
+    renderer.shadowMap.autoUpdate = true;
+    renderer.physicallyCorrectLights = true
+    renderer.gammaFactor = 2.2;
+    // renderer.outputEncoding = THREE.sRGBEncoding
+    // renderer.toneMapping = THREE.ACESFilmicToneMapping
+    // renderer.toneMappingExposure = 0.6
+
+    console.log(scene)
 
     /**
      * Animate
