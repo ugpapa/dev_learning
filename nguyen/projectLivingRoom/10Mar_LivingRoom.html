@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title> Mysterio - Living room</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            overflow: hidden;
+        }
+
+        .webgl {
+            position: fixed;
+            top: 0;
+            left: 0;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="webgl"></canvas>
+    <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+            "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+            "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
+            "orbitControl": "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js",
+            "gltfLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js",
+            "dracoLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js"
+        }
+      }
+    </script>
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from "orbitControl";
+        import * as dat from "lil-gui";
+        import { GLTFLoader } from "gltfLoader";
+        import { DRACOLoader } from "dracoLoader";
+
+        let camera, controls, scene, renderer, gui, canvas;
+        let light, light2, light3, light4;
+
+        // Init
+        gui = new dat.GUI()
+        canvas = document.querySelector('canvas.webgl')
+        scene = new THREE.Scene()
+        const textureLoader = new THREE.TextureLoader()
+        const loader = new GLTFLoader();
+
+        // Size
+        const sizes = {
+            width: window.innerWidth,
+            height: window.innerHeight
+        }
+
+        const updateAllMaterials = () => {
+            scene.traverse((child) => {
+                if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+                    child.material.needsUpdate = true
+                    child.castShadow = true
+                    child.receiveShadow = true
+                }
+            })
+        }
+
+        // Camera
+        camera = new THREE.PerspectiveCamera(18, sizes.width / sizes.height, 0.1, 100)
+        camera.position.set(7, 2.1, 15);
+        scene.add(camera)
+
+        // Controls
+        controls = new OrbitControls(camera, canvas)
+        controls.target.set(0, 0.75, 0);
+        controls.enableDamping = true
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ canvas: canvas })
+        renderer.setSize(sizes.width, sizes.height)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        renderer.shadowMap.enabled = true
+        renderer.shadowMap.autoUpdate = true;
+
+        window.addEventListener('resize', onWindowResize);
+
+        function init() {
+            // Load room object
+            generateRoomObject()
+
+            // Load room
+            loader.load('scene.gltf', function (gltf) {
+                const car = gltf.scene.children[0];
+                //car.scale.set(1.5, 1.5, 2);
+                scene.add(gltf.scene);
+
+            });
+
+            generateLight()
+
+            //generateRoof()
+
+            // Add debug
+            debugConfiguration()
+        }
+        init()
+
+        function generateRoomObject() {
+            loader.load(
+                './models/Chair_002.glb',
+                (gltf) => {
+                    const chair = gltf.scene;
+                    chair.rotation.y = Math.PI * 1.25
+                    chair.position.x = 0.15
+                    chair.position.y = 0.15
+                    scene.add(chair)
+                    updateAllMaterials()
+                }
+            )
+
+            loader.load(
+                './models/table_002.glb',
+                (gltf) => {
+                    const table = gltf.scene;
+                    table.position.x = -2.1
+                    table.position.y = 0.1
+                    table.position.z = 3.5
+                    scene.add(table)
+                    updateAllMaterials()
+                }
+            )
+
+            loader.load(
+                './models/Chair_004.glb',
+                (gltf) => {
+                    const chair = gltf.scene;
+                    chair.rotation.y = Math.PI * 0.3
+                    chair.position.x = -2.1
+                    chair.position.y = 0.15
+                    chair.position.z = 2.5
+                    scene.add(chair)
+                    updateAllMaterials()
+                }
+            )
+
+            loader.load(
+                './models/Chair_004.glb',
+                (gltf) => {
+                    const chair = gltf.scene;
+                    chair.rotation.y = Math.PI * 0.25
+                    chair.position.x = 0.5
+                    chair.position.y = 0.15
+                    chair.position.z = -3.5
+                    scene.add(chair)
+                    updateAllMaterials()
+                }
+            )
+        }
+
+        function generateRoof() {
+            const floorTexture = textureLoader.load('./textures/floorTexture.png');
+            floorTexture.encoding = THREE.sRGBEncoding;
+            const floorMaterial = new THREE.MeshStandardMaterial();
+            floorMaterial.map = floorTexture;
+            const floor = new THREE.Mesh(
+                new THREE.ConeGeometry(5, 4, 4),
+                new THREE.MeshStandardMaterial({
+                    map: floorTexture,
+                })
+            );
+            floor.position.set(0, 5, 0)
+            floor.receiveShadow = true;
+            floor.rotation.y = Math.PI * 0.25;
+            scene.add(floor);
+        }
+
+        function generateLight() {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2)
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.2)
+            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.2);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.set(1024, 1024)
+            directionalLight.shadow.camera.far = 50
+            directionalLight.shadow.camera.left = 20
+            directionalLight.shadow.camera.top = 19
+            directionalLight.shadow.camera.right = 7
+            directionalLight.shadow.camera.bottom = -7
+            directionalLight.position.set(0, 0, 0)
+            directionalLight2.position.set(0, 30, 3)
+            scene.add(ambientLight, directionalLight, directionalLight2)
+
+            light = new THREE.PointLight('#fdfbd3', 0.3);
+            light.position.set(0, 300, 500);
+            light2 = new THREE.PointLight('#fdfbd3', 0.3);
+            light2.position.set(500, 100, 0);
+            light3 = new THREE.PointLight('#fdfbd3', 0.3);
+            light3.position.set(0, 200, -500);
+            light4 = new THREE.PointLight('#fdfbd3', 0.3);
+            light4.position.set(-500, 600, 500);
+            scene.add(light, light2, light3, light4);
+        }
+
+        function debugConfiguration() {
+            gui.add(camera.position, 'z', -15, 15, 1)
+            gui.add(camera.position, 'y', -15, 15, 1)
+            gui.add(camera.position, 'x', -15, 15, 1)
+        }
+
+        // Animate
+        let previousTime = 0;
+        const clock = new THREE.Clock()
+        const animate = () => {
+            const elapsedTime = clock.getElapsedTime();
+            const deltaTime = elapsedTime - previousTime;
+
+            controls.update()
+
+            render();
+
+            window.requestAnimationFrame(animate)
+        }
+        animate()
+
+        function onWindowResize() {
+            // Update sizes, camera, renderer
+            sizes.width = window.innerWidth
+            sizes.height = window.innerHeight
+
+            camera.aspect = sizes.width / sizes.height
+            camera.updateProjectionMatrix()
+
+            renderer.setSize(sizes.width, sizes.height)
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+
+</html>
