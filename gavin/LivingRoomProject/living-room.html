@@ -89,6 +89,7 @@
           if (child.name == 'room') {
             child.children[0].traverse((roomChild) => {
               if (roomChild instanceof THREE.Mesh && roomChild.material instanceof THREE.MeshStandardMaterial) {
+                roomChild.material.needsUpdate = true
                 roomChild.material.metalness = 0.0
                 roomChild.material.roughness = 1.0
                 roomChild.castShadow = true
@@ -165,37 +166,6 @@
       width: floorDimensions.height,
       height: 4.5,
     }
-    // const wallGeometry = new THREE.PlaneGeometry(wallDimensions.width, wallDimensions.height)
-    // const wallMaterial = new THREE.MeshLambertMaterial({
-    //   color: '#cde9f7'
-    // })
-    // const wallMesh = new THREE.Mesh(wallGeometry, wallMaterial)
-    // wallMesh.castShadow = false
-    // wallMesh.receiveShadow = true
-
-    // // left wall (from camera's POV)
-    // const wallLeft = wallMesh.clone();
-    // wallLeft.name = 'wallLeft'
-    // wallLeft.rotation.y = Math.PI * 0.5
-    // wallLeft.position.x = -floorDimensions.width / 2
-    // wallLeft.position.y = wallDimensions.height / 2
-
-    // // right wall (from camera's POV)
-    // const wallRight = wallMesh.clone();
-    // wallRight.name = 'wallRight'
-    // wallRight.rotation.y = -Math.PI * 0.5
-    // wallRight.position.x = floorDimensions.width / 2
-    // wallRight.position.y = wallDimensions.height / 2
-
-    // // back wall
-    // const wallBack = wallMesh.clone();
-    // wallBack.name = 'wallBack'
-    // wallBack.position.z = -floorDimensions.height / 2
-    // wallBack.position.y = wallDimensions.height / 2
-
-    // scene.add(wallLeft)
-    // scene.add(wallBack)
-    // scene.add(wallRight)
 
     /**
      * Pillars
@@ -585,7 +555,7 @@
     // directional light to give more detailed shadows
     const dirLight = new THREE.DirectionalLight(0xffffff, lightParams.dirIntensity)
     dirLight.color.setHSL(0.1, 1, 0.95)
-    dirLight.position.set(1, 8, -0.5)
+    dirLight.position.set(0.3, 9, 1.5)
     scene.add(dirLight)
 
     dirLight.castShadow = true
@@ -601,6 +571,9 @@
     dirLight.shadow.camera.top = d
     dirLight.shadow.camera.bottom = - d
     dirLight.shadow.camera.far = 30
+
+    scene.add(dirLight.target)
+    dirLight.target = pillarTopL
 
     // dirLight.shadow.bias = - 0.0001
     dirLight.shadow.normalBias = .05  // prevent shadow acne
@@ -623,6 +596,22 @@
 
     const pointLightHelper = new THREE.PointLightHelper(pointLight, 1)
     scene.add(pointLightHelper)
+
+    // point light for soft shadows and soft lighting
+    // const pointLight2 = new THREE.PointLight(0xffffff, 8, 50)
+    // pointLight2.position.set(0, 5, 0)
+    // pointLight2.castShadow = true
+
+    // pointLight2.shadow.mapSize.width = 1024
+    // pointLight2.shadow.mapSize.height = 1024
+    // pointLight2.shadow.camera.near = 0.5 // default
+    // pointLight2.shadow.camera.far = 30 // default
+    // pointLight2.shadow.normalBias = .05
+
+    // const pointLightHelper2 = new THREE.PointLightHelper(pointLight2, 0.5)
+    // scene.add(pointLightHelper2)
+
+    // scene.add(pointLight2)
 
     const params = {
       toggleAmbientLight: () => {
@@ -736,7 +725,7 @@
     cameraFolder.add(params, 'enableControlRestrictions').name('Enable control restrictions')
     cameraFolder.add(params, 'disableControlRestrictions').name('Disable control restrictions')
     cameraFolder.add(params, 'resetCameraView').name('Reset Camera View')
-    cameraFolder.close()
+    cameraFolder.open()
 
     gui.open();
 
@@ -761,7 +750,7 @@
      * Camera
      */
     // Base camera
-    const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 100)
+    const camera = new THREE.PerspectiveCamera(70, sizes.width / sizes.height, 0.1, 100)
     scene.add(camera)
 
     // Controls
@@ -779,8 +768,8 @@
 
     const setDefaultView = () => {
       controls.reset()
-      camera.position.set(0, 1.8, 6.9)
-      controls.target.set(0, 1.8, 0)
+      camera.position.set(0, 1.7, 4.9)
+      controls.target.set(0, 1.7, 0)
     }
     setDefaultView()
 
@@ -792,7 +781,7 @@
       // Limit rotations
       // Limit vertical rotation.Range is 0 to Math.PI radians.
       controls.minPolarAngle = Math.PI * 0.45
-      controls.maxPolarAngle = Math.PI * 0.6
+      controls.maxPolarAngle = Math.PI * 0.55
 
       // Limit horizontal rotation
       // If set, the interval [ min, max ] must be a sub-interval of [ - 2 PI, 2 PI ], with ( max - min < 2 PI )
