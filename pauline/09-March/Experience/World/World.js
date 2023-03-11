@@ -1,7 +1,7 @@
 import Experience from "../Experience.js";
 import Environment from "./Environment.js";
 import Floor from "./Floor.js";
-import Furniture from "./Furniture.js";
+import Room from "./Room.js";
 import * as THREE from "three";
 
 export default class World {
@@ -13,15 +13,15 @@ export default class World {
     // Wait for resources
     this.resources.on("ready", () => {
       // Setup
-      this.floor = new Floor();
-      this.furniture = new Furniture();         
+      // this.floor = new Floor();
+      this.room = new Room();
       this.environment = new Environment();
     });
   }
 
   update() {
-    if (this.furniture) {
-      this.furniture.update();
+    if (this.room) {
+      this.room.update();
     }
   }
 }
