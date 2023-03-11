@@ -94,6 +94,7 @@
                 roomChild.material.roughness = 1.0
                 roomChild.castShadow = true
                 roomChild.receiveShadow = true
+                if (roomChild.material.map) roomChild.material.map.anisotropy = 16
               }
             })
           } else {
@@ -108,15 +109,16 @@
               child.children[0].material.metalness = 0.0
               child.children[0].material.roughness = 1.0
             }
+            if (child.children[0].material.map) child.children[0].material.map.anisotropy = 16
           }
         }
 
-        // this enables shadows on all objects with MeshStandardMaterial material
-        // if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-        //   child.material.needsUpdate = true
-        //   child.castShadow = true
-        //   child.receiveShadow = true
-        // }
+        if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+          // child.material.needsUpdate = true
+          // child.castShadow = true
+          // child.receiveShadow = true
+          if (child.material.map) child.material.map.anisotropy = 16
+        }
       })
     }
 
@@ -146,8 +148,10 @@
     floorMaterial.map = textureLoader.load('./textures/floor-pattern.png')
     floorMaterial.metalness = 0.6
     floorMaterial.roughness = 0.3
-    floorMaterial.opacity = 0.9
+    floorMaterial.opacity = 0.7
     floorMaterial.transparent = true
+    floorMaterial.emissive = new THREE.Color('white')
+    floorMaterial.emissiveIntensity = 0.3
 
     const floor = new THREE.Mesh(floorGeometry, floorMaterial)
     floor.name = 'floor'
@@ -492,17 +496,6 @@
       }
     )
     gltfLoader.load(
-      './models/roof.glb',
-      (gltf) => {
-        gltf.scene.name = 'roof'
-        gltf.scene.scale.set(.5, .5, .5)
-        gltf.scene.position.y = wallDimensions.height + 0.5
-        scene.add(gltf.scene)
-
-        updateAllMaterials()
-      }
-    )
-    gltfLoader.load(
       './models/room.glb',
       (gltf) => {
         gltf.scene.name = 'room'
@@ -511,6 +504,18 @@
         scene.add(gltf.scene)
 
         updateAllMaterials()
+
+        gltfLoader.load(
+          './models/roof.glb',
+          (gltf) => {
+            gltf.scene.name = 'roof'
+            gltf.scene.scale.set(.5, .5, .5)
+            gltf.scene.position.y = wallDimensions.height + 0.5
+            scene.add(gltf.scene)
+
+            updateAllMaterials()
+          }
+        )
       }
     )
 
@@ -531,19 +536,28 @@
     /**
      * Lights
     */
-    const lightParams = {
-      ambientIntensity: 0.7,
-      hemiIntensity: 1.25,
-      dirIntensity: 2.0,
-      pointIntensity: 10
+    const ambiLightIntensity = 0.3
+    const hemiLightIntensity = 1.0
+    const spotLightIntensity = 100
+    const dirLightIntensity = 3
+    const pointLightIntensity = 10
+
+    const resetLightValues = () => {
+      ambientLight.intensity = ambiLightIntensity
+      hemiLight.intensity = hemiLightIntensity
+      dirLight.intensity = dirLightIntensity
+      // pointLight.intensity = pointLightIntensity
+      // spotLight.intensity = spotLightIntensity
     }
 
     // light things up a bit
-    const ambientLight = new THREE.AmbientLight(0xffffff, lightParams.ambientIntensity)
+    const ambientLight = new THREE.AmbientLight(0xffffff, ambiLightIntensity)
     scene.add(ambientLight)
 
+    // ambientLight.visible = false
+
     // hemisphere light for natural sunlight
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, lightParams.hemiIntensity)
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, hemiLightIntensity)
     hemiLight.color.setHSL(0.6, 1, 0.6)
     hemiLight.groundColor.setHSL(0.095, 1, 0.75)
     hemiLight.position.set(0, 8, 0)
@@ -553,9 +567,9 @@
     scene.add(hemiLightHelper)
 
     // directional light to give more detailed shadows
-    const dirLight = new THREE.DirectionalLight(0xffffff, lightParams.dirIntensity)
+    const dirLight = new THREE.DirectionalLight(0xffffff, dirLightIntensity)
     dirLight.color.setHSL(0.1, 1, 0.95)
-    dirLight.position.set(0.3, 9, 1.5)
+    dirLight.position.set(1.0, 6.3, 1.25)
     scene.add(dirLight)
 
     dirLight.castShadow = true
@@ -565,53 +579,22 @@
     dirLight.shadow.camera.near = 0.5; // default
     dirLight.shadow.camera.far = 30;
 
-    const d = 3
-    dirLight.shadow.camera.left = - d
-    dirLight.shadow.camera.right = d
-    dirLight.shadow.camera.top = d
-    dirLight.shadow.camera.bottom = - d
-    dirLight.shadow.camera.far = 30
-
-    scene.add(dirLight.target)
-    dirLight.target = pillarTopL
+    dirLight.shadow.camera.left = - 2
+    dirLight.shadow.camera.right = 2
+    dirLight.shadow.camera.top = 3
+    dirLight.shadow.camera.bottom = - 3
 
     // dirLight.shadow.bias = - 0.0001
     dirLight.shadow.normalBias = .05  // prevent shadow acne
 
+    scene.add(dirLight.target)
+    dirLight.target = pillarStandL
+
     const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 1)
     scene.add(dirLightHelper)
 
-    // point light for soft shadows and soft lighting
-    const pointLight = new THREE.PointLight(0xffffff, lightParams.pointIntensity, 50)
-    pointLight.position.set(1.5, 9, -1.8)
-    pointLight.castShadow = true
-
-    pointLight.shadow.mapSize.width = 1024
-    pointLight.shadow.mapSize.height = 1024
-    pointLight.shadow.camera.near = 0.5 // default
-    pointLight.shadow.camera.far = 30 // default
-    pointLight.shadow.normalBias = .05
-
-    scene.add(pointLight)
-
-    const pointLightHelper = new THREE.PointLightHelper(pointLight, 1)
-    scene.add(pointLightHelper)
-
-    // point light for soft shadows and soft lighting
-    // const pointLight2 = new THREE.PointLight(0xffffff, 8, 50)
-    // pointLight2.position.set(0, 5, 0)
-    // pointLight2.castShadow = true
-
-    // pointLight2.shadow.mapSize.width = 1024
-    // pointLight2.shadow.mapSize.height = 1024
-    // pointLight2.shadow.camera.near = 0.5 // default
-    // pointLight2.shadow.camera.far = 30 // default
-    // pointLight2.shadow.normalBias = .05
-
-    // const pointLightHelper2 = new THREE.PointLightHelper(pointLight2, 0.5)
-    // scene.add(pointLightHelper2)
-
-    // scene.add(pointLight2)
+    // dirLight.visible = false
+    // dirLightHelper.visible = false
 
     const params = {
       toggleAmbientLight: () => {
@@ -625,12 +608,8 @@
         dirLight.visible = !dirLight.visible
         dirLightHelper.visible = !dirLightHelper.visible
       },
-      togglePointLight: () => {
-        pointLight.visible = !pointLight.visible
-        pointLightHelper.visible = !pointLightHelper.visible
-      },
       toggleAllLights: () => {
-        if (ambientLight.visible || hemiLight.visible || dirLight.visible || pointLight.visible) {
+        if (ambientLight.visible || hemiLight.visible || dirLight.visible) {
           ambientLight.visible = false
 
           hemiLight.visible = false
@@ -638,9 +617,6 @@
 
           dirLight.visible = false
           dirLightHelper.visible = false
-
-          pointLight.visible = false
-          pointLightHelper.visible = false
         } else {
           ambientLight.visible = true
 
@@ -649,9 +625,6 @@
 
           dirLight.visible = true
           dirLightHelper.visible = true
-
-          pointLight.visible = true
-          pointLightHelper.visible = true
         }
       },
       resetCameraView: () => {
@@ -678,37 +651,16 @@
       },
       resetLightValues: () => {
         resetLightValues()
+      },
+      resetToneMappingExposure: () => {
+        renderer.toneMappingExposure = toneMappingExposure
       }
     }
 
-    const resetLightValues = () => {
-      lightParams.ambientIntensity = 0.7
-      lightParams.hemiIntensity = 1.25
-      lightParams.dirIntensity = 2.0
-      lightParams.pointIntensity = 10
-    }
-
     const controlLightFolder = gui.addFolder('Lighting')
-    controlLightFolder
-      .add(hemiLight, 'intensity')
-      .min(0)
-      .max(3)
-      .step(0.05)
-      .name('Hemisphere light intensity')
-
-    controlLightFolder
-      .add(dirLight, 'intensity')
-      .min(0)
-      .max(5)
-      .step(0.1)
-      .name('Directional light intensity')
-
-    controlLightFolder
-      .add(pointLight, 'intensity')
-      .min(0)
-      .max(50)
-      .step(0.5)
-      .name('Point light intensity')
+    controlLightFolder.add(ambientLight, 'intensity').min(0).max(2).step(0.05).name('Ambient light intensity').listen()
+    controlLightFolder.add(hemiLight, 'intensity').min(0).max(3).step(0.05).name('Hemisphere light intensity').listen()
+    controlLightFolder.add(dirLight, 'intensity').min(0).max(5).step(0.1).name('Directional light intensity').listen()
 
     controlLightFolder.add(params, 'resetLightValues').name('Reset Light values')
     controlLightFolder.close()
@@ -717,7 +669,6 @@
     toggleFolder.add(params, 'toggleAmbientLight').name('Toggle Ambient Light')
     toggleFolder.add(params, 'toggleHemisphereLight').name('Toggle Hemisphere Light')
     toggleFolder.add(params, 'toggleDirectionalLight').name('Toggle Directional Light')
-    toggleFolder.add(params, 'togglePointLight').name('Toggle Point Light')
     toggleFolder.add(params, 'toggleAllLights').name('Toggle All Lights')
     toggleFolder.close()
 
@@ -764,8 +715,6 @@
       BOTTOM: 'KeyS'
     }
 
-    // window.addEventListener( 'keydown', onKeyDown, false )
-
     const setDefaultView = () => {
       controls.reset()
       camera.position.set(0, 1.7, 4.9)
@@ -805,22 +754,27 @@
     renderer.physicallyCorrectLights = true
     renderer.outputEncoding = THREE.sRGBEncoding
 
-    // renderer.toneMapping = THREE.ACESFilmicToneMapping
-    // renderer.toneMappingExposure = 3
-    // gui
-    //   .add(renderer, 'toneMapping', {
-    //     No: THREE.NoToneMapping,
-    //     Linear: THREE.LinearToneMapping,
-    //     Reinhard: THREE.ReinhardToneMapping,
-    //     Cineon: THREE.CineonToneMapping,
-    //     ACESFilmic: THREE.ACESFilmicToneMapping
-    //   })
-    //   .onFinishChange(() => {
-    //     renderer.toneMapping = Number(renderer.toneMapping)
-    //     updateAllMaterials()
-    //   })
+    // Tone Mapping
+    const toneMappingExposure = 1
+    renderer.toneMapping = THREE.LinearToneMapping
+    renderer.toneMappingExposure = toneMappingExposure
 
-    // gui.add(renderer, 'toneMappingExposure').min(0).max(10).step(0.001)
+    const toneMapFolder = gui.addFolder('Tone Mapping')
+    toneMapFolder
+      .add(renderer, 'toneMapping', {
+        No: THREE.NoToneMapping,
+        Linear: THREE.LinearToneMapping,
+        Reinhard: THREE.ReinhardToneMapping,
+        Cineon: THREE.CineonToneMapping,
+        ACESFilmic: THREE.ACESFilmicToneMapping
+      })
+      .onFinishChange(() => {
+        renderer.toneMapping = Number(renderer.toneMapping)
+        updateAllMaterials()
+      })
+    toneMapFolder.add(renderer, 'toneMappingExposure').min(0).max(10).step(0.001).listen()
+    toneMapFolder.add(params, 'resetToneMappingExposure').name('Reset Tone Mapping Exposure')
+    toneMapFolder.close()
 
     console.log(scene)
 
