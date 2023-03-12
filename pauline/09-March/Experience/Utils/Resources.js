@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { GLTFLoader } from 'https://unpkg.com/three@0.148.0/examples/jsm/loaders/GLTFLoader.js'
+import { GLTFLoader } from 'gltfLoader'
 import EventEmitter from './EventEmitter.js'
 
 export default class Resources extends EventEmitter
