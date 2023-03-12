@@ -75,7 +75,7 @@
 
         // Camera
         camera = new THREE.PerspectiveCamera(18, sizes.width / sizes.height, 0.1, 100)
-        camera.position.set(7, 2.1, 15);
+        camera.position.set(15, 4, -7);
         scene.add(camera)
 
         // Controls
@@ -96,22 +96,26 @@
             // Load room object
             generateRoomObject()
 
-            // Load room
-            loader.load('scene.gltf', function (gltf) {
-                const car = gltf.scene.children[0];
-                //car.scale.set(1.5, 1.5, 2);
-                scene.add(gltf.scene);
+            generateRoom()
 
-            });
-
+            generateWallPicture()
+        
             generateLight()
 
-            //generateRoof()
+            // generateRoof()
 
             // Add debug
             debugConfiguration()
         }
         init()
+
+        function generateRoom() {
+            loader.load('scene.gltf', function (gltf) {
+                const obj = gltf.scene.children[0];
+                obj.scale.set(1.0, 1.0, 1.2);
+                scene.add(gltf.scene);
+            });
+        }
 
         function generateRoomObject() {
             loader.load(
@@ -165,6 +169,98 @@
             )
         }
 
+        function generateWallPicture(){
+            const smallPictureTopLeftFrame = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
+            const smallPictureMapTopLeft = new THREE.TextureLoader().load('textures/mys.jpg');
+            const smallPictureMaterialTopLeft = new THREE.MeshLambertMaterial({ map: smallPictureMapTopLeft });
+            const smallPicTopLeft = new THREE.Mesh(
+                new THREE.PlaneGeometry(
+                    0.8,
+                    1.0
+                ),
+                smallPictureMaterialTopLeft
+            )
+            smallPicTopLeft.position.x = -2.9
+            smallPicTopLeft.position.y = 2.1
+            smallPicTopLeft.position.z = 3.8
+            smallPicTopLeft.rotation.y = Math.PI * 0.5
+            smallPicTopLeft.receiveShadow = true
+            smallPictureTopLeftFrame.position.x = -3
+            smallPictureTopLeftFrame.position.y = 2.1
+            smallPictureTopLeftFrame.position.z = 3.8
+            smallPictureTopLeftFrame.rotation.y = Math.PI * 0.5
+            smallPictureTopLeftFrame.castShadow = true
+            scene.add(smallPicTopLeft, smallPictureTopLeftFrame);
+
+            const smallPictureFrameMiddle = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
+            const smallPictureMapMiddle = new THREE.TextureLoader().load('textures/theOrder.jpg');
+            const smallPictureMaterialMiddle = new THREE.MeshLambertMaterial({ map: smallPictureMapMiddle });
+            const smallPictureMiddle = new THREE.Mesh(
+                new THREE.PlaneGeometry(
+                    0.8,
+                    1.0
+                ),
+                smallPictureMaterialMiddle
+            )
+            smallPictureMiddle.position.x = -2.9
+            smallPictureMiddle.position.y = 2.1
+            smallPictureMiddle.position.z = 2.3
+            smallPictureMiddle.rotation.y = Math.PI * 0.5
+            smallPictureMiddle.receiveShadow = true
+            smallPictureFrameMiddle.position.x = -3
+            smallPictureFrameMiddle.position.y = 2.1
+            smallPictureFrameMiddle.position.z = 2.3
+            smallPictureFrameMiddle.rotation.y = Math.PI * 0.5
+            smallPictureFrameMiddle.castShadow = true
+            scene.add(smallPictureMiddle, smallPictureFrameMiddle);
+
+            const smallPictureFrameTopRight = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
+            const smallPictureMapTopRight = new THREE.TextureLoader().load('textures/psyart.jpg');
+            const smallPictureMaterialTopRight = new THREE.MeshLambertMaterial({ map: smallPictureMapTopRight });
+            const smallPictureTopRight = new THREE.Mesh(
+                new THREE.PlaneGeometry(
+                    0.8,
+                    1.0
+                ),
+                smallPictureMaterialTopRight
+            )
+            smallPictureTopRight.position.x = -2.9
+            smallPictureTopRight.position.y = 2.1
+            smallPictureTopRight.position.z = 2.3 - (3.8 - 2.3)
+            smallPictureTopRight.rotation.y = Math.PI * 0.5
+            smallPictureTopRight.receiveShadow = true
+            smallPictureFrameTopRight.position.x = -3
+            smallPictureFrameTopRight.position.y = 2.1
+            smallPictureFrameTopRight.position.z = 2.3 - (3.8 - 2.3)
+            smallPictureFrameTopRight.rotation.y = Math.PI * 0.5
+            smallPictureFrameTopRight.castShadow = true
+            scene.add(smallPictureTopRight, smallPictureFrameTopRight);
+
+            const mediumFramePicture = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.3, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
+            const mediumPictureMap = new THREE.TextureLoader().load('textures/friendsnotexist.jpg');
+            const mediumPictureMaterial = new THREE.MeshLambertMaterial({ map: mediumPictureMap });
+            const mediumPicture = new THREE.Mesh(
+                new THREE.PlaneGeometry(
+                    2.0,
+                    2.0
+                ),
+                mediumPictureMaterial
+            )
+            mediumPicture.position.x = 0
+            mediumPicture.position.y = 1.5
+            mediumPicture.position.z = 4.45
+            mediumPicture.rotation.y = Math.PI * 1
+            mediumPicture.rotation.z = Math.PI * 0
+            mediumPicture.receiveShadow = true
+            mediumFramePicture.position.x = 0
+            mediumFramePicture.position.y = 1.5
+            mediumFramePicture.position.z = 4.5
+            mediumFramePicture.rotation.y = Math.PI * 1
+            mediumFramePicture.rotation.z = Math.PI * 0
+            mediumFramePicture.castShadow = true
+            scene.add(mediumPicture, mediumFramePicture);
+        }
+
         function generateRoof() {
             const floorTexture = textureLoader.load('./textures/floorTexture.png');
             floorTexture.encoding = THREE.sRGBEncoding;
@@ -184,6 +280,7 @@
 
         function generateLight() {
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.2)
+            const ambientLight2 = new THREE.AmbientLight(0x555555, 0.9);
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.2)
             const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.2);
             directionalLight.castShadow = true;
@@ -195,7 +292,7 @@
             directionalLight.shadow.camera.bottom = -7
             directionalLight.position.set(0, 0, 0)
             directionalLight2.position.set(0, 30, 3)
-            scene.add(ambientLight, directionalLight, directionalLight2)
+            scene.add(ambientLight, ambientLight2, directionalLight, directionalLight2)
 
             light = new THREE.PointLight('#fdfbd3', 0.3);
             light.position.set(0, 300, 500);
