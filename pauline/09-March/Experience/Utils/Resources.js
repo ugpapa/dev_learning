@@ -28,6 +28,7 @@ export default class Resources extends EventEmitter
 
     startLoading()
     {
+        //TODO: change this to hashmap
         // Load each source
         for(const source of this.sources)
         {
