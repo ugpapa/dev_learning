@@ -13,78 +13,22 @@ export default class Environment {
       this.debugFolder = this.debug.ui.addFolder("environment");
     }
 
-    this.setSunLight()
-    // this.setAmbientLight();
-    // this.setDirectionalLight();
+    this.setPointLight();
     this.setEnvironmentMap();
   }
 
-  setAmbientLight() {
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-    this.scene.add(this.ambientLight);
+  setPointLight() {
+    this.pointLight = new THREE.PointLight("#e75f35", 70000);
+    this.pointLight.position.set(100, 310, 110);
+    this.scene.add(this.pointLight);
   }
 
-  setDirectionalLight() {
-    this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    this.directionalLight.castShadow = true;
-    this.directionalLight.shadow.mapSize.set(1024, 1024);
-    this.directionalLight.shadow.camera.far = 15;
-    this.directionalLight.shadow.camera.left = -7;
-    this.directionalLight.shadow.camera.top = 7;
-    this.directionalLight.shadow.camera.right = 7;
-    this.directionalLight.shadow.camera.bottom = -7;
-    this.directionalLight.position.set(5, 5, 5);
-    this.scene.add(this.directionalLight);
-  }
-
-  setSunLight() {
-    this.sunLight = new THREE.DirectionalLight("#ffffff", 4);
-    this.sunLight.castShadow = true;
-    this.sunLight.shadow.camera.far = 15;
-    this.sunLight.shadow.mapSize.set(1024, 1024);
-    this.sunLight.shadow.normalBias = 0.05;
-    this.sunLight.position.set(3.5, 2, -1.25);
-    this.scene.add(this.sunLight);
-
-    // Debug
-    if (this.debug.active) {
-      this.debugFolder
-        .add(this.sunLight, "intensity")
-        .name("sunLightIntensity")
-        .min(0)
-        .max(10)
-        .step(0.001);
-
-      this.debugFolder
-        .add(this.sunLight.position, "x")
-        .name("sunLightX")
-        .min(-5)
-        .max(5)
-        .step(0.001);
-
-      this.debugFolder
-        .add(this.sunLight.position, "y")
-        .name("sunLightY")
-        .min(-5)
-        .max(5)
-        .step(0.001);
-
-      this.debugFolder
-        .add(this.sunLight.position, "z")
-        .name("sunLightZ")
-        .min(-5)
-        .max(5)
-        .step(0.001);
-    }
-  }
-
+ 
   setEnvironmentMap() {
     this.environmentMap = {};
     this.environmentMap.intensity = 0.4;
     this.environmentMap.texture = this.resources.items.environmentMapTexture;
     this.environmentMap.texture.encoding = THREE.sRGBEncoding;
-
-    this.scene.environment = this.environmentMap.texture;
 
     this.environmentMap.updateMaterials = () => {
       this.scene.traverse((child) => {
@@ -98,6 +42,7 @@ export default class Environment {
         }
       });
     };
+
     this.environmentMap.updateMaterials();
 
     // Debug

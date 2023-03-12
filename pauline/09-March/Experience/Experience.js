@@ -7,6 +7,7 @@ import Camera from "./Camera.js";
 import World from "./World/World.js";
 import sources from "./sources.js";
 import Renderer from "./Renderer.js";
+import Environment from "./World/Environment.js";
 
 let instance = null;
 
@@ -52,7 +53,6 @@ export default class Experience {
 
   update() {
     this.camera.update();
-    this.world.update();
     this.renderer.update();
   }
 
