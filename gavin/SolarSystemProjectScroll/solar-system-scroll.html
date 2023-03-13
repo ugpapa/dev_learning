@@ -319,7 +319,7 @@
      *
     */
     const sun = new THREE.Mesh(
-      new THREE.SphereGeometry(params.sunSize, 32, 32),
+      new THREE.SphereGeometry(params.sunSize, 64, 64),
       new THREE.MeshLambertMaterial({
         map: sunColorTexture,
         emissive: new THREE.Color(planets.sun.sunHexColor),
@@ -329,7 +329,7 @@
     )
 
     const earth = new THREE.Mesh(
-      new THREE.SphereGeometry(planets.earth.size, 32, 16),
+      new THREE.SphereGeometry(planets.earth.size, 64, 64),
       new THREE.MeshLambertMaterial({
         map: earthColorTexture,
         specularMap: earthSpecularTexture
@@ -338,7 +338,7 @@
     earth.rotation.y = 23.4
 
     const earthMoon = new THREE.Mesh(
-      new THREE.SphereGeometry(planets.earth.size * planets.earth.moon.sizeToEarth, 32, 16),
+      new THREE.SphereGeometry(planets.earth.size * planets.earth.moon.sizeToEarth, 64, 64),
       new THREE.MeshLambertMaterial({
         map: earthMoonColorTexture
       })
@@ -347,7 +347,7 @@
     earth.add(earthMoon)
 
     const mercury = new THREE.Mesh(
-      new THREE.SphereGeometry(planets.mercury.size, 32, 16),
+      new THREE.SphereGeometry(planets.mercury.size, 64, 64),
       new THREE.MeshLambertMaterial({
         map: mercuryColorTexture
       })
@@ -355,7 +355,7 @@
     mercury.rotation.y = 0
 
     const venus = new THREE.Mesh(
-      new THREE.SphereGeometry(planets.venus.size, 32, 16),
+      new THREE.SphereGeometry(planets.venus.size, 64, 64),
       new THREE.MeshLambertMaterial({
         map: venusColorTexture
       })
@@ -363,7 +363,7 @@
     venus.rotation.y = 177.4
 
     const mars = new THREE.Mesh(
-      new THREE.SphereGeometry(planets.mars.size, 32, 16),
+      new THREE.SphereGeometry(planets.mars.size, 64, 64),
       new THREE.MeshLambertMaterial({
         map: marsColorTexture
       })
@@ -371,7 +371,7 @@
     mars.rotation.y = 25.2
 
     const jupiter = new THREE.Mesh(
-      new THREE.SphereGeometry(planets.jupiter.size, 32, 16),
+      new THREE.SphereGeometry(planets.jupiter.size, 64, 64),
       new THREE.MeshLambertMaterial({
         map: jupiterColorTexture
       })
@@ -381,7 +381,7 @@
     const saturn = new THREE.Group()
 
     const saturnSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(planets.saturn.size, 32, 16),
+      new THREE.SphereGeometry(planets.saturn.size, 64, 64),
       new THREE.MeshLambertMaterial({
         map: saturnColorTexture
       })
@@ -417,7 +417,7 @@
     saturn.add(saturnSphere, saturnRing)
 
     const uranus = new THREE.Mesh(
-      new THREE.SphereGeometry(planets.uranus.size, 32, 16),
+      new THREE.SphereGeometry(planets.uranus.size, 64, 64),
       new THREE.MeshLambertMaterial({
         map: uranusColorTexture
       })
@@ -425,7 +425,7 @@
     uranus.rotation.y = 97.8
 
     const neptune = new THREE.Mesh(
-      new THREE.SphereGeometry(planets.neptune.size, 32, 16),
+      new THREE.SphereGeometry(planets.neptune.size, 64, 64),
       new THREE.MeshLambertMaterial({
         map: neptuneColorTexture
       })
