@@ -596,8 +596,6 @@
       else
         verticalViewRatio = sizes.width / sizes.height
 
-      console.log('verticalViewRatio:', verticalViewRatio)
-
       // Update cameras and renderers
       for (let i = 0; i < cameraViews.length; i++) {
         const view = cameraViews[i]
@@ -801,8 +799,6 @@
         renderer.setViewport(x, y, width, height)
         renderer.setScissor(x, y, width, height)
         renderer.setScissorTest(true)
-
-        // console.log(view.name, 'x:', x, ', y:', y, ', width:', width, ', height:', height)
 
         renderer.render(scene, camera)
       }
