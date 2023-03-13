@@ -1,0 +1,8 @@
+master.yang
+  3:16 PM
+homework..
+Make a solar system.
+- Sun is located in center, and other planet is rotate around sun, and stars is in background.
+- all planet’s map is  in https://www.solarsystemscope.com/textures/
+- earth has moon, moon is also rotate the earth.
+- use camera animation, makes scene awesome. :slightly_smiling_face:
