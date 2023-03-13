@@ -75,12 +75,11 @@
 
         // Camera
         camera = new THREE.PerspectiveCamera(18, sizes.width / sizes.height, 0.1, 100)
-        camera.position.set(16.5, 2, 0);
         scene.add(camera)
 
         // Controls
         controls = new OrbitControls(camera, canvas)
-        controls.target.set(-5, 2.5, 0);
+        controls.enableDamping = true
         controls.listenToKeyEvents(window)
         controls.keys = {
             LEFT: 'KeyA',
