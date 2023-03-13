@@ -576,16 +576,33 @@
       height: window.innerHeight
     }
 
+    let verticalViewRatio = sizes.width / sizes.height
+    if (sizes.width / sizes.height < 0.3)
+      verticalViewRatio = 0.3
+    else if (sizes.width / sizes.height > 1.0)
+      verticalViewRatio = 1.0
+    else
+      verticalViewRatio = sizes.width / sizes.height
+
+
     window.addEventListener('resize', () => {
       // Update sizes
       sizes.width = window.innerWidth
       sizes.height = window.innerHeight
+      if (sizes.width / sizes.height < 0.3)
+        verticalViewRatio = 0.3
+      else if (sizes.width / sizes.height > 1.0)
+        verticalViewRatio = 1.0
+      else
+        verticalViewRatio = sizes.width / sizes.height
+
+      console.log('verticalViewRatio:', verticalViewRatio)
 
       // Update cameras and renderers
       for (let i = 0; i < cameraViews.length; i++) {
         const view = cameraViews[i]
         const camera = view.camera
-        
+
         // Update camera
         camera.aspect = (sizes.width / sizes.height) * sectionsOnScreen
         camera.updateProjectionMatrix()
@@ -732,9 +749,9 @@
         obj.position.z = -(Math.sin(elapsedTime * 0.5 * speed * params.orbitalSpeed) * params.distanceGap * pos)
       }
 
-      orbit(earth, planets.earth.distance, planets.earth.orbitalSpeed)
       orbit(mercury, planets.mercury.distance, planets.mercury.orbitalSpeed)
       orbit(venus, planets.venus.distance, planets.venus.orbitalSpeed)
+      orbit(earth, planets.earth.distance, planets.earth.orbitalSpeed)
       orbit(mars, planets.mars.distance, planets.mars.orbitalSpeed)
       orbit(jupiter, planets.jupiter.distance, planets.jupiter.orbitalSpeed)
       orbit(saturn, planets.saturn.distance, planets.saturn.orbitalSpeed)
@@ -753,24 +770,27 @@
         const view = cameraViews[i]
         const camera = view.camera
 
-        // sun is larger so make the camera further
+        // Here we update the camera's position to make them stay on the planet's side.
+        // The "/ verticalViewRatio" is for screen resizing, this keeps the planet
+        // look pretty even on vertical screens, and also makes the camera look
+        // nice even when you're actively resizing the screen
         if (view.name == 'sun') {
-          camera.position.x = view.object.position.x + view.objectParams.size * 0.5
+          // the sun has its own condition because it's much bigger than the planets
+          camera.position.x = (view.object.position.x + view.objectParams.size * 0.5) / verticalViewRatio
           camera.position.y = view.object.position.y + view.objectParams.size * 0.5
           camera.position.z = view.object.position.z + view.objectParams.size * 2.5
         } else {
-          // planet on the right
+          // keep even number planet on the right
           if (i % 2 == 0) {
-            camera.position.x = view.object.position.x + view.objectParams.size * 0.5
-            camera.position.y = view.object.position.y + view.objectParams.size * 1
+            camera.position.x = view.object.position.x + view.objectParams.size * 0.5 / verticalViewRatio * 1.2
             camera.position.z = view.object.position.z + view.objectParams.size * 2.5
           }
-          // planet on the left
+          // keep odd number planet on the left
           else {
-            camera.position.x = view.object.position.x + view.objectParams.size * 2.5
-            camera.position.y = view.object.position.y + view.objectParams.size * 1
+            camera.position.x = view.object.position.x + view.objectParams.size * 2.5 * verticalViewRatio * 1.7
             camera.position.z = view.object.position.z + view.objectParams.size * 0.5
           }
+          camera.position.y = view.object.position.y + view.objectParams.size * 1
         }
 
         const x = sizes.width * 0
