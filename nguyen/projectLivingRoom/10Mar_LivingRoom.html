@@ -94,25 +94,19 @@
             camera.position.set(16.5, 2, 0);
             controls.target.set(-5, 2.5, 0);
         }
-        resetView()
 
         const restrictControls = () => {
             controls.minDistance = 0
             controls.maxDistance = Infinity
             controls.minPolarAngle = Math.PI / 2;
             controls.maxPolarAngle = Math.PI / 2;
-            controls.minAzimuthAngle = Math.PI 
+            controls.minAzimuthAngle = 0;
             controls.maxAzimuthAngle = Math.PI / 2;
         }
-        restrictControls()
 
         const params = {
             resetCam: () => {
                 resetView()
-            },
-            enableControlRestrictions: () => {
-                resetView()
-                restrictControls()
             }
         }
 
@@ -126,6 +120,8 @@
         window.addEventListener('resize', onWindowResize);
 
         function init() {
+            resetView()
+            restrictControls()
             // Load room object
             generateRoomObject()
 
