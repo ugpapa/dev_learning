@@ -75,13 +75,46 @@
 
         // Camera
         camera = new THREE.PerspectiveCamera(18, sizes.width / sizes.height, 0.1, 100)
-        camera.position.set(15, 4, -7);
+        camera.position.set(16.5, 2, 0);
         scene.add(camera)
 
         // Controls
         controls = new OrbitControls(camera, canvas)
-        controls.target.set(0, 0.75, 0);
-        controls.enableDamping = true
+        controls.target.set(-5, 2.5, 0);
+        controls.listenToKeyEvents(window)
+        controls.keys = {
+            LEFT: 'KeyA',
+            UP: 'KeyW',
+            RIGHT: 'KeyD',
+            BOTTOM: 'KeyS'
+        }
+
+        const resetView = () => {
+            controls.reset()
+            camera.position.set(16.5, 2, 0);
+            controls.target.set(-5, 2.5, 0);
+        }
+        resetView()
+
+        const restrictControls = () => {
+            controls.minDistance = 0
+            controls.maxDistance = Infinity
+            controls.minPolarAngle = Math.PI / 2;
+            controls.maxPolarAngle = Math.PI / 2;
+            controls.minAzimuthAngle = Math.PI 
+            controls.maxAzimuthAngle = Math.PI / 2;
+        }
+        restrictControls()
+
+        const params = {
+            resetCam: () => {
+                resetView()
+            },
+            enableControlRestrictions: () => {
+                resetView()
+                restrictControls()
+            }
+        }
 
         // Renderer
         renderer = new THREE.WebGLRenderer({ canvas: canvas })
@@ -99,7 +132,7 @@
             generateRoom()
 
             generateWallPicture()
-        
+
             generateLight()
 
             // generateRoof()
@@ -112,7 +145,7 @@
         function generateRoom() {
             loader.load('scene.gltf', function (gltf) {
                 const obj = gltf.scene.children[0];
-                obj.scale.set(1.0, 1.0, 1.2);
+                obj.scale.set(1.0, 1.0, 1.5);
                 scene.add(gltf.scene);
             });
         }
@@ -169,7 +202,7 @@
             )
         }
 
-        function generateWallPicture(){
+        function generateWallPicture() {
             const smallPictureTopLeftFrame = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
             const smallPictureMapTopLeft = new THREE.TextureLoader().load('textures/mys.jpg');
             const smallPictureMaterialTopLeft = new THREE.MeshLambertMaterial({ map: smallPictureMapTopLeft });
@@ -306,9 +339,13 @@
         }
 
         function debugConfiguration() {
-            gui.add(camera.position, 'z', -15, 15, 1)
-            gui.add(camera.position, 'y', -15, 15, 1)
-            gui.add(camera.position, 'x', -15, 15, 1)
+            gui.add(camera.position, 'z', -18, 18, 0.5)
+            gui.add(camera.position, 'y', -18, 18, 0.5)
+            gui.add(camera.position, 'x', -18, 18, 0.5)
+
+            const cameraFolder = gui.addFolder('Camera')
+            cameraFolder.add(params, 'resetCam').name('Reset Camera View')
+            gui.open();
         }
 
         // Animate
