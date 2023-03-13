@@ -309,17 +309,10 @@
         createOrbitalLines()
       })
 
-    // gui
-    //   .add(params, 'earthSize')
-    //   .min(1)
-    //   .max(10)
-    //   .step(0.5)
-    //   .name('Change Planet Size')
-
 
     gui.add(params, 'toggleOrbitalLines').name('Toggle Orbital Lines')
-    // gui.add(params, 'topCameraView').name('Camera Top View')
-    // gui.add(params, 'wideAngleCameraView').name('Wide Angle Camera View')
+
+    gui.close()
 
     /**
      * Create planets
@@ -339,10 +332,7 @@
       new THREE.SphereGeometry(planets.earth.size, 32, 16),
       new THREE.MeshLambertMaterial({
         map: earthColorTexture,
-        // normalMap: earthNormalTexture,
-        // normalScale: (0.5, 0.5),
-        specularMap: earthSpecularTexture,
-        // normalBias: 0.2
+        specularMap: earthSpecularTexture
       })
     )
     earth.rotation.y = 23.4
@@ -492,25 +482,6 @@
     scene.add(uranus)
     scene.add(neptune)
 
-
-    // gui
-    //   .add(params, 'observePlanet', {
-    //     Sun: [sun, planets.sun],
-    //     Mercury: [mercury, planets.mercury],
-    //     Venus: [venus, planets.venus],
-    //     Earth: [earth, planets.earth],
-    //     Mars: [mars, planets.mars],
-    //     Jupiter: [jupiter, planets.jupiter],
-    //     Saturn: [saturn, planets.saturn],
-    //     Uranus: [uranus, planets.uranus],
-    //     Neptune: [neptune, planets.neptune],
-    //   })
-    //   .name('Observe')
-    //   .setValue('Select planet / sun')
-    //   .onChange((val) => {
-    //     observePlanet(val)
-    //   })
-
     // Orbital lines
     let orbitalLine = null
     let orbitalLineGeometry = null
@@ -574,44 +545,6 @@
 
     toggleOrbitalLines()
 
-    // /**
-    //  * Fonts
-    //  */
-    // const matcapTexture = textureLoader.load('./textures/matcaps/red-yellow.png')
-    // let text = null
-    // // add font for text
-    // const fontLoader = new FontLoader()
-    // fontLoader.load(
-    //   './fonts/helvetiker_bold.typeface.json',
-    //   (font) => {
-    //     const textGeometry = new TextGeometry(
-    //       "Gavin's Solar System", {
-    //       font: font,
-    //       size: 2,
-    //       height: 0.6,
-    //       curveSegments: 5,
-    //       bevelEnabled: true,
-    //       bevelThickness: 0.03,
-    //       bevelSize: 0.02,
-    //       bevelOffset: 0,
-    //       bevelSegments: 4,
-    //     })
-
-    //     // Center text
-    //     textGeometry.center()
-
-    //     // Add map cap texture to object material
-    //     const material = new THREE.MeshMatcapMaterial()
-    //     material.matcap = matcapTexture
-    //     // material.wireframe = true  // test
-
-    //     // Add text to scene
-    //     text = new THREE.Mesh(textGeometry, material)
-    //     scene.add(text)
-    //     text.position.y = 13
-    //   }
-    // )
-
     /**
      * Lights
      */
@@ -642,10 +575,12 @@
       sizes.width = window.innerWidth
       sizes.height = window.innerHeight
 
-      // Update cameras
+      // Update cameras and renderers
       for (let i = 0; i < cameraViews.length; i++) {
         const view = cameraViews[i]
         const camera = view.camera
+        
+        // Update camera
         camera.aspect = (sizes.width / sizes.height) * sectionsOnScreen
         camera.updateProjectionMatrix()
 
@@ -667,27 +602,18 @@
      * Scroll
      */
     let scrollY = window.scrollY
-    let currentSection = 0
-
     window.addEventListener('scroll', () => {
       scrollY = window.scrollY
-
-      // know when we reach a section
-      const newSection = Math.round(scrollY / sizes.height)
-      // console.log(newSection)
-
-      // We can now test if newSection is different from currentSection.
-      // If so, that means we changed the section and we can update the
-      // currentSection in order to do our animation
-      if (newSection != currentSection) {
-        currentSection = newSection
-
-        console.log('changed section:', currentSection)
-      }
     })
 
-    const sectionsOnScreen = 1
+    /**
+     * Camera
+     */
+    // Base camera
+    let camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 500)
+    scene.add(camera)
 
+    const sectionsOnScreen = 1
     const cameraViews = [
       {
         name: 'sun',
@@ -754,105 +680,6 @@
     }
 
     /**
-     * Camera
-     */
-    // Base camera
-    let camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000)
-    scene.add(camera)
-
-    const topCameraView = () => {
-      isObservingPlanet = false
-
-      if (controlMode == 0) controls.reset()
-
-      camera.position.set(0, 240, 0)
-      camera.lookAt(sun.position)
-    }
-
-    const wideAngleCameraView = () => {
-      isObservingPlanet = false
-
-      if (controlMode == 0) controls.reset()
-
-      camera.position.set(-30, 50, 70)
-      camera.lookAt(sun.position)
-    }
-
-    // Observe planets
-    let isObservingPlanet = false
-    let observingObject = null
-    let observingObjectParams = null
-    const observePlanet = (planet) => {
-      isObservingPlanet = true
-
-      if (controlMode == 0) controls.reset()
-
-      observingObject = planet[0]
-      observingObjectParams = planet[1]
-    }
-
-    // Controls
-    let controlMode = 0
-    let controls = new OrbitControls(camera, canvas)
-    controls.enableDamping = true
-
-    const changeCamera = (mode) => {
-      if (controls) controls.dispose()
-
-      const prevCamera = camera
-
-      scene.remove(camera)
-
-      camera = new THREE.PerspectiveCamera(
-        75,
-        sizes.width / sizes.height,
-        0.1,
-        1000)
-      camera.position.copy(prevCamera.position)
-      camera.rotation.copy(prevCamera.rotation)
-
-      switch (mode) {
-        case 'Orbit':
-          controls = new OrbitControls(camera, canvas)
-          controls.enableDamping = true
-
-          controlMode = 0
-          break
-
-        case 'FPS':
-          controls.dispose()
-
-          controls = new FirstPersonControls(camera, canvas)
-          controls.movementSpeed = 50
-          controls.lookSpeed = 0.14
-
-          controlMode = 1
-          break
-
-        // case 'Fly':
-        //   controls.dispose()
-
-        //   controls = new FlyControls(camera, canvas)
-        //   controls.movementSpeed = 1
-
-        //   controlMode = 2
-        //   break
-      }
-    }
-
-    // gui
-    //   .add(params, 'changeCamera', {
-    //     Orbit: 'Orbit',
-    //     FPS: 'FPS',
-    //     // Fly: 'Fly'
-    //   })
-    //   .name('Camera Control')
-    //   .setValue('Orbit')
-    //   .onChange((val) => {
-    //     changeCamera(val)
-    //   })
-
-    /**
      * Renderer
      */
     const renderer = new THREE.WebGLRenderer({
@@ -891,8 +718,6 @@
       uranus.rotation.y = elapsedTime * planets.uranus.rotationSpeed * (params.rotationSpeed * 100)
       neptune.rotation.y = elapsedTime * planets.neptune.rotationSpeed * (params.rotationSpeed * 100)
 
-      // if (text) text.rotation.y = elapsedTime * 0.8
-
       /////////////////////////////////////////
       // Make planets orbit around the sound //
       /////////////////////////////////////////
@@ -916,10 +741,6 @@
       earthMoon.position.x = Math.cos(elapsedTime * 0.5 * planets.earth.orbitalSpeed * params.orbitalSpeed) * params.distanceGap * planets.earth.distance + planets.earth.moon.distanceToEarth
       earthMoon.position.z = -(Math.sin(elapsedTime * 0.5 * planets.earth.orbitalSpeed * params.orbitalSpeed) * params.distanceGap * planets.earth.distance + planets.earth.moon.distanceToEarth)
       earthMoon.lookAt(earth.position)
-
-      // Update orbit controls
-      if (controlMode == 0) controls.update()
-      else controls.update(deltaTime)
 
       // update renderers and cameras
       for (let i = 0; i < cameraViews.length; i++) {
