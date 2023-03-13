@@ -501,16 +501,18 @@
       }
 
       orbitalLineMaterial = new THREE.MeshBasicMaterial({
-        color: 0x2e2e2e,
-        transparent: true
+        // color: 0x2e2e2e,
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.2,
+        side: THREE.DoubleSide
       })
 
       for (const planetObj of Object.entries(planets)) {
-        orbitalLineGeometry = new THREE.TorusGeometry(
-          planetObj[1].distance * params.distanceGap, // radius
-          0.15, // tube
-          16, // radialSegments
-          100 // tubularSegments 
+        orbitalLineGeometry = new THREE.RingGeometry(
+          planetObj[1].distance * params.distanceGap - 0.05,
+          planetObj[1].distance * params.distanceGap,
+          256
         )
         orbitalLine = new THREE.Mesh(orbitalLineGeometry, orbitalLineMaterial)
         orbitalLine.rotation.x = Math.PI * 0.5
