@@ -407,7 +407,7 @@
         map: earthMoonColorTexture
       })
     )
-    earthMoon.position.y = 0.7
+    earthMoon.position.y = 1
     earth.add(earthMoon)
 
     const mercury = new THREE.Mesh(
@@ -954,6 +954,7 @@
       // Make moon orbits Earth
       //////////////////////////
       earthMoon.position.x = earth.position.x + Math.sin(elapsedTime * 0.5) * planets.earth.moon.distanceToEarth
+      earthMoon.position.y = Math.sin(elapsedTime * 0.5) * 1
       earthMoon.position.z = earth.position.z + Math.cos(elapsedTime * 0.5) * planets.earth.moon.distanceToEarth
       earthMoon.lookAt(earth.position)
 
