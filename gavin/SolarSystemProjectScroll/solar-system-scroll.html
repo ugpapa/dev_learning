@@ -167,9 +167,9 @@
     import { OrbitControls } from "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js"
     import { FirstPersonControls } from "https://unpkg.com/three@0.147.0/examples/jsm/controls/FirstPersonControls.js"
 
-    import typefaceFont from 'typefaceFont' assert { type: "json" }
-    import { FontLoader } from "FontLoader"
-    import { TextGeometry } from "TextGeometry"
+    import typefaceFont from "https://unpkg.com/three@0.147.0/examples/fonts/helvetiker_bold.typeface.json" assert { type: "json" }
+    import { FontLoader } from "https://unpkg.com/three@0.147.0/examples/jsm/loaders/FontLoader.js"
+    import { TextGeometry } from "https://unpkg.com/three@0.147.0/examples/jsm/geometries/TextGeometry.js"
 
     import { gsap } from 'https://cdn.skypack.dev/gsap'
 
@@ -629,6 +629,44 @@
     // toggleOrbitalLines()
 
     // gui.add(params, 'toggleOrbitalLines').name('Toggle Orbital Lines')
+
+    /**
+     * Fonts
+     */
+    const matcapTexture = textureLoader.load('./textures/matcaps/red-yellow.png')
+    let text = null
+    // add font for text
+    const fontLoader = new FontLoader()
+    fontLoader.load(
+      './fonts/helvetiker_bold.typeface.json',
+      (font) => {
+        const textGeometry = new TextGeometry(
+          "Gavin's Solar System", {
+          font: font,
+          size: 2,
+          height: 0.6,
+          curveSegments: 5,
+          bevelEnabled: true,
+          bevelThickness: 0.03,
+          bevelSize: 0.02,
+          bevelOffset: 0,
+          bevelSegments: 4,
+        })
+
+        // Center text
+        textGeometry.center()
+
+        // Add map cap texture to object material
+        const material = new THREE.MeshMatcapMaterial()
+        material.matcap = matcapTexture
+        // material.wireframe = true  // test
+
+        // Add text to scene
+        text = new THREE.Mesh(textGeometry, material)
+        scene.add(text)
+        text.position.y = 13
+      }
+    )
 
     /**
      * Lights
