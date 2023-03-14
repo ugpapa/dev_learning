@@ -739,6 +739,51 @@
     }
     restrictControls()
 
+    const enableRotationControls = () => {
+      // Limit rotations
+      // How far you can orbit vertically, upper and lower limits.
+      controls.minPolarAngle = 0
+      controls.maxPolarAngle = Math.PI
+
+      // How far you can orbit horizontally, upper and lower limits.
+      controls.minAzimuthAngle = - Infinity
+      controls.maxAzimuthAngle = Infinity
+    }
+
+    const checkCameraPos = () => {
+      // console.log(camera.position) // debug
+      if (camera.position.z < 2.5 && camera.position.z > -2.2) {
+        enableRotationControls()
+
+        if (camera.position.x > 2.2 || camera.position.x < -2.2) {
+          restrictControls()
+          // console.log('x outside valid range')
+        }
+        if (camera.position.y > 2.2 || camera.position.y < -2.2) {
+          restrictControls()
+          // console.log('y outside valid range')
+        }
+      } else {
+        restrictControls()
+        // console.log('z outside valid range')
+      }
+      // console.log('running')
+    }
+
+    canvas.addEventListener("mousedown", (e) => {
+      // on zoom using mouse drag
+      if (e.button === 1) {
+        canvas.onmousemove = (e) => {
+          checkCameraPos()
+        }
+      }
+    })
+
+    window.addEventListener('mousewheel', () => {
+      // on zoom using scrollwheel
+      checkCameraPos()
+    })
+
     /**
      * Renderer
      */
