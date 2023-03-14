@@ -759,7 +759,7 @@
           restrictControls()
           // console.log('x outside valid range')
         }
-        if (camera.position.y > 2.2 || camera.position.y < -2.2) {
+        if (camera.position.y > 10 || camera.position.y < 0) {
           restrictControls()
           // console.log('y outside valid range')
         }
@@ -821,7 +821,7 @@
     toneMapFolder.add(params, 'resetToneMappingExposure').name('Reset Tone Mapping Exposure')
     toneMapFolder.close()
 
-    console.log(scene)
+    // console.log(scene)
 
     /**
      * Animate
