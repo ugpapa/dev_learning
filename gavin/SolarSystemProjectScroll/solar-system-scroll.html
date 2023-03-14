@@ -25,20 +25,43 @@
     }
 
     .section {
+      /* 100vh means the element should occupy the web browser viewport height */
+      height: 100vh;
+      /* prevent going behind threejs scene */
+      position: relative;
+
+      /* center text */
       display: flex;
       align-items: center;
-      height: 100vh;
-      position: relative;
-      font-family: 'Cabin', sans-serif;
-      color: #ffeded;
+
+      /* adjust text properties */
+      font-family: 'Arial', sans-serif;
+      color: #ffffff;
       text-transform: uppercase;
       font-size: 7vmin;
+
       padding-left: 10%;
       padding-right: 10%;
+      /* border: 1px solid red; */
     }
 
-    section:nth-child(odd) {
+    .section:nth-child(odd) {
       justify-content: flex-end;
+    }
+
+    .item {
+      display: block;
+      width: 8em;
+      /* border: 1px solid red; */
+    }
+
+    p {
+      /* border: 5px solid yellow; */
+      font-size: 2vmin;
+      text-transform: none;
+      color: #ffffff;
+      text-align: justify;
+      text-shadow: 2px 2px 3px #000000;
     }
   </style>
 </head>
@@ -47,65 +70,102 @@
   <canvas class="webgl"></canvas>
 
   <section class="section">
-    <h1>SUN</h1>
   </section>
 
   <section class="section">
-    <h2>MERCURY</h2>
+    <div class="item">
+      <h1>MERCURY</h1>
+      <p>
+        Mercury—the smallest planet in our solar system and closest to the Sun—is only slightly larger than Earth's
+        Moon. Mercury is the fastest planet, zipping around the Sun every 88 Earth days.
+      </p>
+    </div>
   </section>
 
   <section class="section">
-    <h2>VENUS</h2>
+    <div class="item">
+      <h1>VENUS</h1>
+      <p>
+        Venus spins slowly in the opposite direction from most planets. A thick atmosphere traps heat in a runaway
+        greenhouse effect, making it the hottest planet in our solar system.
+      </p>
+    </div>
   </section>
 
   <section class="section">
-    <h2>EARTH</h2>
+    <div class="item">
+      <h1>EARTH</h1>
+      <p>
+        Earth—our home planet—is the only place we know of so far that's inhabited by living things. It's also the
+        only planet in our solar system with liquid water on the surface.
+      </p>
+    </div>
   </section>
 
   <section class="section">
-    <h2>MARS</h2>
+    <div class="item">
+      <h1>MARS</h1>
+      <p>
+        Mars is a dusty, cold, desert world with a very thin atmosphere. There is strong evidence Mars was — billions
+        of years ago — wetter and warmer, with a thicker atmosphere.
+      </p>
+    </div>
   </section>
 
   <section class="section">
-    <h2>JUPITER</h2>
+    <div class="item">
+      <h1>JUPITER</h1>
+      <p>
+        Jupiter is more than twice as massive than the other planets of our solar system combined. The giant planet's
+        Great Red spot is a centuries-old storm bigger than Earth.
+      </p>
+    </div>
   </section>
 
   <section class="section">
-    <h2>SATURN</h2>
+    <div class="item">
+      <h1>SATURN</h1>
+      <p>
+        Adorned with a dazzling, complex system of icy rings, Saturn is unique in our solar system. The other giant
+        planets have rings, but none are as spectacular as Saturn's.
+      </p>
+    </div>
   </section>
 
   <section class="section">
-    <h2>URANUS</h2>
+    <div class="item">
+      <h1>URANUS</h1>
+      <p>
+        Uranus—seventh planet from the Sun—rotates at a nearly 90-degree angle from the plane of its orbit. This
+        unique tilt makes Uranus appear to spin on its side.
+      </p>
+    </div>
   </section>
 
   <section class="section">
-    <h2>NEPTUNE</h2>
+    <div class="item">
+      <h1>NEPTUNE</h1>
+      <p>
+        Neptune—the eighth and most distant major planet orbiting our Sun—is dark, cold and whipped by supersonic
+        winds. It was the first planet located through mathematical calculations.
+      </p>
+    </div>
   </section>
 
   <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
   <script type="importmap">
       {
         "imports": {
-          "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
-          "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
-
-          "OrbitControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js",
-          "FirstPersonControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/FirstPersonControls.js",
-          "FlyControls": "https://unpkg.com/three@0.147.0/examples/jsm/controls/FlyControls.js",
-
-          "FontLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/FontLoader.js",
-          "TextGeometry": "https://unpkg.com/three@0.147.0/examples/jsm/geometries/TextGeometry.js",
-          "typefaceFont": "https://unpkg.com/three@0.147.0/examples/fonts/helvetiker_bold.typeface.json"
+          "three": "https://unpkg.com/three@0.147.0/build/three.module.js"
         }
       }
     </script>
   <script type="module">
     import * as THREE from 'three'
-    import * as dat from "lil-gui"
+    import * as dat from "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js"
 
-    import { OrbitControls } from "OrbitControls"
-    import { FirstPersonControls } from "FirstPersonControls"
-    // import { FlyControls } from "FlyControls"
+    import { OrbitControls } from "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js"
+    import { FirstPersonControls } from "https://unpkg.com/three@0.147.0/examples/jsm/controls/FirstPersonControls.js"
 
     import typefaceFont from 'typefaceFont' assert { type: "json" }
     import { FontLoader } from "FontLoader"
@@ -179,15 +239,18 @@
       earthSize: 1,
       sunSize: 10,
 
-      toggleOrbitalLines: () => {
-        toggleOrbitalLines()
-      },
+      // toggleOrbitalLines: () => {
+      //   toggleOrbitalLines()
+      // },
 
       topCameraView: () => {
         topCameraView()
       },
       wideAngleCameraView: () => {
         wideAngleCameraView()
+      },
+      cinematicCameraView: () => {
+        cinematicCameraView()
       },
 
       observePlanet: (val) => {
@@ -285,12 +348,12 @@
       },
     }
 
-    gui
-      .add(params, 'orbitalSpeed')
-      .min(0)
-      .max(50)
-      .step(1)
-      .name('Orbital speed')
+    // gui
+    //   .add(params, 'orbitalSpeed')
+    //   .min(0)
+    //   .max(50)
+    //   .step(1)
+    //   .name('Orbital speed')
 
     gui
       .add(params, 'rotationSpeed')
@@ -299,18 +362,19 @@
       .step(0.1)
       .name('Rotation Speed')
 
-    gui
-      .add(params, 'distanceGap')
-      .min(0.6)
-      .max(5.0)
-      .step(0.1)
-      .name('Planet distance')
-      .onChange(() => {
-        createOrbitalLines()
-      })
+    // gui
+    //   .add(params, 'distanceGap')
+    //   .min(0.6)
+    //   .max(5.0)
+    //   .step(0.1)
+    //   .name('Planet distance')
+    //   .onChange(() => {
+    //     createOrbitalLines()
+    //   })
 
-
-    gui.add(params, 'toggleOrbitalLines').name('Toggle Orbital Lines')
+    gui.add(params, 'topCameraView').name('Camera Top View')
+    gui.add(params, 'wideAngleCameraView').name('Wide Angle Camera View')
+    gui.add(params, 'cinematicCameraView').name('Cinematic Camera View')
 
     gui.close()
 
@@ -451,8 +515,10 @@
     jupiter.castShadow = true
     jupiter.receiveShadow = true
 
-    saturn.castShadow = true
-    saturn.receiveShadow = true
+    saturnSphere.castShadow = true
+    saturnSphere.receiveShadow = true
+    saturnRing.castShadow = false
+    saturnRing.receiveShadow = true
 
     uranus.castShadow = true
     uranus.receiveShadow = true
@@ -460,16 +526,31 @@
     neptune.castShadow = true
     neptune.receiveShadow = true
 
-    // Make default planet's position
-    earth.position.x = planets.earth.distance
-    earthMoon.position.x = planets.earth.distance + planets.earth.moon.distanceToEarth
-    mercury.position.x = planets.mercury.distance
+    // Default planets' position
+    mercury.position.x = -planets.mercury.distance
+    mercury.position.z = planets.mercury.distance
+
     venus.position.x = planets.venus.distance
+    venus.position.z = -planets.venus.distance
+
+    earth.position.x = -planets.earth.distance
+    earth.position.z = planets.earth.distance - 5
+    earthMoon.position.x = planets.earth.distance + planets.earth.moon.distanceToEarth
+
     mars.position.x = planets.mars.distance
-    jupiter.position.x = planets.jupiter.distance
+    mars.position.z = -planets.mars.distance + 5
+
+    jupiter.position.x = -planets.jupiter.distance
+    jupiter.position.z = planets.jupiter.distance + 10
+
     saturn.position.x = planets.saturn.distance
-    uranus.position.x = planets.uranus.distance
+    saturn.position.z = -planets.saturn.distance - 20
+
+    uranus.position.x = -planets.uranus.distance
+    uranus.position.z = planets.uranus.distance + 40
+
     neptune.position.x = planets.neptune.distance
+    neptune.position.z = -planets.neptune.distance - 50
 
     scene.add(sun)
     scene.add(mercury)
@@ -482,70 +563,72 @@
     scene.add(uranus)
     scene.add(neptune)
 
-    // Orbital lines
-    let orbitalLine = null
-    let orbitalLineGeometry = null
-    let orbitalLineMaterial = null
-    const orbitalLines = []
-    const orbitalLineGeometries = []
-    let linesOn = false
+    // // Orbital lines
+    // let orbitalLine = null
+    // let orbitalLineGeometry = null
+    // let orbitalLineMaterial = null
+    // const orbitalLines = []
+    // const orbitalLineGeometries = []
+    // let linesOn = false
 
-    const createOrbitalLines = () => {
-      // Remove all lines
-      if (orbitalLine !== null) {
-        orbitalLineMaterial.dispose()
-        for (let i = 0; i < orbitalLineGeometries.length; i++) {
-          orbitalLineGeometries[i].dispose()
-          scene.remove(orbitalLines[i])
-        }
-      }
+    // const createOrbitalLines = () => {
+    //   // Remove all lines
+    //   if (orbitalLine !== null) {
+    //     orbitalLineMaterial.dispose()
+    //     for (let i = 0; i < orbitalLineGeometries.length; i++) {
+    //       orbitalLineGeometries[i].dispose()
+    //       scene.remove(orbitalLines[i])
+    //     }
+    //   }
 
-      orbitalLineMaterial = new THREE.MeshBasicMaterial({
-        // color: 0x2e2e2e,
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.2,
-        side: THREE.DoubleSide
-      })
+    //   orbitalLineMaterial = new THREE.MeshBasicMaterial({
+    //     // color: 0x2e2e2e,
+    //     color: 0xffffff,
+    //     transparent: true,
+    //     opacity: 0.2,
+    //     side: THREE.DoubleSide
+    //   })
 
-      for (const planetObj of Object.entries(planets)) {
-        orbitalLineGeometry = new THREE.RingGeometry(
-          planetObj[1].distance * params.distanceGap - 0.05,
-          planetObj[1].distance * params.distanceGap,
-          256
-        )
-        orbitalLine = new THREE.Mesh(orbitalLineGeometry, orbitalLineMaterial)
-        orbitalLine.rotation.x = Math.PI * 0.5
+    //   for (const planetObj of Object.entries(planets)) {
+    //     orbitalLineGeometry = new THREE.RingGeometry(
+    //       planetObj[1].distance * params.distanceGap - 0.05,
+    //       planetObj[1].distance * params.distanceGap,
+    //       256
+    //     )
+    //     orbitalLine = new THREE.Mesh(orbitalLineGeometry, orbitalLineMaterial)
+    //     orbitalLine.rotation.x = Math.PI * 0.5
 
-        orbitalLines.push(orbitalLine)
-        orbitalLineGeometries.push(orbitalLineGeometry)
+    //     orbitalLines.push(orbitalLine)
+    //     orbitalLineGeometries.push(orbitalLineGeometry)
 
-        scene.add(orbitalLine)
-      }
-    }
+    //     scene.add(orbitalLine)
+    //   }
+    // }
 
-    const removeOrbitalLines = () => {
-      // Remove all lines
-      if (orbitalLine !== null) {
-        orbitalLineMaterial.dispose()
-        for (let i = 0; i < orbitalLineGeometries.length; i++) {
-          orbitalLineGeometries[i].dispose()
-          scene.remove(orbitalLines[i])
-        }
-      }
-    }
+    // const removeOrbitalLines = () => {
+    //   // Remove all lines
+    //   if (orbitalLine !== null) {
+    //     orbitalLineMaterial.dispose()
+    //     for (let i = 0; i < orbitalLineGeometries.length; i++) {
+    //       orbitalLineGeometries[i].dispose()
+    //       scene.remove(orbitalLines[i])
+    //     }
+    //   }
+    // }
 
-    const toggleOrbitalLines = () => {
-      if (linesOn) {
-        removeOrbitalLines()
-        linesOn = false
-        return
-      }
-      createOrbitalLines()
-      linesOn = true
-    }
+    // const toggleOrbitalLines = () => {
+    //   if (linesOn) {
+    //     removeOrbitalLines()
+    //     linesOn = false
+    //     return
+    //   }
+    //   createOrbitalLines()
+    //   linesOn = true
+    // }
 
-    toggleOrbitalLines()
+    // toggleOrbitalLines()
+
+    // gui.add(params, 'toggleOrbitalLines').name('Toggle Orbital Lines')
 
     /**
      * Lights
@@ -637,7 +720,7 @@
     const sectionsOnScreen = 1
     const cameraViews = [
       {
-        name: 'sun',
+        name: 'full',
         object: sun,
         objectParams: planets.sun
       },
@@ -683,14 +766,66 @@
       }
     ]
 
+    /**
+     * Controls (WIP)
+    */
+    let controlMode = 0
+    let controls = null
+
+    const changeCamera = (mode, camera) => {
+      if (controls) controls.dispose()
+
+      const prevCamera = camera;
+
+      scene.remove(camera)
+
+      camera = new THREE.PerspectiveCamera(
+        75,
+        sizes.width / sizes.height,
+        0.1,
+        1000)
+      camera.position.copy(prevCamera.position)
+      camera.rotation.copy(prevCamera.rotation)
+
+      switch (mode) {
+        case 'Orbit':
+          controls = new OrbitControls(camera, canvas)
+          controls.enableDamping = true
+
+          controlMode = 0
+          break
+
+        case 'FPS':
+          controls.dispose()
+
+          controls = new FirstPersonControls(camera, canvas)
+          controls.movementSpeed = 50;
+          controls.lookSpeed = 0.14;
+
+          controlMode = 1
+          break
+      }
+    }
+
+    gui
+      .add(params, 'changeCamera', {
+        Orbit: 'Orbit',
+        FPS: 'FPS'
+      })
+      .name('Camera Control')
+      .setValue('Orbit')
+      .onChange((val) => {
+        changeCamera(val, cameraViews[0].camera)
+      })
+
+    // set cameras
     for (let i = 0; i < cameraViews.length; i++) {
       const view = cameraViews[i]
       const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height * sectionsOnScreen, 0.1, 500)
 
-      if (view.name == 'sun') {
-        camera.position.x = view.object.position.x + (view.objectParams.size * 2.5)
-        camera.position.y = view.objectParams.size
-        camera.position.z = view.object.position.z + (view.objectParams.size * 2.5)
+      if (view.name == 'full') {
+        controls = new OrbitControls(camera, canvas)
+        controls.enableDamping = true
       } else {
         camera.position.x = view.object.position.x + (view.objectParams.size * 4)
         camera.position.y = view.object.position.y + view.objectParams.size * 3
@@ -698,6 +833,27 @@
       }
       camera.lookAt(view.object.position)
       view.camera = camera
+    }
+
+    const topCameraView = () => {
+      cinematicView = false
+      if (controlMode == 0) controls.reset()
+      cameraViews[0].camera.position.set(0, 240, 0)
+      cameraViews[0].camera.lookAt(sun.position)
+    }
+
+    const wideAngleCameraView = () => {
+      cinematicView = false
+      if (controlMode == 0) controls.reset()
+      cameraViews[0].camera.position.set(-5, 25, 45)
+      cameraViews[0].camera.lookAt(sun.position)
+    }
+
+    // Cinematic view
+    let cinematicView = true
+    const cinematicCameraView = () => {
+      cinematicView = true
+      if (controlMode == 0) controls.reset()
     }
 
     /**
@@ -739,28 +895,28 @@
       uranus.rotation.y = elapsedTime * planets.uranus.rotationSpeed * (params.rotationSpeed * 100)
       neptune.rotation.y = elapsedTime * planets.neptune.rotationSpeed * (params.rotationSpeed * 100)
 
-      /////////////////////////////////////////
-      // Make planets orbit around the sound //
-      /////////////////////////////////////////
-      const orbit = (obj, pos, speed) => {
-        obj.position.x = Math.cos(elapsedTime * 0.5 * speed * params.orbitalSpeed) * params.distanceGap * pos
-        obj.position.z = -(Math.sin(elapsedTime * 0.5 * speed * params.orbitalSpeed) * params.distanceGap * pos)
-      }
+      // /////////////////////////////////////////
+      // // Make planets orbit around the sound //
+      // /////////////////////////////////////////
+      // const orbit = (obj, pos, speed) => {
+      //   obj.position.x = Math.cos(elapsedTime * 0.5 * speed * params.orbitalSpeed) * params.distanceGap * pos
+      //   obj.position.z = -(Math.sin(elapsedTime * 0.5 * speed * params.orbitalSpeed) * params.distanceGap * pos)
+      // }
 
-      orbit(mercury, planets.mercury.distance, planets.mercury.orbitalSpeed)
-      orbit(venus, planets.venus.distance, planets.venus.orbitalSpeed)
-      orbit(earth, planets.earth.distance, planets.earth.orbitalSpeed)
-      orbit(mars, planets.mars.distance, planets.mars.orbitalSpeed)
-      orbit(jupiter, planets.jupiter.distance, planets.jupiter.orbitalSpeed)
-      orbit(saturn, planets.saturn.distance, planets.saturn.orbitalSpeed)
-      orbit(uranus, planets.uranus.distance, planets.uranus.orbitalSpeed)
-      orbit(neptune, planets.neptune.distance, planets.neptune.orbitalSpeed)
+      // orbit(mercury, planets.mercury.distance, planets.mercury.orbitalSpeed)
+      // orbit(venus, planets.venus.distance, planets.venus.orbitalSpeed)
+      // orbit(earth, planets.earth.distance, planets.earth.orbitalSpeed)
+      // orbit(mars, planets.mars.distance, planets.mars.orbitalSpeed)
+      // orbit(jupiter, planets.jupiter.distance, planets.jupiter.orbitalSpeed)
+      // orbit(saturn, planets.saturn.distance, planets.saturn.orbitalSpeed)
+      // orbit(uranus, planets.uranus.distance, planets.uranus.orbitalSpeed)
+      // orbit(neptune, planets.neptune.distance, planets.neptune.orbitalSpeed)
 
       //////////////////////////
       // Make moon orbits Earth
       //////////////////////////
-      earthMoon.position.x = Math.cos(elapsedTime * 0.5 * planets.earth.orbitalSpeed * params.orbitalSpeed) * params.distanceGap * planets.earth.distance + planets.earth.moon.distanceToEarth
-      earthMoon.position.z = -(Math.sin(elapsedTime * 0.5 * planets.earth.orbitalSpeed * params.orbitalSpeed) * params.distanceGap * planets.earth.distance + planets.earth.moon.distanceToEarth)
+      earthMoon.position.x = earth.position.x + Math.sin(elapsedTime * 0.5) * planets.earth.moon.distanceToEarth
+      earthMoon.position.z = earth.position.z + Math.cos(elapsedTime * 0.5) * planets.earth.moon.distanceToEarth
       earthMoon.lookAt(earth.position)
 
       // update renderers and cameras
@@ -772,11 +928,20 @@
         // The "/ verticalViewRatio" is for screen resizing, this keeps the planet
         // look pretty even on vertical screens, and also makes the camera look
         // nice even when you're actively resizing the screen
-        if (view.name == 'sun') {
-          // the sun has its own condition because it's much bigger than the planets
-          camera.position.x = (view.object.position.x + view.objectParams.size * 0.5) / verticalViewRatio
-          camera.position.y = view.object.position.y + view.objectParams.size * 0.5
-          camera.position.z = view.object.position.z + view.objectParams.size * 2.5
+        if (view.name == 'full') {
+          if (cinematicView) {
+            camera.position.x = Math.sin(elapsedTime * 0.3) * 70
+            camera.position.y = Math.sin(elapsedTime * 0.3) * 30
+            camera.position.z = Math.cos(elapsedTime * 0.3) * 30
+            camera.lookAt(sun.position)
+          } else {
+            // Update orbit controls
+            if (controlMode == 0) {
+              controls.update()
+            } else {
+              controls.update(deltaTime)
+            }
+          }
         } else {
           // keep even number planet on the right
           if (i % 2 == 0) {
@@ -785,12 +950,13 @@
           }
           // keep odd number planet on the left
           else {
-            camera.position.x = view.object.position.x + view.objectParams.size * 2.5 * verticalViewRatio * 1.7
+            camera.position.x = view.object.position.x + view.objectParams.size * 2.5 * verticalViewRatio * 1.2
             camera.position.z = view.object.position.z + view.objectParams.size * 0.5
           }
           camera.position.y = view.object.position.y + view.objectParams.size * 1
         }
 
+        // Update renderer
         const x = sizes.width * 0
         const y = -Math.floor(sizes.height * i / sectionsOnScreen) + scrollY
         const width = sizes.width * 1.0
