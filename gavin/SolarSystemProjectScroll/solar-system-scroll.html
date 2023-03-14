@@ -57,11 +57,29 @@
 
     p {
       /* border: 5px solid yellow; */
-      font-size: 2vmin;
+      font-size: 2vw;
       text-transform: none;
       color: #ffffff;
       text-align: justify;
       text-shadow: 2px 2px 3px #000000;
+    }
+
+    @media screen and (min-width: 851px) {
+      p {
+        font-size: 2.0vw;
+      }
+    }
+
+    @media screen and (max-width: 1220px) {
+      p {
+        font-size: 3.0vw;
+      }
+    }
+
+    @media screen and (max-width: 750px) {
+      p {
+        font-size: 5.0vw;
+      }
     }
   </style>
 </head>
