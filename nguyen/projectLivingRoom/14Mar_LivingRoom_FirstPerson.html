@@ -47,8 +47,19 @@
         import { GLTFLoader } from "gltfLoader";
         import { DRACOLoader } from "dracoLoader";
 
-        let camera, controls, scene, renderer, gui, canvas;
+        let camera, scene, renderer, gui, canvas;
         let light, light2, light3, light4;
+        // Controls
+        let controls = {};
+        let player = {
+            height: 1.5,
+            turnSpeed: .1,
+            speed: .1,
+            jumpHeight: .2,
+            gravity: .01,
+            velocity: 0,
+            playerJumps: false
+        };
 
         // Init
         gui = new dat.GUI()
@@ -74,52 +85,55 @@
         }
 
         // Camera
-        camera = new THREE.PerspectiveCamera(18, sizes.width / sizes.height, 0.1, 100)
+        camera = new THREE.PerspectiveCamera(65, sizes.width / sizes.height, 0.1, 1000)
+        camera.position.set(1, 1, 4.5);
+        // camera.lookAt(new THREE.Vector3(0, player.height, 0));
         scene.add(camera)
 
-        // Controls
-        controls = new OrbitControls(camera, canvas)
-        controls.enableDamping = true
-        controls.listenToKeyEvents(window)
-        controls.keys = {
-            LEFT: 'ArrowLeft',
-            UP: 'ArrowUp',
-            RIGHT: 'ArrowRight',
-            BOTTOM: 'ArrowDown'
+        function control() {
+            // Controls:Engine 
+            if (controls[87]) { // w
+                camera.position.x += Math.sin(camera.rotation.y) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y) * player.speed;
+            }
+            if (controls[83]) { // s
+                camera.position.x -= Math.sin(camera.rotation.y) * player.speed;
+                camera.position.z -= -Math.cos(camera.rotation.y) * player.speed;
+            }
+            if (controls[65]) { // a
+                camera.position.x -= Math.sin(camera.rotation.y + Math.PI / 2) * player.speed;
+                camera.position.z -= -Math.cos(camera.rotation.y + Math.PI / 2) * player.speed;
+            }
+            if (controls[68]) { // d
+                camera.position.x -= Math.sin(camera.rotation.y - Math.PI / 2) * player.speed;
+                camera.position.z -= -Math.cos(camera.rotation.y - Math.PI / 2) * player.speed;
+            }
+            if (controls[69]) { // e: For right rotation
+                camera.rotation.y -= player.turnSpeed;
+            }
+            if (controls[81]) { // q: For left rotation
+                camera.rotation.y += player.turnSpeed;;
+            }
+            if (controls[37]) { // la
+                camera.rotation.y -= player.turnSpeed;
+            }
+            if (controls[39]) { // ra
+                camera.rotation.y += player.turnSpeed;
+            }
+            if (controls[32]) { // space
+                if (player.jumps) return false;
+                player.jumps = true;
+                player.velocity = -player.jumpHeight;
+            }
         }
-        
 
-        const resetView = () => {
-            controls.reset()
-            camera.position.set(16.5, 2, 0);
-            controls.target.set(-5, 2.5, 0);
-        }
+        function ixMovementUpdate() {
+            player.velocity += player.gravity;
+            camera.position.y -= player.velocity;
 
-        const restrictControls = () => {
-            controls.minDistance = 3
-            controls.maxDistance = 40
-            controls.minPolarAngle = - Math.PI / 2
-            controls.maxPolarAngle = Math.PI
-            controls.minAzimuthAngle = 0;
-            controls.maxAzimuthAngle = Math.PI;
-        }
-
-        const defaultControl = () => {
-            controls.minDistance = 0
-            controls.maxDistance = 200
-            controls.minPolarAngle = 0
-            controls.maxPolarAngle = Math.PI
-            controls.minAzimuthAngle = - Infinity;
-            controls.maxAzimuthAngle = Infinity;
-        }
-
-        const params = {
-            resetCam: () => {
-                resetView()
-            },
-            disableRestrictControl: () => {
-                resetView()
-                defaultControl()
+            if (camera.position.y < player.height) {
+                camera.position.y = player.height;
+                player.jumps = false;
             }
         }
 
@@ -131,11 +145,10 @@
         renderer.shadowMap.autoUpdate = true;
 
         window.addEventListener('resize', onWindowResize);
+        document.addEventListener('keydown', ({ keyCode }) => { controls[keyCode] = true });
+        document.addEventListener('keyup', ({ keyCode }) => { controls[keyCode] = false });
 
         function init() {
-            resetView()
-
-            restrictControls()
             // Load room object
             generateRoomObject()
 
@@ -352,9 +365,6 @@
             gui.add(camera.position, 'z', -18, 18, 0.5)
             gui.add(camera.position, 'y', -18, 18, 0.5)
             gui.add(camera.position, 'x', -18, 18, 0.5)
-            const cameraFolder = gui.addFolder('Camera')
-            cameraFolder.add(params, 'resetCam').name('Reset Camera View')
-            cameraFolder.add(params, 'disableRestrictControl').name('Disable control restrictions')
             gui.open();
         }
 
@@ -365,7 +375,8 @@
             const elapsedTime = clock.getElapsedTime();
             const deltaTime = elapsedTime - previousTime;
 
-            controls.update()
+            control();
+            ixMovementUpdate();
             //camera.rotation.set(0.5, 0, 0);
 
             render();
