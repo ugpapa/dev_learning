@@ -756,7 +756,7 @@
 
     // Tone Mapping
     const toneMappingExposure = 1
-    renderer.toneMapping = THREE.LinearToneMapping
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = toneMappingExposure
 
     const toneMapFolder = gui.addFolder('Tone Mapping')
