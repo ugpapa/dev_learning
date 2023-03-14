@@ -957,6 +957,9 @@
       earthMoon.position.z = earth.position.z + Math.cos(elapsedTime * 0.5) * planets.earth.moon.distanceToEarth
       earthMoon.lookAt(earth.position)
 
+      // Rotate text
+      if (text) text.rotation.y = elapsedTime * 0.7
+
       // update renderers and cameras
       for (let i = 0; i < cameraViews.length; i++) {
         const view = cameraViews[i]
