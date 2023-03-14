@@ -402,12 +402,12 @@
     earth.rotation.y = 23.4
 
     const earthMoon = new THREE.Mesh(
-      new THREE.SphereGeometry(planets.earth.size * planets.earth.moon.sizeToEarth, 64, 64),
+      new THREE.SphereGeometry(planets.earth.size * planets.earth.moon.sizeToEarth * 0.3, 64, 64),
       new THREE.MeshLambertMaterial({
         map: earthMoonColorTexture
       })
     )
-    earthMoon.position.y = 1
+    earthMoon.position.y = 0.7
     earth.add(earthMoon)
 
     const mercury = new THREE.Mesh(
