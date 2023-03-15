@@ -71,7 +71,7 @@
         import { TextGeometry } from 'textGeometry';
 
         let camera, controls, scene, renderer, canvas;
-        let sun, planetRing, planetRing2, planetRing3, planetRing4, planetObject, moon;
+        let sun, planetRing, planetRing2, planetRing3, planetRing4, planetObject, moon, textMesh;
 
         const planets = [
             { name: 'mercury', sizeRatio: 100 / 277, position: 15, rotation: 0.0002, inclination: 7.0, moonNum: 0 },
@@ -106,12 +106,47 @@
             width: window.innerWidth,
             height: window.innerHeight
         }
-        window.addEventListener('resize', onWindowResize);
 
+        window.addEventListener('resize', onWindowResize);
+        let scrollY = window.scrollY
+        window.addEventListener('scroll', () => {
+            scrollY = window.scrollY
+        })
         // Camera
         camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 5, 20000)
         camera.position.set(100, 50, 50)
         scene.add(camera)
+
+        const params = {
+            topCameraView: () => {
+                topCameraView()
+            },
+            enableSound: () => {
+                initSound()
+            },
+            flyByCamera: () => {
+                flyByCamera()
+            }
+        }
+
+        const topCameraView = () => {
+            camera.position.set(0, 100, 0)
+            camera.lookAt(sun.position)
+            textMesh.position.set(0, 0, -50);
+            textMesh.lookAt(camera.position)
+
+        }
+
+        const flyByCamera = () => {
+            camera.position.set(100, 50, 50)
+            camera.position.x += .01;
+            camera.position.y += -.01;
+            camera.position.z += -.05;
+
+            if (camera.position.z < -100) {
+                camera.position.set(100, 50, 50);
+            }
+        }
 
         // Controls
         controls = new OrbitControls(camera, canvas)
@@ -121,9 +156,32 @@
         renderer = new THREE.WebGLRenderer({ canvas: canvas })
         renderer.setSize(sizes.width, sizes.height)
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        //renderer.physicallyCorrectLights = true
 
         function init() {
             // Background
+            loadWorldMap()
+
+            loadTitle()
+
+            // Create sun
+            generateSun()
+
+            // Light
+            generateLight()
+
+            // Ring system: Jupyter, Saturn, Uranus, Neptune
+            generatePlanetRing()
+
+            // Create other planets
+            generatePlanets()
+
+            // Debug 
+            debugConfiguration()
+        }
+        init()
+
+        function loadWorldMap() {
             scene.background = new THREE.Color(0x000000);
             const spaceLoader = new THREE.CubeTextureLoader();
             const spaceTexture = spaceLoader.load([
@@ -135,7 +193,9 @@
                 "textures/background/space-zneg.jpg",
             ]);
             scene.background = spaceTexture;
+        }
 
+        function loadTitle() {
             // Text
             const loader = new FontLoader();
             loader.load('fonts/helvetiker_regular.typeface.json', function (font) {
@@ -153,7 +213,7 @@
                 textGeometry.center();
                 const matcapTexture = textureLoader.load('./textures/matcaps/3.png')
                 const material = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
-                const textMesh = new THREE.Mesh(
+                textMesh = new THREE.Mesh(
                     textGeometry,
                     material
                 )
@@ -161,52 +221,12 @@
                 textMesh.position.set(50, 55, 25);
                 textMesh.lookAt(camera.position);
             })
-
-            // Create sun
-            generateSun()
-
-            // Ring system: Jupyter, Saturn, Uranus, Neptune
-            generatePlanetRing()
-
-            // Create other planets
-            generatePlanets()
-
-            // Debug 
-            debugConfiguration()
         }
-        init()
 
-        function MYsteRioBelly() {
-            for (let i = 0; i < count * 3; i++) {
-                positions[i] = (Math.random() - 1.5) * 300
-                colors[i] = Math.random()
-            }
-
-            particlesGeometry.setAttribute(
-                'position',
-                new THREE.BufferAttribute(positions, 3)
-            )
-
-            particlesGeometry.setAttribute(
-                'color',
-                new THREE.BufferAttribute(colors, 3)
-            )
-
-            const particlesMaterial = new THREE.PointsMaterial()
-            particlesMaterial.size = .1
-            particlesMaterial.sizeAttenuation = true
-            particlesMaterial.color = new THREE.Color('#ff88cc')
-            particlesMaterial.transparent = true
-            particlesMaterial.alphaMap = particlesTexture
-            particlesMaterial.alphaTest = 0.001
-            particlesMaterial.depthWrite = false
-            particlesMaterial.blending = THREE.AdditiveBlending
-            particlesMaterial.vertexColors = true
-
-            const particles = new THREE.Points(particlesGeometry, particlesMaterial)
-            scene.add(particles)
+        function generateLight() {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2)
+            scene.add(ambientLight)
         }
-        MYsteRioBelly()
 
         function generateSun() {
             sun = new THREE.Mesh(
@@ -218,7 +238,7 @@
         }
 
         function generatePlanets() {
-            const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
             planets.forEach((planet, index) => {
                 const orbitGroup = new THREE.Group()
                 const orbit = new THREE.Mesh(
@@ -276,25 +296,30 @@
             });
             moon = new THREE.Mesh(moonGeometry, moonMaterial);
         }
-
         function generatePlanetRing() {
-            const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            planetRing = new THREE.Mesh(new THREE.TorusGeometry(5, 0.02, 16, 100), orbitMaterial);
+            const orbitMaterial = new THREE.MeshLambertMaterial({
+                map: textureLoader.load('./textures/2k_saturn_ring_alpha.png'),
+                transparent: true,
+                side: THREE.DoubleSide,
+            })
+            const ringGeometry = new THREE.RingGeometry(3, 5, 64)
+            const pos = ringGeometry.attributes.position
+            const v3 = new THREE.Vector3()
+            for (let i = 0; i < pos.count; i++) {
+                v3.fromBufferAttribute(pos, i)
+                ringGeometry.attributes.uv.setXY(i, v3.length() < 4 ? 0 : 1, 1)
+            }
+
+            planetRing = new THREE.Mesh(ringGeometry, orbitMaterial);
             planetRing.rotateX(Math.PI / 2.5)
-            planetRing2 = new THREE.Mesh(new THREE.TorusGeometry(5, 0.02, 16, 100), orbitMaterial);
+            planetRing2 = new THREE.Mesh(new THREE.TorusGeometry(3, 0.02, 16, 100), orbitMaterial);
             planetRing2.rotateX(Math.PI / 3)
-            planetRing3 = new THREE.Mesh(new THREE.TorusGeometry(5, 0.02, 16, 100), orbitMaterial);
+            planetRing3 = new THREE.Mesh(new THREE.TorusGeometry(3, 0.02, 16, 100), orbitMaterial);
             planetRing3.rotateX(Math.PI / 3.5)
-            planetRing4 = new THREE.Mesh(new THREE.TorusGeometry(5, 0.02, 16, 100), orbitMaterial);
+            planetRing4 = new THREE.Mesh(new THREE.TorusGeometry(3, 0.02, 16, 100), orbitMaterial);
             planetRing4.rotateX(Math.PI / 4.5)
         }
-
-        function debugConfiguration() {
-            gui.add(camera.position, 'z', -250, 250, 1)
-            gui.add(camera.position, 'y', -250, 250, 1)
-            gui.add(camera.position, 'x', -250, 250, 1)
-        }
-
+        
 
         function initSound() {
             let audioElement = document.querySelector('audio'),
@@ -314,7 +339,14 @@
                 }
             })
         }
-        initSound()
+
+        function debugConfiguration() {
+            gui.add(camera.position, 'z', -250, 250, 1)
+            gui.add(camera.position, 'y', -250, 250, 1)
+            gui.add(camera.position, 'x', -250, 250, 1)
+            gui.add(params, 'topCameraView').name('Camera Top View')
+            gui.add(params, 'flyByCamera').name('Fly By Camera')
+        }
 
         // Animate
         const clock = new THREE.Clock()
@@ -343,15 +375,6 @@
                 planet.rotation.y += planets[index].rotation * 2
                 planet.rotation.x += planets[index].rotation * 2
             })
-
-            // Flyby camera
-            camera.position.x += .01;
-            camera.position.y += -.01;
-            camera.position.z += -.05;
-
-            if (camera.position.z < -100) {
-                camera.position.set(100, 50, 50);
-            }
 
             controls.update()
 
