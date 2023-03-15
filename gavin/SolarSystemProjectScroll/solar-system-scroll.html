@@ -241,7 +241,7 @@
     const neptuneColorTexture = textureLoader.load('./textures/2k_neptune.jpg')
     const earthMoonColorTexture = textureLoader.load('./textures/2k_moon.jpg')
 
-    const earthNormalTexture = textureLoader.load('./textures/2k_earth_normal_map.tif')
+    // const earthNormalTexture = textureLoader.load('./textures/2k_earth_normal_map.tif')
     const earthSpecularTexture = textureLoader.load('./textures/2k_earth_specular_map.tif')
 
     // Fix moon texture
@@ -481,7 +481,6 @@
 
     const saturnRingMaterial = new THREE.MeshLambertMaterial({
       map: saturnRingAlphaTexture,
-      // alphaMap: saturnRingAlphaTexture,
       transparent: true,
       side: THREE.DoubleSide,
     })
@@ -1155,6 +1154,8 @@
     }
 
     tick()
+
+    console.log(renderer.info)
   </script>
 </body>
 
