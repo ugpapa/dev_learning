@@ -635,6 +635,7 @@
         restrictControls()
       },
       disableControlRestrictions: () => {
+        isControlLimited = false
         // Limit zooming
         controls.minDistance = 0
         controls.maxDistance = Infinity
@@ -701,6 +702,8 @@
      * Camera
      */
     // Base camera
+    let isControlLimited = true
+
     const camera = new THREE.PerspectiveCamera(70, sizes.width / sizes.height, 0.1, 100)
     scene.add(camera)
 
@@ -723,6 +726,7 @@
     setDefaultView()
 
     const restrictControls = () => {
+      isControlLimited = true
       // Limit zooming
       controls.minDistance = 0
       controls.maxDistance = 8
@@ -751,6 +755,9 @@
     }
 
     const checkCameraPos = () => {
+      if (!isControlLimited)
+        return
+
       // console.log(camera.position) // debug
       if (camera.position.z < 2.5 && camera.position.z > -2.2) {
         enableRotationControls()
