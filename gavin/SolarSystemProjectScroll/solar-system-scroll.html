@@ -1276,7 +1276,6 @@
 
       // Observe planet function
       const observe = (planetObj, planet) => {
-        console.log(cinematicView, controlMode)
         if (planet.name == 'Sun') {
           fullScene.camera.position.x = Math.cos(elapsedTime * 0.3) * (planet.size * 2.5)
           fullScene.camera.position.y = 10
@@ -1370,8 +1369,6 @@
     }
 
     tick()
-
-    console.log(renderer.info)
   </script>
 </body>
 
