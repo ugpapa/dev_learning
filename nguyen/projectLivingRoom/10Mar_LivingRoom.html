@@ -96,12 +96,12 @@
         }
 
         const restrictControls = () => {
-            controls.minDistance = 3
-            controls.maxDistance = 40
-            controls.minPolarAngle = - Math.PI / 2
-            controls.maxPolarAngle = Math.PI
-            controls.minAzimuthAngle = 0;
-            controls.maxAzimuthAngle = Math.PI;
+            controls.minDistance = 0
+            controls.maxDistance = 25
+            controls.minPolarAngle = Math.PI * 0.48
+            controls.maxPolarAngle = Math.PI * 0.53
+            controls.minAzimuthAngle = Math.PI * 0.4
+            controls.maxAzimuthAngle = Math.PI * 0.65
         }
 
         const defaultControl = () => {
