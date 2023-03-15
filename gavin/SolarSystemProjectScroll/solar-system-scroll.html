@@ -281,7 +281,9 @@
 
       changeCamera: (val) => {
         changeCamera(val)
-      }
+      },
+
+      highResShadows: false
     }
 
     const planets = {
@@ -703,8 +705,8 @@
     pointLight.position.set(0, 0, 0)
 
     pointLight.castShadow = true
-    pointLight.shadow.mapSize.width = 8192
-    pointLight.shadow.mapSize.height = 8192
+    pointLight.shadow.mapSize.width = 1024
+    pointLight.shadow.mapSize.height = 1024
 
     scene.add(pointLight)
 
@@ -1026,6 +1028,22 @@
 
     //   console.log('Using SMAA')
     // }
+
+    const toggleHighResShadows = (value) => {
+      if (value) {
+        pointLight.shadow.mapSize.width = 8192
+        pointLight.shadow.mapSize.height = 8192
+        pointLight.shadow.map.dispose() // important
+        pointLight.shadow.map = null
+      } else {
+        pointLight.shadow.mapSize.width = 1024
+        pointLight.shadow.mapSize.height = 1024
+        pointLight.shadow.map.dispose() // important
+        pointLight.shadow.map = null
+      }
+    }
+
+    gui.add(params, 'highResShadows').onChange((value) => { toggleHighResShadows(value) }).name('High Resolution Shadows')
 
     /**
      * Animate
