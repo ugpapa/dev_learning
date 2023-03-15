@@ -139,6 +139,8 @@
 
         const flyByCamera = () => {
             camera.position.set(100, 50, 50)
+            textMesh.position.set(50, 55, 25);
+            textMesh.lookAt(camera.position);
             camera.position.x += .01;
             camera.position.y += -.01;
             camera.position.z += -.05;
