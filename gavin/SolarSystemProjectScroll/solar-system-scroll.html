@@ -250,7 +250,6 @@
 
     /**
      * Objects
-     *
     */
     const params = {
       earthRotationSpeed: Math.PI * 0.01,
@@ -939,7 +938,7 @@
      * Bloom post processing for the sun in the full scene
      * Some source code from the Three.js example:
      * https://threejs.org/examples/?q=bloom#webgl_postprocessing_unreal_bloom_selective
-    */ 
+    */
     const renderPass = new RenderPass(scene, cameraViews[0].camera)
 
     const bloomPass = new UnrealBloomPass()
@@ -984,8 +983,8 @@
     finalComposer.addPass(renderPass);
     finalComposer.addPass(finalPass);
 
-		const bloomLayer = new THREE.Layers();
-		bloomLayer.set(1);
+    const bloomLayer = new THREE.Layers();
+    bloomLayer.set(1);
 
     // set sun layer to 1 which is the bloom layer
     scene.traverse((child) => {
@@ -996,8 +995,8 @@
       }
     })
 
-		const darkMaterial = new THREE.MeshBasicMaterial({ color: 'black' })
-		const materials = {}
+    const darkMaterial = new THREE.MeshBasicMaterial({ color: 'black' })
+    const materials = {}
 
     const darkenNonBloomed = (obj) => {
       if (obj.isMesh && bloomLayer.test(obj.layers) === false) {
