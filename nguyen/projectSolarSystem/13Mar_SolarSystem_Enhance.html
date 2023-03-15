@@ -12,11 +12,6 @@
             padding: 0;
         }
 
-        html,
-        body {
-            overflow: hidden;
-        }
-
         .webgl {
             position: fixed;
             top: 0;
@@ -24,13 +19,30 @@
             outline: none;
         }
 
-        sound {
+        .section {
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            color: #22b4d8;
+            text-transform: uppercase;
+            font-size: 7vmin;
+            padding-left: 10%;
+            padding-right: 10%;
+        }
+
+        /* .section:nth-child(odd) {
+            justify-content: flex-end;
+        } */
+
+        .sound {
             width: 30px;
             height: 25px;
             top: 30px;
             left: 30px;
             background-color: transparent;
-            position: absolute;
+            position: relative;
             background-position: center;
             background-image: url(./textures/speaker_off.png);
             background-position: left;
@@ -39,19 +51,145 @@
             cursor: pointer;
             opacity: 0.6;
         }
+
+        p {
+            /* border: 5px solid yellow; */
+            font-size: 1.5vw;
+            text-transform: none;
+            color: #ffffff;
+            text-align: justify;
+            text-shadow: 2px 2px 3px #000000;
+        }
     </style>
 </head>
 
 <body>
     <canvas class="webgl"></canvas>
-    <div id="sound"></div>
+    <section class="section">
+    </section>
+    <section class="section">
+        <div class="item">
+            <h1>The Solar System</h1>
+            <p>
+                Our solar system consists of our star, the Sun, and everything bound to it by gravity – the planets
+                Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune; dwarf planets such as Pluto; dozens
+                of moons; and millions of asteroids, comets, and meteoroids.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="item">
+            <h1>The Sun</h1>
+            <p>
+                Sun is a yellow dwarf star, a hot ball of glowing gases.
+                The Sun is the largest object in our solar system, comprising 99.8% of the system’s mass, with a diameter of 1,392,00 km
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <!-- Don't mind the text, im just pasting some description -->
+        <div class="item">
+            <h1>Mercury - God of commerce and skill</h1>
+            <p>
+                The smallest planet in our solar system and nearest to the Sun, Mercury is only slightly larger than Earth's Moon.
+                Mercury is the fastest planet in our solar system, traveling through space at nearly 29 mph.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="item">
+            <h1>Venus - Goddess of Beauty </h1>
+            <p>
+                Venus is the second planet from the Sun and is Earth's closest planetary neighbor.
+                Venus was the first planet explored by a spacecraft- NASA’s Mariner 2 Successfully on 14 December 1962. Since then numerous spacecraft from the U.S. and other space agencies have explored Venus.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="item">
+            <h1>The Earth - Inhabited by living</h1>
+            <p>
+                Earth is the fifth largest planet. The planet is unique as the only planet in the solar system with liquid water on the surface.
+                Earth has one moon. The atmosphere of Earth protects us from incoming meteoroids, most of which break up in our atmosphere before they can strike the surface.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="item">
+            <h1>The Sun</h1>
+            <p>
+                Sun is a yellow dwarf star, a hot ball of glowing gases.
+                The Sun is the largest object in our solar system, comprising 99.8% of the system’s mass, with a diameter of 1,392,00 km
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="item">
+            <h1>Mars - God of war</h1>
+            <p>
+                Mars is a Dusty, cold, desert world with a very thin atmosphere. 
+                There is strong evidence Mars was—billions of years ago—wetter and warmer, with a thicker atmosphere.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="item">
+            <h1>Jupiter - Ruler of Gods</h1>
+            <p>
+                The fifth planet from our Sun and is, by far, the largest planet in the solar system and has the shortest day in the solar system. 
+                Jupiter's stripes and swirls are cold, windy clouds of ammonia and water, floating in an atmosphere of hydrogen and helium.
+            </p>
+        </div>
+    </section>
+    
+    <section class="section">
+        <div class="item">
+            <h1>Saturn - God of Agriculture</h1>
+            <p>
+                Saturn is a massive ball made mostly of hydrogen and helium.
+                Saturn is the only planet in our solar system with an average density that is less than water.
+                It is a gas giant; Saturn doesn't have a true surface.
+                Saturn's rings are thought to be pieces of comets, asteroids, or shattered moons that broke up before they reached the planet, torn apart by Saturn's powerful gravity.
+                The main rings are A, B, and C. Rings D, E, F, and G are fainter and more recently discovered.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="item">
+            <h1>Uranus - God of Heavens</h1>
+            <p>
+                Uranus is the seventh planet from the Sun, with the third largest diameter in our solar system. 
+                It was the first planet found with the aid of a telescope, in 1781 by astronomer William Herschel.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="item">
+            <h1>Neptune - God of the Sea</h1>
+            <p>
+                The eighth planet from Sun and the only planet in our solar system not visible to the naked eye and the first predicted by mathematics before its discovery.
+                In 2011 Neptune completed its first 165-year orbit since its discovery in 1846. (Source NASA)- NASA’s Voyager 2 is the only spacecraft to have visited Neptune up close
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div id="sound"></div>
+    </section>
     <audio preload="auto" type="audio/ogg" loop src="./media/colossal_trailer_music_gaze.ogg">
         Your browser does not support the
         <code>audio</code> element.
     </audio>
     <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
-
-
     <script type="importmap">
       {
         "imports": {
@@ -213,7 +351,7 @@
                     bevelSegments: 5,
                 });
                 textGeometry.center();
-                const matcapTexture = textureLoader.load('./textures/matcaps/3.png')
+                const matcapTexture = textureLoader.load('./textures/matcaps/5.png')
                 const material = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
                 textMesh = new THREE.Mesh(
                     textGeometry,
@@ -321,7 +459,7 @@
             planetRing4 = new THREE.Mesh(new THREE.TorusGeometry(3, 0.02, 16, 100), orbitMaterial);
             planetRing4.rotateX(Math.PI / 4.5)
         }
-        
+
 
         function initSound() {
             let audioElement = document.querySelector('audio'),
