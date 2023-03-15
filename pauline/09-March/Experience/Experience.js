@@ -44,6 +44,14 @@ export default class Experience {
     this.time.on("tick", () => {
       this.update();
     });
+
+    this.camera.on('wheel', ()=>{
+      this.update();
+    });
+
+    this.camera.on('keydown', ()=>{
+      this.update();
+    });
   }
 
   resize() {
@@ -59,6 +67,8 @@ export default class Experience {
   destroy() {
     this.sizes.off("resize");
     this.time.off("tick");
+    this.camera.off('wheel');
+    this.camera.off('keydown');
 
     // Traverse the whole scene
     this.scene.traverse((child) => {

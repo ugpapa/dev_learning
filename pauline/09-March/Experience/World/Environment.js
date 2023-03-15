@@ -22,7 +22,6 @@ export default class Environment {
     this.pointLight.position.set(100, 310, 110);
     this.scene.add(this.pointLight);
   }
-
  
   setEnvironmentMap() {
     this.environmentMap = {};
