@@ -108,7 +108,7 @@
 
         const restrictControlsPerson = () => {
             controls.minDistance = 5
-            controls.maxDistance = 22
+            controls.maxDistance = 19
             controls.minPolarAngle = Math.PI * 0.48
             controls.maxPolarAngle = Math.PI * 0.53
             controls.minAzimuthAngle = Math.PI * 0.43
@@ -126,9 +126,6 @@
 
         let isPersonEnable = false;
         const params = {
-            topCameraView: () => {
-                topCameraView()
-            },
             resetCam: () => {
                 resetView()
                 restrictControls()
@@ -162,7 +159,7 @@
             resetView()
 
             restrictControls()
-            // Load room object
+
             generateRoomObject()
 
             generateRoom()
@@ -171,9 +168,6 @@
 
             generateLight()
 
-            // generateRoof()
-
-            // Add debug
             debugConfiguration()
         }
         init()
@@ -246,13 +240,7 @@
             const smallPictureTopLeftFrame = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
             const smallPictureMapTopLeft = new THREE.TextureLoader().load('textures/mys.jpg');
             const smallPictureMaterialTopLeft = new THREE.MeshLambertMaterial({ map: smallPictureMapTopLeft });
-            const smallPicTopLeft = new THREE.Mesh(
-                new THREE.PlaneGeometry(
-                    0.8,
-                    1.0
-                ),
-                smallPictureMaterialTopLeft
-            )
+            const smallPicTopLeft = new THREE.Mesh(new THREE.PlaneGeometry(0.8,1.0), smallPictureMaterialTopLeft)
             smallPicTopLeft.position.x = -2.9
             smallPicTopLeft.position.y = 2.1
             smallPicTopLeft.position.z = 3.8
@@ -268,13 +256,7 @@
             const smallPictureFrameMiddle = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
             const smallPictureMapMiddle = new THREE.TextureLoader().load('textures/theOrder.jpg');
             const smallPictureMaterialMiddle = new THREE.MeshLambertMaterial({ map: smallPictureMapMiddle });
-            const smallPictureMiddle = new THREE.Mesh(
-                new THREE.PlaneGeometry(
-                    0.8,
-                    1.0
-                ),
-                smallPictureMaterialMiddle
-            )
+            const smallPictureMiddle = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.0), smallPictureMaterialMiddle)
             smallPictureMiddle.position.x = -2.9
             smallPictureMiddle.position.y = 2.1
             smallPictureMiddle.position.z = 2.3
@@ -290,13 +272,7 @@
             const smallPictureFrameTopRight = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
             const smallPictureMapTopRight = new THREE.TextureLoader().load('textures/psyart.jpg');
             const smallPictureMaterialTopRight = new THREE.MeshLambertMaterial({ map: smallPictureMapTopRight });
-            const smallPictureTopRight = new THREE.Mesh(
-                new THREE.PlaneGeometry(
-                    0.8,
-                    1.0
-                ),
-                smallPictureMaterialTopRight
-            )
+            const smallPictureTopRight = new THREE.Mesh(new THREE.PlaneGeometry(0.8 ,1.0), smallPictureMaterialTopRight)
             smallPictureTopRight.position.x = -2.9
             smallPictureTopRight.position.y = 2.1
             smallPictureTopRight.position.z = 2.3 - (3.8 - 2.3)
@@ -312,13 +288,7 @@
             const mediumFramePicture = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.3, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
             const mediumPictureMap = new THREE.TextureLoader().load('textures/friendsnotexist.jpg');
             const mediumPictureMaterial = new THREE.MeshLambertMaterial({ map: mediumPictureMap });
-            const mediumPicture = new THREE.Mesh(
-                new THREE.PlaneGeometry(
-                    2.0,
-                    2.0
-                ),
-                mediumPictureMaterial
-            )
+            const mediumPicture = new THREE.Mesh(new THREE.PlaneGeometry(2.0 ,2.0), mediumPictureMaterial)
             mediumPicture.position.x = 0
             mediumPicture.position.y = 1.5
             mediumPicture.position.z = 4.45
@@ -335,12 +305,9 @@
         }
 
         function control() {
-            // Controls:Engine 
             if (controlsPlayer[87]) { // w
                 camera.position.x -= Math.sin(camera.rotation.y) * player.speed;
                 camera.position.z -= -Math.cos(camera.rotation.y) * player.speed;
-                console.log("Pos x: ", camera.position.x)
-                console.log("Pos z: ", camera.position.x)
             }
             if (controlsPlayer[83]) { // s
                 camera.position.x += Math.sin(camera.rotation.y) * player.speed;
@@ -354,25 +321,6 @@
                 camera.position.x += Math.sin(camera.rotation.y - Math.PI / 2) * player.speed;
                 camera.position.z += -Math.cos(camera.rotation.y - Math.PI / 2) * player.speed;
             }
-
-            // Straigh behavior, figure out later
-
-            // if (controlsPlayer[69]) { // e: For right rotation
-            //     camera.rotation.x += player.turnSpeed;
-            //     camera.rotation.y += player.turnSpeed;
-            //     //console.log("Current q pos: ", camera.rotation.y)
-            // }
-            // if (controlsPlayer[81]) { // q: For left rotation
-            //     camera.rotation.x -= player.turnSpeed;;
-            //     camera.rotation.y -= player.turnSpeed;
-            //     //console.log("Current e pos: ", camera.rotation.y)
-            // }
-            // if (controlsPlayer[37]) { // la
-            //     camera.rotation.y -= player.turnSpeed;
-            // }
-            // if (controlsPlayer[39]) { // ra
-            //     camera.rotation.y += player.turnSpeed;
-            // }
             if (controlsPlayer[32]) { // space
                 if (player.jumps) return false;
                 player.jumps = true;
@@ -390,30 +338,11 @@
             }
         }
 
-        function generateRoof() {
-            const floorTexture = textureLoader.load('./textures/floorTexture.png');
-            floorTexture.encoding = THREE.sRGBEncoding;
-            const floorMaterial = new THREE.MeshStandardMaterial();
-            floorMaterial.map = floorTexture;
-            const floor = new THREE.Mesh(
-                new THREE.ConeGeometry(5, 4, 4),
-                new THREE.MeshStandardMaterial({
-                    map: floorTexture,
-                })
-            );
-            floor.position.set(0, 5, 0)
-            floor.receiveShadow = true;
-            floor.rotation.y = Math.PI * 0.25;
-            scene.add(floor);
-        }
-
         function generateLight() {
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.2)
             const ambientLight2 = new THREE.AmbientLight(0x555555, 0.9);
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.2)
             const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.2);
-
-            // Light good
             const color = 0xFFFFFF;
             const intensity = 0.1;
             const beautifulLight = new THREE.PointLight(color, intensity);
@@ -423,8 +352,6 @@
             beautifulLight.position.set(-0.3, 1.8, 0.3);
             scene.add(beautifulLight);
 
-            const helper = new THREE.PointLightHelper(beautifulLight);
-            // scene.add(helper); Test
             directionalLight.castShadow = true;
             directionalLight.shadow.mapSize.set(1024, 1024)
             directionalLight.shadow.camera.far = 50
@@ -449,17 +376,11 @@
         }
 
         // Animate
-        let previousTime = 0;
         const clock = new THREE.Clock()
         const animate = () => {
-            const elapsedTime = clock.getElapsedTime();
-            const deltaTime = elapsedTime - previousTime;
             controls.update()
-            console.log(controls.update())
+
             if (isPersonEnable) {
-                
-                //camera.position.set(16.5, 2, 0);
-                //controls.target.set(-5, 2.5, 0);
                 // Enable wall restriction
                 restrictControlsPerson()
 
@@ -468,7 +389,6 @@
 
                 // Check for movement update
                 isMovementUpdate()
-                //console.log("Enable 3D movement!")
             }
             render();
 

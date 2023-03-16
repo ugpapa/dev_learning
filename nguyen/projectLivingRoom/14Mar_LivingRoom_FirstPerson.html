@@ -95,7 +95,6 @@
             if (controls[87]) { // w
                 camera.position.x -= Math.sin(camera.rotation.y) * player.speed;
                 camera.position.z -= -Math.cos(camera.rotation.y) * player.speed;
-                console.log("Pos: ", camera.position.x)
             }
             if (controls[83]) { // s
                 camera.position.x += Math.sin(camera.rotation.y) * player.speed;
