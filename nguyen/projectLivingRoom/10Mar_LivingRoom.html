@@ -47,8 +47,18 @@
         import { GLTFLoader } from "gltfLoader";
         import { DRACOLoader } from "dracoLoader";
 
-        let camera, controls, scene, renderer, gui, canvas;
+        let camera, scene, renderer, gui, canvas, controls;
+        let controlsPlayer = {};
         let light, light2, light3, light4;
+        let player = {
+            height: 2.0,
+            turnSpeed: .1,
+            speed: .1,
+            jumpHeight: .1,
+            gravity: .01,
+            velocity: 0,
+            playerJumps: false
+        };
 
         // Init
         gui = new dat.GUI()
@@ -80,14 +90,6 @@
         // Controls
         controls = new OrbitControls(camera, canvas)
         controls.enableDamping = true
-        controls.listenToKeyEvents(window)
-        controls.keys = {
-            LEFT: 'ArrowLeft',
-            UP: 'ArrowUp',
-            RIGHT: 'ArrowRight',
-            BOTTOM: 'ArrowDown'
-        }
-        
 
         const resetView = () => {
             controls.reset()
@@ -104,6 +106,15 @@
             controls.maxAzimuthAngle = Math.PI * 0.65
         }
 
+        const restrictControlsPerson = () => {
+            controls.minDistance = 5
+            controls.maxDistance = 22
+            controls.minPolarAngle = Math.PI * 0.48
+            controls.maxPolarAngle = Math.PI * 0.53
+            controls.minAzimuthAngle = Math.PI * 0.43
+            controls.maxAzimuthAngle = Math.PI * 0.62
+        }
+
         const defaultControl = () => {
             controls.minDistance = 0
             controls.maxDistance = 200
@@ -113,14 +124,23 @@
             controls.maxAzimuthAngle = Infinity;
         }
 
+        let isPersonEnable = false;
         const params = {
+            topCameraView: () => {
+                topCameraView()
+            },
             resetCam: () => {
                 resetView()
                 restrictControls()
+                isPersonEnable = false;
             },
             disableRestrictControl: () => {
                 resetView()
                 defaultControl()
+                isPersonEnable = false;
+            },
+            personControl: () => {
+                isPersonEnable = true;
             }
         }
 
@@ -130,8 +150,13 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         renderer.shadowMap.enabled = true
         renderer.shadowMap.autoUpdate = true;
+        renderer.physicallyCorrectLights = true
+        renderer.antialias = true
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
         window.addEventListener('resize', onWindowResize);
+        document.addEventListener('keydown', ({ keyCode }) => { controlsPlayer[keyCode] = true });
+        document.addEventListener('keyup', ({ keyCode }) => { controlsPlayer[keyCode] = false });
 
         function init() {
             resetView()
@@ -169,6 +194,7 @@
                     chair.rotation.y = Math.PI * 1.25
                     chair.position.x = 0.15
                     chair.position.y = 0.15
+                    chair.receiveShadow = true
                     scene.add(chair)
                     updateAllMaterials()
                 }
@@ -181,6 +207,7 @@
                     table.position.x = -2.1
                     table.position.y = 0.1
                     table.position.z = 3.5
+                    table.receiveShadow = true
                     scene.add(table)
                     updateAllMaterials()
                 }
@@ -194,6 +221,7 @@
                     chair.position.x = -2.1
                     chair.position.y = 0.15
                     chair.position.z = 2.5
+                    chair.receiveShadow = true
                     scene.add(chair)
                     updateAllMaterials()
                 }
@@ -207,6 +235,7 @@
                     chair.position.x = 0.5
                     chair.position.y = 0.15
                     chair.position.z = -3.5
+                    chair.receiveShadow = true
                     scene.add(chair)
                     updateAllMaterials()
                 }
@@ -305,6 +334,62 @@
             scene.add(mediumPicture, mediumFramePicture);
         }
 
+        function control() {
+            // Controls:Engine 
+            if (controlsPlayer[87]) { // w
+                camera.position.x -= Math.sin(camera.rotation.y) * player.speed;
+                camera.position.z -= -Math.cos(camera.rotation.y) * player.speed;
+                console.log("Pos x: ", camera.position.x)
+                console.log("Pos z: ", camera.position.x)
+            }
+            if (controlsPlayer[83]) { // s
+                camera.position.x += Math.sin(camera.rotation.y) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y) * player.speed;
+            }
+            if (controlsPlayer[65]) { // a
+                camera.position.x += Math.sin(camera.rotation.y + Math.PI / 2) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y + Math.PI / 2) * player.speed;
+            }
+            if (controlsPlayer[68]) { // d
+                camera.position.x += Math.sin(camera.rotation.y - Math.PI / 2) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y - Math.PI / 2) * player.speed;
+            }
+
+            // Straigh behavior, figure out later
+
+            // if (controlsPlayer[69]) { // e: For right rotation
+            //     camera.rotation.x += player.turnSpeed;
+            //     camera.rotation.y += player.turnSpeed;
+            //     //console.log("Current q pos: ", camera.rotation.y)
+            // }
+            // if (controlsPlayer[81]) { // q: For left rotation
+            //     camera.rotation.x -= player.turnSpeed;;
+            //     camera.rotation.y -= player.turnSpeed;
+            //     //console.log("Current e pos: ", camera.rotation.y)
+            // }
+            // if (controlsPlayer[37]) { // la
+            //     camera.rotation.y -= player.turnSpeed;
+            // }
+            // if (controlsPlayer[39]) { // ra
+            //     camera.rotation.y += player.turnSpeed;
+            // }
+            if (controlsPlayer[32]) { // space
+                if (player.jumps) return false;
+                player.jumps = true;
+                player.velocity = -player.jumpHeight;
+            }
+        }
+
+        function isMovementUpdate() {
+            player.velocity += player.gravity;
+            camera.position.y -= player.velocity;
+
+            if (camera.position.y < player.height) {
+                camera.position.y = player.height;
+                player.jumps = false;
+            }
+        }
+
         function generateRoof() {
             const floorTexture = textureLoader.load('./textures/floorTexture.png');
             floorTexture.encoding = THREE.sRGBEncoding;
@@ -327,6 +412,19 @@
             const ambientLight2 = new THREE.AmbientLight(0x555555, 0.9);
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.2)
             const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.2);
+
+            // Light good
+            const color = 0xFFFFFF;
+            const intensity = 0.1;
+            const beautifulLight = new THREE.PointLight(color, intensity);
+            beautifulLight.power = 300;
+            beautifulLight.decay = 2;
+            beautifulLight.distance = Infinity;
+            beautifulLight.position.set(-0.3, 1.8, 0.3);
+            scene.add(beautifulLight);
+
+            const helper = new THREE.PointLightHelper(beautifulLight);
+            // scene.add(helper); Test
             directionalLight.castShadow = true;
             directionalLight.shadow.mapSize.set(1024, 1024)
             directionalLight.shadow.camera.far = 50
@@ -337,16 +435,6 @@
             directionalLight.position.set(0, 0, 0)
             directionalLight2.position.set(0, 30, 3)
             scene.add(ambientLight, ambientLight2, directionalLight, directionalLight2)
-
-            light = new THREE.PointLight('#fdfbd3', 0.3);
-            light.position.set(0, 300, 500);
-            light2 = new THREE.PointLight('#fdfbd3', 0.3);
-            light2.position.set(500, 100, 0);
-            light3 = new THREE.PointLight('#fdfbd3', 0.3);
-            light3.position.set(0, 200, -500);
-            light4 = new THREE.PointLight('#fdfbd3', 0.3);
-            light4.position.set(-500, 600, 500);
-            scene.add(light, light2, light3, light4);
         }
 
         function debugConfiguration() {
@@ -356,6 +444,7 @@
             const cameraFolder = gui.addFolder('Camera')
             cameraFolder.add(params, 'resetCam').name('Reset Camera View')
             cameraFolder.add(params, 'disableRestrictControl').name('Disable control restrictions')
+            cameraFolder.add(params, 'personControl').name('Inspect room')
             gui.open();
         }
 
@@ -365,10 +454,22 @@
         const animate = () => {
             const elapsedTime = clock.getElapsedTime();
             const deltaTime = elapsedTime - previousTime;
-
             controls.update()
-            //camera.rotation.set(0.5, 0, 0);
+            console.log(controls.update())
+            if (isPersonEnable) {
+                
+                //camera.position.set(16.5, 2, 0);
+                //controls.target.set(-5, 2.5, 0);
+                // Enable wall restriction
+                restrictControlsPerson()
 
+                // Make 3D movement
+                control()
+
+                // Check for movement update
+                isMovementUpdate()
+                //console.log("Enable 3D movement!")
+            }
             render();
 
             window.requestAnimationFrame(animate)
