@@ -47,8 +47,18 @@
         import { GLTFLoader } from "gltfLoader";
         import { DRACOLoader } from "dracoLoader";
 
-        let camera, controls, scene, renderer, gui, canvas;
+        let camera, scene, renderer, gui, canvas, controls;
+        let controlsPlayer = {};
         let light, light2, light3, light4;
+        let player = {
+            height: 2.0,
+            turnSpeed: .1,
+            speed: .1,
+            jumpHeight: .1,
+            gravity: .01,
+            velocity: 0,
+            playerJumps: false
+        };
 
         // Init
         gui = new dat.GUI()
@@ -80,14 +90,6 @@
         // Controls
         controls = new OrbitControls(camera, canvas)
         controls.enableDamping = true
-        controls.listenToKeyEvents(window)
-        controls.keys = {
-            LEFT: 'ArrowLeft',
-            UP: 'ArrowUp',
-            RIGHT: 'ArrowRight',
-            BOTTOM: 'ArrowDown'
-        }
-        
 
         const resetView = () => {
             controls.reset()
@@ -104,6 +106,15 @@
             controls.maxAzimuthAngle = Math.PI * 0.65
         }
 
+        const restrictControlsPerson = () => {
+            controls.minDistance = 5
+            controls.maxDistance = 19
+            controls.minPolarAngle = Math.PI * 0.48
+            controls.maxPolarAngle = Math.PI * 0.53
+            controls.minAzimuthAngle = Math.PI * 0.43
+            controls.maxAzimuthAngle = Math.PI * 0.62
+        }
+
         const defaultControl = () => {
             controls.minDistance = 0
             controls.maxDistance = 200
@@ -113,14 +124,20 @@
             controls.maxAzimuthAngle = Infinity;
         }
 
+        let isPersonEnable = false;
         const params = {
             resetCam: () => {
                 resetView()
                 restrictControls()
+                isPersonEnable = false;
             },
             disableRestrictControl: () => {
                 resetView()
                 defaultControl()
+                isPersonEnable = false;
+            },
+            personControl: () => {
+                isPersonEnable = true;
             }
         }
 
@@ -130,14 +147,19 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         renderer.shadowMap.enabled = true
         renderer.shadowMap.autoUpdate = true;
+        renderer.physicallyCorrectLights = true
+        renderer.antialias = true
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
         window.addEventListener('resize', onWindowResize);
+        document.addEventListener('keydown', ({ keyCode }) => { controlsPlayer[keyCode] = true });
+        document.addEventListener('keyup', ({ keyCode }) => { controlsPlayer[keyCode] = false });
 
         function init() {
             resetView()
 
             restrictControls()
-            // Load room object
+
             generateRoomObject()
 
             generateRoom()
@@ -146,9 +168,6 @@
 
             generateLight()
 
-            // generateRoof()
-
-            // Add debug
             debugConfiguration()
         }
         init()
@@ -169,6 +188,7 @@
                     chair.rotation.y = Math.PI * 1.25
                     chair.position.x = 0.15
                     chair.position.y = 0.15
+                    chair.receiveShadow = true
                     scene.add(chair)
                     updateAllMaterials()
                 }
@@ -181,6 +201,7 @@
                     table.position.x = -2.1
                     table.position.y = 0.1
                     table.position.z = 3.5
+                    table.receiveShadow = true
                     scene.add(table)
                     updateAllMaterials()
                 }
@@ -194,6 +215,7 @@
                     chair.position.x = -2.1
                     chair.position.y = 0.15
                     chair.position.z = 2.5
+                    chair.receiveShadow = true
                     scene.add(chair)
                     updateAllMaterials()
                 }
@@ -207,6 +229,7 @@
                     chair.position.x = 0.5
                     chair.position.y = 0.15
                     chair.position.z = -3.5
+                    chair.receiveShadow = true
                     scene.add(chair)
                     updateAllMaterials()
                 }
@@ -217,13 +240,7 @@
             const smallPictureTopLeftFrame = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
             const smallPictureMapTopLeft = new THREE.TextureLoader().load('textures/mys.jpg');
             const smallPictureMaterialTopLeft = new THREE.MeshLambertMaterial({ map: smallPictureMapTopLeft });
-            const smallPicTopLeft = new THREE.Mesh(
-                new THREE.PlaneGeometry(
-                    0.8,
-                    1.0
-                ),
-                smallPictureMaterialTopLeft
-            )
+            const smallPicTopLeft = new THREE.Mesh(new THREE.PlaneGeometry(0.8,1.0), smallPictureMaterialTopLeft)
             smallPicTopLeft.position.x = -2.9
             smallPicTopLeft.position.y = 2.1
             smallPicTopLeft.position.z = 3.8
@@ -239,13 +256,7 @@
             const smallPictureFrameMiddle = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
             const smallPictureMapMiddle = new THREE.TextureLoader().load('textures/theOrder.jpg');
             const smallPictureMaterialMiddle = new THREE.MeshLambertMaterial({ map: smallPictureMapMiddle });
-            const smallPictureMiddle = new THREE.Mesh(
-                new THREE.PlaneGeometry(
-                    0.8,
-                    1.0
-                ),
-                smallPictureMaterialMiddle
-            )
+            const smallPictureMiddle = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.0), smallPictureMaterialMiddle)
             smallPictureMiddle.position.x = -2.9
             smallPictureMiddle.position.y = 2.1
             smallPictureMiddle.position.z = 2.3
@@ -261,13 +272,7 @@
             const smallPictureFrameTopRight = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
             const smallPictureMapTopRight = new THREE.TextureLoader().load('textures/psyart.jpg');
             const smallPictureMaterialTopRight = new THREE.MeshLambertMaterial({ map: smallPictureMapTopRight });
-            const smallPictureTopRight = new THREE.Mesh(
-                new THREE.PlaneGeometry(
-                    0.8,
-                    1.0
-                ),
-                smallPictureMaterialTopRight
-            )
+            const smallPictureTopRight = new THREE.Mesh(new THREE.PlaneGeometry(0.8 ,1.0), smallPictureMaterialTopRight)
             smallPictureTopRight.position.x = -2.9
             smallPictureTopRight.position.y = 2.1
             smallPictureTopRight.position.z = 2.3 - (3.8 - 2.3)
@@ -283,13 +288,7 @@
             const mediumFramePicture = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.3, 0.015), new THREE.MeshLambertMaterial({ color: '#D9DDDC' }));
             const mediumPictureMap = new THREE.TextureLoader().load('textures/friendsnotexist.jpg');
             const mediumPictureMaterial = new THREE.MeshLambertMaterial({ map: mediumPictureMap });
-            const mediumPicture = new THREE.Mesh(
-                new THREE.PlaneGeometry(
-                    2.0,
-                    2.0
-                ),
-                mediumPictureMaterial
-            )
+            const mediumPicture = new THREE.Mesh(new THREE.PlaneGeometry(2.0 ,2.0), mediumPictureMaterial)
             mediumPicture.position.x = 0
             mediumPicture.position.y = 1.5
             mediumPicture.position.z = 4.45
@@ -305,21 +304,38 @@
             scene.add(mediumPicture, mediumFramePicture);
         }
 
-        function generateRoof() {
-            const floorTexture = textureLoader.load('./textures/floorTexture.png');
-            floorTexture.encoding = THREE.sRGBEncoding;
-            const floorMaterial = new THREE.MeshStandardMaterial();
-            floorMaterial.map = floorTexture;
-            const floor = new THREE.Mesh(
-                new THREE.ConeGeometry(5, 4, 4),
-                new THREE.MeshStandardMaterial({
-                    map: floorTexture,
-                })
-            );
-            floor.position.set(0, 5, 0)
-            floor.receiveShadow = true;
-            floor.rotation.y = Math.PI * 0.25;
-            scene.add(floor);
+        function control() {
+            if (controlsPlayer[87]) { // w
+                camera.position.x -= Math.sin(camera.rotation.y) * player.speed;
+                camera.position.z -= -Math.cos(camera.rotation.y) * player.speed;
+            }
+            if (controlsPlayer[83]) { // s
+                camera.position.x += Math.sin(camera.rotation.y) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y) * player.speed;
+            }
+            if (controlsPlayer[65]) { // a
+                camera.position.x += Math.sin(camera.rotation.y + Math.PI / 2) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y + Math.PI / 2) * player.speed;
+            }
+            if (controlsPlayer[68]) { // d
+                camera.position.x += Math.sin(camera.rotation.y - Math.PI / 2) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y - Math.PI / 2) * player.speed;
+            }
+            if (controlsPlayer[32]) { // space
+                if (player.jumps) return false;
+                player.jumps = true;
+                player.velocity = -player.jumpHeight;
+            }
+        }
+
+        function isMovementUpdate() {
+            player.velocity += player.gravity;
+            camera.position.y -= player.velocity;
+
+            if (camera.position.y < player.height) {
+                camera.position.y = player.height;
+                player.jumps = false;
+            }
         }
 
         function generateLight() {
@@ -327,6 +343,15 @@
             const ambientLight2 = new THREE.AmbientLight(0x555555, 0.9);
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.2)
             const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.2);
+            const color = 0xFFFFFF;
+            const intensity = 0.1;
+            const beautifulLight = new THREE.PointLight(color, intensity);
+            beautifulLight.power = 300;
+            beautifulLight.decay = 2;
+            beautifulLight.distance = Infinity;
+            beautifulLight.position.set(-0.3, 1.8, 0.3);
+            scene.add(beautifulLight);
+
             directionalLight.castShadow = true;
             directionalLight.shadow.mapSize.set(1024, 1024)
             directionalLight.shadow.camera.far = 50
@@ -337,16 +362,6 @@
             directionalLight.position.set(0, 0, 0)
             directionalLight2.position.set(0, 30, 3)
             scene.add(ambientLight, ambientLight2, directionalLight, directionalLight2)
-
-            light = new THREE.PointLight('#fdfbd3', 0.3);
-            light.position.set(0, 300, 500);
-            light2 = new THREE.PointLight('#fdfbd3', 0.3);
-            light2.position.set(500, 100, 0);
-            light3 = new THREE.PointLight('#fdfbd3', 0.3);
-            light3.position.set(0, 200, -500);
-            light4 = new THREE.PointLight('#fdfbd3', 0.3);
-            light4.position.set(-500, 600, 500);
-            scene.add(light, light2, light3, light4);
         }
 
         function debugConfiguration() {
@@ -356,19 +371,25 @@
             const cameraFolder = gui.addFolder('Camera')
             cameraFolder.add(params, 'resetCam').name('Reset Camera View')
             cameraFolder.add(params, 'disableRestrictControl').name('Disable control restrictions')
+            cameraFolder.add(params, 'personControl').name('Inspect room')
             gui.open();
         }
 
         // Animate
-        let previousTime = 0;
         const clock = new THREE.Clock()
         const animate = () => {
-            const elapsedTime = clock.getElapsedTime();
-            const deltaTime = elapsedTime - previousTime;
-
             controls.update()
-            //camera.rotation.set(0.5, 0, 0);
 
+            if (isPersonEnable) {
+                // Enable wall restriction
+                restrictControlsPerson()
+
+                // Make 3D movement
+                control()
+
+                // Check for movement update
+                isMovementUpdate()
+            }
             render();
 
             window.requestAnimationFrame(animate)

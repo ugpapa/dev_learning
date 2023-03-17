@@ -93,20 +93,20 @@
         function control() {
             // Controls:Engine 
             if (controls[87]) { // w
-                camera.position.x += Math.sin(camera.rotation.y) * player.speed;
-                camera.position.z += -Math.cos(camera.rotation.y) * player.speed;
-            }
-            if (controls[83]) { // s
                 camera.position.x -= Math.sin(camera.rotation.y) * player.speed;
                 camera.position.z -= -Math.cos(camera.rotation.y) * player.speed;
             }
+            if (controls[83]) { // s
+                camera.position.x += Math.sin(camera.rotation.y) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y) * player.speed;;
+            }
             if (controls[65]) { // a
-                camera.position.x -= Math.sin(camera.rotation.y + Math.PI / 2) * player.speed;
-                camera.position.z -= -Math.cos(camera.rotation.y + Math.PI / 2) * player.speed;
+                camera.position.x += Math.sin(camera.rotation.y + Math.PI / 2) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y + Math.PI / 2) * player.speed;
             }
             if (controls[68]) { // d
-                camera.position.x -= Math.sin(camera.rotation.y - Math.PI / 2) * player.speed;
-                camera.position.z -= -Math.cos(camera.rotation.y - Math.PI / 2) * player.speed;
+                camera.position.x += Math.sin(camera.rotation.y - Math.PI / 2) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y - Math.PI / 2) * player.speed;
             }
             if (controls[69]) { // e: For right rotation
                 camera.rotation.y -= player.turnSpeed;
