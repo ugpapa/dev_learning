@@ -925,9 +925,14 @@
           )
           moon.position.y = view.objectParams.moon.height
           moon.position.x = view.objectParams.moon.distanceToEarth
+          moon.castShadow = true
+          moon.receiveShadow = false
           moon.name = 'moon'
 
           mesh.add(moon)
+          
+          mesh.castShadow = false
+          mesh.receiveShadow = true
         }
       }
       mesh.rotation.y = view.objectParams.rotation
