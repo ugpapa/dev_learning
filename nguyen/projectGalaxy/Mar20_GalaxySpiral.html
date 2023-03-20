@@ -285,6 +285,11 @@
 
             window.requestAnimationFrame(animate)
 
+            // Flyby camera
+            camera.position.x += .001;
+            camera.position.y += -.001;
+            camera.position.z += .0005;
+
             checkCameraLocation()
         }
 
