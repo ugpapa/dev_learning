@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title> Project Galaxy 🌌 🪐 </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            overflow: hidden;
+        }
+
+        .webgl {
+            position: fixed;
+            top: 0;
+            left: 0;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas class="webgl"></canvas>
+
+    <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+
+
+    <script type="importmap">
+      {
+        "imports": {
+            "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+            "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
+            "orbitControl": "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js"
+        }
+      }
+    </script>
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from "orbitControl";
+        import * as dat from "lil-gui";
+
+        let camera, controls, scene, renderer, canvas;
+        let geometry = null;
+        let material = null;
+        let points = null;
+        let point = null;
+
+        // Debug
+        const gui = new dat.GUI({ width: 500 });
+
+        // Canvas
+        canvas = document.querySelector('canvas.webgl');
+
+        // Scene
+        scene = new THREE.Scene();
+
+        // Galaxy
+        const params = {
+            count: 100000,
+            size: 0.019,
+            radius: 5,
+            branches: 3,
+            spin: 1.851,
+            randomness: 0.626,
+            randomnessPower: 1.958,
+            insideColor: "#B78BFC", //Purple
+            outsideColor: "#061E5A", //Blue
+        };
+
+         const sizes = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+        };
+
+        // Base camera
+        camera = new THREE.PerspectiveCamera(
+            75,
+            sizes.width / sizes.height,
+            0.1,
+            100
+        );
+        scene.add(camera);
+
+        // Controls
+        controls = new OrbitControls(camera, canvas);
+        controls.enableDamping = true;
+
+        /**
+         * Renderer
+         */
+        renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
+        });
+        renderer.setSize(sizes.width, sizes.height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        function init() {
+            loadWorldMap();
+            generateGalaxy();
+            addUIDebugConfiguration();
+
+            const camPosDebug = {
+                x: -4.539563886122335,
+                y: 4.342814410037079,
+                z: -5.987410775679805
+            }
+            camera.position.set(camPosDebug.x, camPosDebug.y, camPosDebug.z);
+        }
+        init()
+
+        function generateGalaxy() {
+            const { count, size, radius, branches, spin, randomness, randomnessPower } =
+                params;
+
+            // Destroy old galaxy
+            if (point !== null) {
+                geometry.dispose();
+                material.dispose();
+                scene.remove(point);
+            }
+
+            geometry = new THREE.BufferGeometry();
+            material = new THREE.PointsMaterial({
+                size,
+                sizeAttenuation: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+                vertexColors: true,
+            });
+
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+
+            const insideColor = new THREE.Color(params.insideColor);
+            const outsideColor = new THREE.Color(params.outsideColor);
+
+            for (let i = 0; i < count; i++) {
+                const i3 = i * 3;
+                const r = Math.random() * radius;
+                const spinAngle = spin * r;
+                const branchesAngle = ((i % branches) / branches) * 2 * Math.PI;
+
+                const randomX =
+                    Math.pow(Math.random(), randomnessPower) *
+                    (Math.random() < 0.5 ? 1 : -1) *
+                    randomness;
+                const randomY =
+                    Math.pow(Math.random(), randomnessPower) *
+                    (Math.random() < 0.5 ? 1 : -1) *
+                    randomness;
+                const randomZ =
+                    Math.pow(Math.random(), randomnessPower) *
+                    (Math.random() < 0.5 ? 1 : -1) *
+                    randomness;
+
+                positions[i3 + 0] = Math.cos(branchesAngle + spinAngle) * r + randomX; // x
+                positions[i3 + 1] = randomY; // y
+                positions[i3 + 2] = Math.sin(branchesAngle + spinAngle) * r + randomZ; // z
+
+                const mixedColor = insideColor.clone();
+
+                mixedColor.lerp(outsideColor, r / radius);
+
+                colors[i3 + 0] = mixedColor.r;
+                colors[i3 + 1] = mixedColor.g;
+                colors[i3 + 2] = mixedColor.b;
+            }
+
+            geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+            point = new THREE.Points(geometry, material);
+            point.rotateZ(25);
+            scene.add(point);
+        }
+
+        function loadWorldMap() {
+            scene.background = new THREE.Color(0x000000);
+            const spaceLoader = new THREE.CubeTextureLoader();
+            const spaceTexture = spaceLoader.load([
+                "textures/background/BlueNebular_left.jpg",
+                "textures/background/BlueNebular_right.jpg",
+                "textures/background/BlueNebular_top.jpg",
+                "textures/background/BlueNebular_bottom.jpg",
+                "textures/background/BlueNebular_front.jpg",
+                "textures/background/BlueNebular_back.jpg",
+            ]);
+            scene.background = spaceTexture;
+        }
+
+        window.addEventListener('resize', onWindowResize);
+
+        function addUIDebugConfiguration() {
+            gui.add(camera.position, 'z', -18, 18, 0.5)
+            gui.add(camera.position, 'y', -18, 18, 0.5)
+            gui.add(camera.position, 'x', -18, 18, 0.5)
+            gui
+                .add(params, "count")
+                .min(100)
+                .max(1000000)
+                .step(100)
+                .name("Number of points")
+                .onFinishChange(generateGalaxy);
+
+            gui
+                .add(params, "size")
+                .min(0.001)
+                .max(0.1)
+                .step(0.001)
+                .name("Size of point")
+                .onFinishChange(generateGalaxy);
+
+            gui
+                .add(params, "radius")
+                .min(0.01)
+                .max(20)
+                .step(0.01)
+                .name("Size of galaxy")
+                .onFinishChange(generateGalaxy);
+
+            gui
+                .add(params, "branches")
+                .min(2)
+                .max(20)
+                .step(1)
+                .name("Branches Number")
+                .onFinishChange(generateGalaxy);
+
+            gui
+                .add(params, "spin")
+                .min(-5)
+                .max(5)
+                .step(0.001)
+                .name("Spin Branches")
+                .onFinishChange(generateGalaxy);
+
+            gui
+                .add(params, "randomness")
+                .min(0)
+                .max(2)
+                .step(0.001)
+                .name("Randomness")
+                .onFinishChange(generateGalaxy);
+
+            gui
+                .add(params, "randomnessPower")
+                .min(1)
+                .max(10)
+                .step(0.001)
+                .name("Randomness Power")
+                .onFinishChange(generateGalaxy);
+
+            gui
+                .addColor(params, "insideColor")
+                .name("Inside Color")
+                .onFinishChange(generateGalaxy);
+
+            gui
+                .addColor(params, "outsideColor")
+                .name("Outside Color")
+                .onFinishChange(generateGalaxy);
+        }
+
+        function checkCameraLocation() {
+            console.log("Current pos x:", camera.position.x)
+            console.log("Current pos y:", camera.position.y)
+            console.log("Current pos z:", camera.position.z)
+        }
+
+        const clock = new THREE.Clock()
+        const animate = () => {
+            const elapsedTime = clock.getElapsedTime()
+
+            controls.update()
+
+            render();
+
+            window.requestAnimationFrame(animate)
+
+            checkCameraLocation()
+        }
+
+        animate()
+
+        function onWindowResize() {
+            // Update sizes, camera, rendere
+            sizes.width = window.innerWidth
+            sizes.height = window.innerHeight
+
+            camera.aspect = sizes.width / sizes.height
+            camera.updateProjectionMatrix()
+
+            renderer.setSize(sizes.width, sizes.height)
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+
+    </script>
+</body>
+
+</html>
