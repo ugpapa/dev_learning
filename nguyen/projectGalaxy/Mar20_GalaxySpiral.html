@@ -12,10 +12,10 @@
             padding: 0;
         }
 
-        html,
+        /* html,
         body {
             overflow: hidden;
-        }
+        } */
 
         .webgl {
             position: fixed;
@@ -38,29 +38,41 @@
         "imports": {
             "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
             "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
-            "orbitControl": "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js"
+            "orbitControl": "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js",
+            "fontLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/FontLoader.js",
+            "textGeometry": "https://unpkg.com/three@0.147.0/examples/jsm/geometries/TextGeometry.js"
         }
       }
     </script>
+
+    <div id="01_sigmaMale" style="border:1px solid black;
+            position: absolute;
+            top: 85%;
+            left: 50%;
+            transform: translate(-50%, -50%);">
+        <audio controls loop autoplay>
+            <source src="./media/backgroundmusic.ogg" type="audio/ogg">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+
     <script type="module">
         import * as THREE from "three";
         import { OrbitControls } from "orbitControl";
         import * as dat from "lil-gui";
+        import { FontLoader } from 'fontLoader';
+        import { TextGeometry } from 'textGeometry';
 
         let camera, controls, scene, renderer, canvas;
         let geometry = null;
         let material = null;
-        let points = null;
         let point = null;
 
         // Debug
         const gui = new dat.GUI({ width: 500 });
-
-        // Canvas
         canvas = document.querySelector('canvas.webgl');
-
-        // Scene
         scene = new THREE.Scene();
+        const textureLoader = new THREE.TextureLoader()
 
         // Galaxy
         const params = {
@@ -75,7 +87,7 @@
             outsideColor: "#061E5A", //Blue
         };
 
-         const sizes = {
+        const sizes = {
             width: window.innerWidth,
             height: window.innerHeight,
         };
@@ -102,9 +114,30 @@
         renderer.setSize(sizes.width, sizes.height);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+        function loadAudio() {
+            const listener = new THREE.AudioListener();
+            camera.add(listener);
+            const sound = new THREE.Audio(listener);
+            const audioLoader = new THREE.AudioLoader();
+            audioLoader.load('./media/backgroundmusic.ogg', function (buffer) {
+                sound.setBuffer(buffer);
+                sound.setLoop(true);
+                sound.setVolume(0.5);
+                sound.play();
+                console.log("Loaded")
+            });
+            sound.play();
+        }
+
         function init() {
             loadWorldMap();
+
             generateGalaxy();
+
+            loadTitle();
+
+            loadAudio();
+
             addUIDebugConfiguration();
 
             const camPosDebug = {
@@ -198,6 +231,34 @@
 
         window.addEventListener('resize', onWindowResize);
 
+        function loadTitle() {
+            // Text
+            const loader = new FontLoader();
+            loader.load('fonts/helvetiker_regular.typeface.json', function (font) {
+                const textGeometry = new TextGeometry('3D Galaxy', {
+                    font: font,
+                    size: 0.8,
+                    height: 0.1,
+                    curveSegments: 5,
+                    bevelEnabled: true,
+                    bevelThickness: 0.1,
+                    bevelSize: 0.004,
+                    bevelOffset: -0.1,
+                    bevelSegments: 5,
+                });
+                textGeometry.center();
+                const matcapTexture = textureLoader.load('./textures/matcaps/3.png')
+                const material = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
+                const textMesh = new THREE.Mesh(
+                    textGeometry,
+                    material
+                )
+                scene.add(textMesh)
+                textMesh.position.set(0, 4.5, 0);
+                textMesh.lookAt(camera.position);
+            })
+        }
+
         function addUIDebugConfiguration() {
             gui.add(camera.position, 'z', -18, 18, 0.5)
             gui.add(camera.position, 'y', -18, 18, 0.5)
@@ -290,7 +351,7 @@
             camera.position.y += -.001;
             camera.position.z += .0005;
 
-            checkCameraLocation()
+            //checkCameraLocation()
         }
 
         animate()
