@@ -1309,9 +1309,9 @@
       renderer.render(fullScene.scene, fullScene.camera)
 
       // Update effect composer for the sun in the full scene
-      fullScene.scene.traverse(darkenNonBloomed);
+      fullScene.scene.traverse(darkenNonBloomed)
       effectComposer.render()
-      fullScene.scene.traverse(restoreMaterial);
+      fullScene.scene.traverse(restoreMaterial)
 
       effectComposer.setSize(sizes.width, sizes.height)
       effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
