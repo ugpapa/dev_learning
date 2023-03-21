@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Self Project 1</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      overflow: hidden;
+    }
+
+    .webgl {
+      position: fixed;
+      top: 0;
+      left: 0;
+      outline: none;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas class="webgl"></canvas>
+
+  <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
+  <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+          "cannon-es-debugger": "https://cdn.jsdelivr.net/npm/cannon-es-debugger@1.0.0/dist/cannon-es-debugger.min.js"
+        }
+      }
+    </script>
+  <script type="module">
+    import * as THREE from "three"
+    import * as dat from "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js"
+    import { OrbitControls } from "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js"
+
+    import * as CANNON from "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js"
+    // import CannonDebugger from 'cannon-es-debugger'
+
+    import { GLTFLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js'
+    import { DRACOLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js'
+
+
+    /**
+     * Debug
+     */
+    const gui = new dat.GUI()
+    const debugObject = {}
+
+    const pos = 15
+
+    debugObject.createSphere = () => {
+      createSphere(
+        Math.random() * 0.5,
+        {
+          x: (Math.random() - .5) * pos,
+          y: pos,
+          z: (Math.random() - .5) * pos
+        }
+      )
+    }
+
+    debugObject.createBox = () => {
+      createBox(
+        Math.random(),
+        Math.random(),
+        Math.random(),
+        {
+          x: (Math.random() - 0.5) * pos,
+          y: pos,
+          z: (Math.random() - 0.5) * pos
+        }
+      )
+    }
+
+    debugObject.reset = () => {
+      for (const object of objectsToUpdate) {
+        // Remove body
+        object.body.removeEventListener('collide', playHitSound)
+        world.removeBody(object.body)
+
+        // Remove mesh
+        scene.remove(object.mesh)
+      }
+
+      objectsToUpdate.splice(0, objectsToUpdate.length)
+    }
+
+    gui.add(debugObject, 'createSphere')
+    gui.add(debugObject, 'createBox')
+    gui.add(debugObject, 'reset')
+
+    /**
+     * Base
+     */
+    // Canvas
+    const canvas = document.querySelector('canvas.webgl')
+
+    /**
+     * Textures
+     */
+    const textureLoader = new THREE.TextureLoader()
+    const cubeTextureLoader = new THREE.CubeTextureLoader()
+
+    const environmentMap = cubeTextureLoader.load([
+      './textures/environmentMaps/px.png',
+      './textures/environmentMaps/nx.png',
+      './textures/environmentMaps/py.png',
+      './textures/environmentMaps/ny.png',
+      './textures/environmentMaps/pz.png',
+      './textures/environmentMaps/nz.png'
+    ])
+    environmentMap.encoding = THREE.sRGBEncoding
+
+    // Scene
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color('skyblue')
+    scene.environment = environmentMap
+
+    /**
+     * Sounds
+     */
+    const hitSound = new Audio('./sounds/hit.mp3')
+
+    const playHitSound = (collision) => {
+      const impactStrength = collision.contact.getImpactVelocityAlongNormal()
+
+      if (impactStrength > 1.5) {
+        hitSound.volume = Math.random()
+        hitSound.currentTime = 0
+        hitSound.play()
+      }
+    }
+
+    /**
+     * Physics
+     */
+    // World
+    const world = new CANNON.World()
+
+    // optimize performance by using SAPBroadphase
+    world.broadphase = new CANNON.SAPBroadphase(world)
+
+    // set to Earch gravity
+    world.gravity.set(0, -9.82, 0)
+
+    // optimize performance even more by putting objects to sleep
+    world.allowSleep = true
+
+    // Cannon ground
+    const floorSize = { w: 100, h: 100 }
+    const groundBody = new CANNON.Body({
+      type: CANNON.Body.STATIC,
+      shape: new CANNON.Box(new CANNON.Vec3(floorSize.w * 0.5, 0.01, floorSize.h * 0.5))
+    })
+
+    //groundBody.quaternion.setFromEuler(-Math.PI * 0.5, 0, 0)
+    groundBody.position.y += 0.05
+
+    world.addBody(groundBody)
+
+    // Default material
+    const defaultMaterial = new CANNON.Material('default')
+    const defaultContactMaterial = new CANNON.ContactMaterial(
+      defaultMaterial,
+      {
+        friction: 0.3,
+        restitution: 0.0
+      }
+    )
+    world.addContactMaterial(defaultContactMaterial)
+    world.defaultContactMaterial = defaultContactMaterial
+
+    // Cannon debugger
+    // const cannonDebugger = new CannonDebugger(scene, world))
+
+    // Cannon fox body
+    const foxBody = new CANNON.Body({
+      mass: 2,
+      shape: new CANNON.Box(new CANNON.Vec3(25.185 * 0.025 * 0.5, 79.028 * 0.025 * 0.5, 154.720 * 0.025 * 0.5)),
+      position: new CANNON.Vec3(0, 3, 0),
+      material: defaultMaterial
+    })
+    foxBody.addEventListener('collide', playHitSound)
+    world.addBody(foxBody)
+
+    /**
+     * Models
+     */
+    // Provide a DRACOLoader instance to decode compressed mesh data
+    const dracoLoader = new DRACOLoader()
+    // path copied to 'static' from 'node_modules/three/examples/jsm/libs/draco/'
+    dracoLoader.setDecoderPath('/draco/')
+
+    const gltfLoader = new GLTFLoader()
+    // console.log(gltfLoader) // debug
+    gltfLoader.setDRACOLoader(dracoLoader)
+
+    let mixer, fox, foxAnims, foxBoundingBoxHelper,
+      currentAction, playingAction,
+      idlingAnim, walkingAnim, runningAnim
+
+    // load fox model and play animation
+    gltfLoader.load(
+      './models/Fox.glb',
+      (gltf) => {
+        mixer = new THREE.AnimationMixer(gltf.scene)
+        fox = gltf.scene
+        foxAnims = gltf.animations
+        idlingAnim = mixer.clipAction(foxAnims[0]) // idling anim
+        walkingAnim = mixer.clipAction(foxAnims[1]) // walking anim
+        runningAnim = mixer.clipAction(foxAnims[2]) // running anim
+
+        // set idling anim as default
+        const action = mixer.clipAction(foxAnims[0])
+        currentAction = action
+        action.play()
+        playingAction = action
+
+        fox.scale.set(.025, .025, .025)
+
+        // enable shadows
+        fox.traverse((object) => {
+          if (object.isMesh) object.castShadow = true;
+        })
+
+        scene.add(fox)
+
+        foxBoundingBoxHelper = new THREE.BoxHelper(fox, 0xff0000)
+        scene.add(foxBoundingBoxHelper)
+
+        // get size of fox model
+        // Result: Vector3 { x: 25.185436248779297, y: 79.02893318235874, z: 154.71986389160156 }
+        // const temp = fox.getObjectByName("fox")
+        // let foxSize = new THREE.Vector3()
+        // temp.geometry.boundingBox.getSize(foxSize)
+        // console.log('fox size:', foxSize)
+      }
+    )
+
+    /**
+     * Floor
+     */
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(floorSize.w, floorSize.h),
+      new THREE.MeshStandardMaterial({
+        color: '#C4A484',
+        metalness: 0.3,
+        roughness: 0.4,
+        envMap: environmentMap,
+        envMapIntensity: 0.5
+      })
+    )
+    floor.receiveShadow = true
+    floor.rotation.x = -Math.PI * 0.5
+    scene.add(floor)
+
+    /**
+     * Grass
+     * Source: https://discourse.threejs.org/t/simple-instanced-grass-example/26694
+     */
+
+    // MATERIALS
+    const vertexShader = `
+      varying vec2 vUv;
+      uniform float time;
+      
+      void main() {
+
+        vUv = uv;
+        
+        // VERTEX POSITION
+        
+        vec4 mvPosition = vec4( position, 1.0 );
+        #ifdef USE_INSTANCING
+          mvPosition = instanceMatrix * mvPosition;
+        #endif
+        
+        // DISPLACEMENT
+        
+        // here the displacement is made stronger on the blades tips.
+        float dispPower = 1.0 - cos( uv.y * 3.1416 / 2.0 );
+        
+        float displacement = sin( mvPosition.z + time * 10.0 ) * ( 0.1 * dispPower );
+        mvPosition.z += displacement;
+        
+        //
+        
+        vec4 modelViewPosition = modelViewMatrix * mvPosition;
+        gl_Position = projectionMatrix * modelViewPosition;
+
+      }
+    `
+    const fragmentShader = `
+      varying vec2 vUv;
+      
+      void main() {
+        vec3 baseColor = vec3( 0.41, 1.0, 0.5 );
+        float clarity = ( vUv.y * 0.5 ) + 0.5;
+        gl_FragColor = vec4( baseColor * clarity, 1 );
+      }
+    `
+
+    const uniforms = {
+      time: {
+        value: 0
+      }
+    }
+
+    const leavesMaterial = new THREE.ShaderMaterial({
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+      uniforms: uniforms,
+      side: THREE.DoubleSide
+    })
+
+    // MESH
+    const instanceNumber = 200000
+    const dummy = new THREE.Object3D()
+
+    const geometry = new THREE.PlaneGeometry(0.1, 1, 1, 4)
+
+    // grass height
+    geometry.translate(0, 0.5, 0)
+
+    const instancedMesh = new THREE.InstancedMesh(geometry, leavesMaterial, instanceNumber)
+
+    // instancedMesh.receiveShadow = true
+    // instancedMesh.castShadow = true
+    scene.add(instancedMesh)
+
+    // Position and scale the grass blade instances randomly.
+    for (let i = 0; i < instanceNumber; i++) {
+      dummy.position.set(
+        (Math.random() - 0.5) * floorSize.w, // plane width
+        0,
+        (Math.random() - 0.5) * floorSize.h // plant height
+      );
+
+      dummy.scale.setScalar(0.5 + Math.random() * 0.2)
+      dummy.rotation.y = Math.random() * Math.PI
+
+      dummy.updateMatrix()
+      instancedMesh.setMatrixAt(i, dummy.matrix)
+    }
+
+    /**
+     * Utils
+     */
+    const objectsToUpdate = []
+    const sphereGeometry = new THREE.SphereGeometry(5, 20, 20)
+    const sphereMaterial = new THREE.MeshStandardMaterial({
+      metalness: .3,
+      roughness: .4,
+      envMap: environmentMap
+    })
+
+    const createSphere = (radius, position) => {
+      // Three.js mesh
+      const mesh = new THREE.Mesh(sphereGeometry, sphereMaterial)
+      mesh.scale.set(radius, radius, radius)
+      mesh.castShadow = true
+      mesh.position.copy(position)
+      scene.add(mesh)
+
+      // Cannon.js body
+      const shape = new CANNON.Sphere(radius)
+      const body = new CANNON.Body({
+        mass: 1,
+        position: new CANNON.Vec3(0, 15, 0),
+        shape,
+        material: defaultMaterial
+      })
+      body.position.copy(position)
+      body.addEventListener('collide', playHitSound)
+      world.addBody(body)
+
+      // Save in objects to update
+      objectsToUpdate.push({
+        mesh: mesh,
+        body: body
+      })
+    }
+
+    // Create box
+    const boxGeometry = new THREE.BoxGeometry(5, 5, 5)
+    const boxMaterial = new THREE.MeshStandardMaterial({
+      metalness: 0.3,
+      roughness: 0.4,
+      envMap: environmentMap,
+      envMapIntensity: 0.5
+    })
+
+    const createBox = (width, height, depth, position) => {
+      // Three.js mesh
+      const mesh = new THREE.Mesh(boxGeometry, boxMaterial)
+      mesh.scale.set(width, height, depth)
+      mesh.castShadow = true
+      mesh.position.copy(position)
+      scene.add(mesh)
+
+      // Cannon.js body
+      const shape = new CANNON.Box(new CANNON.Vec3(width * 0.5, height * 0.5, depth * 0.5))
+
+      const body = new CANNON.Body({
+        mass: 1,
+        position: new CANNON.Vec3(0, 3, 0),
+        shape: shape,
+        material: defaultMaterial
+      })
+      body.position.copy(position)
+      body.addEventListener('collide', playHitSound)
+      world.addBody(body)
+
+      // Save in objects
+      objectsToUpdate.push({ mesh, body })
+
+      return { mesh, body }
+    }
+
+    createBox(0.4, 1, 2, { x: 0, y: 10, z: 30 })
+
+
+    /**
+     * Control character
+     * Source code: https://github.com/tamani-coding/threejs-character-controls-example
+     * Code was borrowed and modified
+     */
+    const W = 'w'
+    const A = 'a'
+    const S = 's'
+    const D = 'd'
+    const SHIFT = 'shift'
+    const SPACE = 'space'
+    const DIRECTIONS = [W, A, S, D]
+
+    const fadeAnimDuration = 0.2
+    const walkVelocity = 15
+    const runVelocity = 28
+
+    let isSprinting = false
+
+    const walkDirection = new THREE.Vector3()
+    const rotateAngle = new THREE.Vector3(0, 1, 0)
+    // const rotateQuarternion = new THREE.Quaternion()
+    const cameraTarget = new THREE.Vector3()
+
+    // CONTROL KEYS
+    const keysPressed = {}
+
+    document.addEventListener("keydown", () => {
+      // updateCharacter(event.which)
+      if (event.shiftKey && fox) {
+        isSprinting = !isSprinting
+      } else {
+        keysPressed[event.key.toLowerCase()] = true
+      }
+    }, false)
+
+    document.addEventListener("keyup", () => {
+      keyReleased()
+      keysPressed[event.key.toLowerCase()] = false
+    }, false)
+
+    // reset to idling anim
+    const keyReleased = () => {
+      if (playingAction != idlingAnim) {
+        currentAction.fadeOut(0.5)
+        playingAction = idlingAnim
+        playingAction.reset().fadeIn(0.5).play()
+        currentAction = playingAction
+      }
+    }
+
+    const calculateDirectionOffset = (keysPressed) => {
+      let directionOffset = 0 // s
+
+      if (keysPressed[S]) {
+        if (keysPressed[D]) {
+          directionOffset = Math.PI * 0.25 // s + d
+        } else if (keysPressed[A]) {
+          directionOffset = - Math.PI * 0.25 // s + a
+        }
+      } else if (keysPressed[W]) {
+        if (keysPressed[D]) {
+          directionOffset = Math.PI * 0.25 + Math.PI * 0.5 // w + d
+        } else if (keysPressed[A]) {
+          directionOffset = -Math.PI * 0.25 - Math.PI * 0.5 // w + a
+        } else {
+          directionOffset = Math.PI // w
+        }
+      } else if (keysPressed[D]) {
+        directionOffset = Math.PI * 0.5 // d
+      } else if (keysPressed[A]) {
+        directionOffset = - Math.PI * 0.5 // a
+      }
+
+      return directionOffset
+    }
+
+    const updateCameraTarget = (moveX, moveZ) => {
+      // move camera
+      camera.position.x += moveX
+      camera.position.z += moveZ
+
+      // update camera target
+      cameraTarget.x = foxBody.position.x
+      cameraTarget.y = foxBody.position.y + 1
+      cameraTarget.z = foxBody.position.z
+      controls.target = cameraTarget
+    }
+
+    const updateCharacter = (deltaTime, keysPressed) => {
+      if (!fox || !foxAnims || !mixer) return
+
+      mixer.update(deltaTime)
+
+      let toAction = null
+      const directionPressed = DIRECTIONS.some(key => keysPressed[key] == true)
+
+      if (directionPressed && isSprinting) {
+        toAction = runningAnim
+      } else if (directionPressed) {
+        toAction = walkingAnim
+      } else {
+        toAction = idlingAnim
+      }
+
+      if (toAction && playingAction != toAction) {
+        currentAction.fadeOut(fadeAnimDuration)
+        playingAction = toAction
+        playingAction.reset().fadeIn(fadeAnimDuration).play()
+        currentAction = playingAction
+      }
+
+      // console.log(currentAction)
+
+      if (currentAction == runningAnim || currentAction == walkingAnim) {
+        // calculate towards camera direction
+        const angleYCameraDirection = Math.atan2(
+          (camera.position.x - foxBody.position.x),
+          (camera.position.z - foxBody.position.z)
+        )
+
+        // diagonal movement angle offset
+        const directionOffset = calculateDirectionOffset(keysPressed)
+
+        // rotate model
+        // rotateQuarternion.setFromAxisAngle(rotateAngle, angleYCameraDirection + directionOffset)
+        // fox.quaternion.rotateTowards(rotateQuarternion, 0.2)
+        foxBody.quaternion.setFromAxisAngle(rotateAngle, angleYCameraDirection + directionOffset)
+
+        // calculate direction
+        camera.getWorldDirection(walkDirection)
+        walkDirection.y = 0
+        walkDirection.normalize()
+        walkDirection.applyAxisAngle(rotateAngle, directionOffset)
+
+        // run / walk velocity
+        const velocity = currentAction == runningAnim ? runVelocity : walkVelocity
+
+        // move model & camera
+        const moveX = -walkDirection.x * velocity * deltaTime
+        const moveZ = -walkDirection.z * velocity * deltaTime
+        foxBody.position.x += moveX
+        foxBody.position.z += moveZ
+        updateCameraTarget(moveX, moveZ)
+      }
+    }
+
+    /**
+     * Lights
+     */
+    const ambiLightIntensity = 0.4
+    const hemiLightIntensity = 1.0
+    const dirLightIntensity = 3.0
+
+    const resetLightValues = () => {
+      ambientLight.intensity = ambiLightIntensity
+      hemiLight.intensity = hemiLightIntensity
+      directionalLight.intensity = dirLightIntensity
+    }
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, ambiLightIntensity)
+    scene.add(ambientLight)
+
+    // hemisphere light for natural sunlight
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, hemiLightIntensity)
+    hemiLight.color.setHSL(0.6, 1, 0.6)
+    hemiLight.groundColor.setHSL(0.095, 1, 0.75)
+    hemiLight.position.set(0, 10, 0)
+    scene.add(hemiLight)
+
+    // const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 1)
+    // scene.add(hemiLightHelper)
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, dirLightIntensity)
+    directionalLight.castShadow = true
+    directionalLight.shadow.mapSize.set(1024, 1024)
+    directionalLight.shadow.camera.near = 20
+    directionalLight.shadow.camera.far = 100
+
+    const d = 50
+    directionalLight.shadow.camera.left = -d
+    directionalLight.shadow.camera.top = d
+    directionalLight.shadow.camera.right = d
+    directionalLight.shadow.camera.bottom = -d
+    directionalLight.position.set(0, 35, 50)
+    scene.add(directionalLight)
+
+    const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 10)
+    scene.add(directionalLightHelper)
+
+    /**
+     * Sizes
+     */
+    const sizes = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+
+    window.addEventListener('resize', () => {
+      // Update sizes
+      sizes.width = window.innerWidth
+      sizes.height = window.innerHeight
+
+      // Update camera
+      camera.aspect = sizes.width / sizes.height
+      camera.updateProjectionMatrix()
+
+      // Update renderer
+      renderer.setSize(sizes.width, sizes.height)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    })
+
+    /**
+     * Camera
+     */
+    // Base camera
+    const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 500)
+    camera.position.set(-28, 15, 28)
+    scene.add(camera)
+
+    // Controls
+    const controls = new OrbitControls(camera, canvas)
+    controls.enableDamping = true
+
+    /**
+     * Renderer
+     */
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas
+    })
+    renderer.setSize(sizes.width, sizes.height)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.physicallyCorrectLights = true
+    renderer.outputEncoding = THREE.sRGBEncoding
+
+    // Tone Mapping
+    const toneMappingExposure = 1
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = toneMappingExposure
+
+    /**
+     * Animate
+     */
+    const clock = new THREE.Clock()
+    let oldElapsedTime = 0
+
+    const tick = () => {
+      const elapsedTime = clock.getElapsedTime()
+      const deltaTime = elapsedTime - oldElapsedTime
+      oldElapsedTime = elapsedTime
+
+      // Update physics
+      world.step(1 / 120, deltaTime, 3)
+      for (const obj of objectsToUpdate) {
+        obj.mesh.position.copy(obj.body.position)
+        obj.mesh.quaternion.copy(obj.body.quaternion)
+      }
+
+      if (fox) {
+        fox.position.copy(foxBody.position)
+        fox.quaternion.copy(foxBody.quaternion)
+      }
+
+      // Animate grass
+      leavesMaterial.uniforms.time.value = clock.getElapsedTime() * 0.3
+      leavesMaterial.uniformsNeedUpdate = true
+
+      updateCharacter(deltaTime, keysPressed)
+      if (foxBoundingBoxHelper) foxBoundingBoxHelper.update()
+
+      // Update controls
+      controls.update()
+
+      // Render
+      renderer.render(scene, camera)
+
+      // Call tick again on the next frame
+      window.requestAnimationFrame(tick)
+    }
+
+    tick()
+  </script>
+</body>
+
+</html>
