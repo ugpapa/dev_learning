@@ -53,13 +53,20 @@
         let controls = {};
         let player = {
             height: 1.5,
-            turnSpeed: .1,
+            cameraSpeed: .1,
             speed: .1,
             jumpHeight: .2,
             gravity: .01,
             velocity: 0,
             playerJumps: false
         };
+
+        const params = {
+            height: player.height,
+            cameraSpeed: player.cameraSpeed,
+            speed: player.speed,
+            jumpHeight: player.jumpHeight
+        }
 
         // Init
         gui = new dat.GUI()
@@ -93,32 +100,32 @@
         function control() {
             // Controls:Engine 
             if (controls[87]) { // w
+                camera.position.x += Math.sin(camera.rotation.y) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y) * player.speed;
+            }
+            if (controls[83]) { // s
                 camera.position.x -= Math.sin(camera.rotation.y) * player.speed;
                 camera.position.z -= -Math.cos(camera.rotation.y) * player.speed;
             }
-            if (controls[83]) { // s
-                camera.position.x += Math.sin(camera.rotation.y) * player.speed;
-                camera.position.z += -Math.cos(camera.rotation.y) * player.speed;;
-            }
             if (controls[65]) { // a
-                camera.position.x += Math.sin(camera.rotation.y + Math.PI / 2) * player.speed;
-                camera.position.z += -Math.cos(camera.rotation.y + Math.PI / 2) * player.speed;
-            }
-            if (controls[68]) { // d
                 camera.position.x += Math.sin(camera.rotation.y - Math.PI / 2) * player.speed;
                 camera.position.z += -Math.cos(camera.rotation.y - Math.PI / 2) * player.speed;
             }
+            if (controls[68]) { // d
+                camera.position.x += Math.sin(camera.rotation.y + Math.PI / 2) * player.speed;
+                camera.position.z += -Math.cos(camera.rotation.y + Math.PI / 2) * player.speed;
+            }
             if (controls[69]) { // e: For right rotation
-                camera.rotation.y -= player.turnSpeed;
+                camera.rotation.y -= player.cameraSpeed / 2;
             }
             if (controls[81]) { // q: For left rotation
-                camera.rotation.y += player.turnSpeed;;
+                camera.rotation.y += player.cameraSpeed / 2;
             }
             if (controls[37]) { // la
-                camera.rotation.y -= player.turnSpeed;
+                camera.rotation.y -= player.cameraSpeed / 2;
             }
             if (controls[39]) { // ra
-                camera.rotation.y += player.turnSpeed;
+                camera.rotation.y += player.cameraSpeed / 2;
             }
             if (controls[32]) { // space
                 if (player.jumps) return false;
@@ -161,7 +168,7 @@
             // generateRoof()
 
             // Add debug
-            debugConfiguration()
+            addUIDebugConfiguration()
         }
         init()
 
@@ -361,10 +368,22 @@
             scene.add(light, light2, light3, light4);
         }
 
-        function debugConfiguration() {
+        function addUIDebugConfiguration() {
             gui.add(camera.position, 'z', -18, 18, 0.5)
             gui.add(camera.position, 'y', -18, 18, 0.5)
             gui.add(camera.position, 'x', -18, 18, 0.5)
+            gui
+                .add(params, "height")
+                .min(0)
+                .max(10)
+                .step(1)
+                .name("Player height")
+
+
+            // height: player.height,
+            // cameraSpeed: player.cameraSpeed,
+            // speed: player.speed,
+            // jumpHeight: player.jumpHeight
             gui.open();
         }
 
