@@ -36,7 +36,7 @@ export default class Resources extends EventEmitter {
       });
     }
   }
-  
+
   sourceLoaded(source, file) {
     this.items[source.name] = file;
 

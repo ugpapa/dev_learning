@@ -7,6 +7,7 @@ export default class Environment {
     this.scene = this.experience.scene;
     this.resources = this.experience.resources;
     this.debug = this.experience.debug;
+    this.scene.background = this.resources.items.environmentMapTexture;
 
     // Debug
     if (this.debug.active) {
@@ -18,9 +19,12 @@ export default class Environment {
   }
 
   setPointLight() {
-    this.pointLight = new THREE.PointLight("#e75f35", 70000);
-    this.pointLight.position.set(100, 310, 110);
+    this.pointLight = new THREE.PointLight("#edcb30", 100000);
+    this.pointLight.position.set(0, -5, 0);
+    this.pointLightHelper = new THREE.PointLightHelper(this.pointLight);
+    this.scene.add(this.pointLightHelper);
     this.scene.add(this.pointLight);
+    this.pointLight.castShadow = true;
   }
  
   setEnvironmentMap() {

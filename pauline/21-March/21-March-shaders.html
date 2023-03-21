@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>27 - Shaders</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <canvas class="webgl"></canvas>
+    <script
+      defer
+      src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"
+    ></script>
+    <script async type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.148.0/build/three.module.js",
+          "control": "https://unpkg.com/three@0.148.0/examples/jsm/controls/OrbitControls.js",
+          "vertex": "./shaders/test/vertex.js",
+          "fragment": "./shaders/test/fragment.js"
+        }
+      }
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/lil-gui@0.17"></script>
+    <script async type="module" src="./script.js"></script>
+  </body>
+</html>
