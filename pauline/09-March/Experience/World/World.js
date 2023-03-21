@@ -25,10 +25,11 @@ export default class World {
       // let i = 0;
       let isDoneAnimation = true;
       // while(i < items.length){
-      //   const item = new Item(items[i], objectSettings[i], isDoneAnimation);
       //   if(!isDoneAnimation){
       //     isDoneAnimation = true;
       //     i += 1;
+      //   } else {
+      //     const item = new Item(items[i], objectSettings[i], isDoneAnimation);
       //   }
       // }
       this.women1Painting = new Item(this.resources.items.women1Painting, objectSettings[0], isDoneAnimation);

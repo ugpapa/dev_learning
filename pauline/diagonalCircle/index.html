@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Homework 2</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      .webgl {
+        position: fixed;
+        top: 0;
+        left: 0;
+        outline: none;
+      }
+      .section {
+        display: flex;
+        align-items: center;
+        height: 100vh;
+        position: relative;
+        font-family: "Cabin", sans-serif;
+        color: #ffeded;
+        text-transform: uppercase;
+        font-size: 7vmin;
+        padding-left: 10%;
+        padding-right: 10%;
+      }
+      section:nth-child(odd) {
+        justify-content: flex-end;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas class="webgl"></canvas>
+    <script
+      defer
+      src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"
+    ></script>
+    <script async type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.148.0/build/three.module.js",
+          "control": "https://unpkg.com/three@0.148.0/examples/jsm/controls/OrbitControls.js",
+          "gltfLoader": "https://unpkg.com/three@0.148.0/examples/jsm/loaders/GLTFLoader.js",
+          "gsap": "https://cdn.skypack.dev/gsap@3.5.1"
+        }
+      }
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/lil-gui@0.17"></script>
+    <script async type="module" src="./script.js"></script>
+  </body>
+</html>
