@@ -162,7 +162,7 @@
       points.rotation.x = Math.PI * 0.1
       points.rotation.z = Math.PI * 0.05
 
-      // Geometry for particle
+      // Geometry for inner particle galaxy
       const innerGeometry = new THREE.BufferGeometry()
 
       // Create particle data
@@ -173,7 +173,7 @@
         const i3 = i * 3
 
         const radius = Math.random() * particleParams.radius * 0.3
-        const spinAngle = radius * particleParams.spin * 50
+        const spinAngle = radius * 1000
         const branchAngle = (i % particleParams.branches) / particleParams.branches * Math.PI * 2
 
         const randomX = Math.random() * (Math.random() < 0.5 ? 1 : - 1) * particleParams.randomness * radius
@@ -184,14 +184,6 @@
         innerPositions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX
         innerPositions[i3 + 1] = randomY
         innerPositions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ
-
-        // Color of the particles, mix between two colors
-        const mixedColor = colorsInside.clone()
-        mixedColor.lerp(colorsOutside, radius / particleParams.radius * 0.3)
-
-        innerColors[i3] = mixedColor.r
-        innerColors[i3 + 1] = mixedColor.g
-        innerColors[i3 + 2] = mixedColor.b
       }
 
       // Add particle data to geometry
