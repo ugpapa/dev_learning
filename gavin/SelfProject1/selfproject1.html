@@ -44,7 +44,7 @@
     import { OrbitControls } from "https://unpkg.com/three@0.147.0/examples/jsm/controls/OrbitControls.js"
 
     import * as CANNON from "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js"
-    // import CannonDebugger from 'cannon-es-debugger'
+    // import CannonDebugger from 'cannon-es-debugger' // currently broken
 
     import { GLTFLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js'
     import { DRACOLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js'
@@ -58,9 +58,15 @@
 
     const pos = 15
 
+    const getRandomIntInclusive = (min, max) => {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1) + min)
+    }
+
     debugObject.createSphere = () => {
       createSphere(
-        Math.random() * 0.5,
+        getRandomIntInclusive(0.5, 5),
         {
           x: (Math.random() - .5) * pos,
           y: pos,
@@ -71,9 +77,9 @@
 
     debugObject.createBox = () => {
       createBox(
-        Math.random(),
-        Math.random(),
-        Math.random(),
+        getRandomIntInclusive(0.5, 10),
+        getRandomIntInclusive(0.5, 10),
+        getRandomIntInclusive(0.5, 10),
         {
           x: (Math.random() - 0.5) * pos,
           y: pos,
@@ -93,11 +99,14 @@
       }
 
       objectsToUpdate.splice(0, objectsToUpdate.length)
+
+      // foxBody.position.set(0, 1, 0)
     }
 
-    gui.add(debugObject, 'createSphere')
-    gui.add(debugObject, 'createBox')
-    gui.add(debugObject, 'reset')
+    const objectFolder = gui.addFolder('Objects')
+    objectFolder.add(debugObject, 'createSphere').name('Create sphere')
+    objectFolder.add(debugObject, 'createBox').name('Create box')
+    objectFolder.add(debugObject, 'reset').name('Remove all')
 
     /**
      * Base
@@ -126,11 +135,20 @@
     scene.background = new THREE.Color('skyblue')
     scene.environment = environmentMap
 
+    // TODO: click to load scene
+    /**
+     * Click to start
+     */
+
+
     /**
      * Sounds
      */
     const hitSound = new Audio('./sounds/hit.mp3')
 
+    // Some browsers like Chrome prevent sounds from playing
+    // unless the user has interacted with the page like clicking
+    // anywhere, so on load you won't hear the first sounds.
     const playHitSound = (collision) => {
       const impactStrength = collision.contact.getImpactVelocityAlongNormal()
 
@@ -138,6 +156,18 @@
         hitSound.volume = Math.random()
         hitSound.currentTime = 0
         hitSound.play()
+      }
+    }
+
+    // TODO: add collision check
+    /**
+     * Collision checking
+     */
+    const checkCollision = (collision) => {
+      const impactStrength = collision.contact.getImpactVelocityAlongNormal()
+
+      if (impactStrength > 1.5) {
+
       }
     }
 
@@ -156,41 +186,70 @@
     // optimize performance even more by putting objects to sleep
     // world.allowSleep = true
 
-    // Cannon ground
-    const floorSize = { w: 100, h: 100 }
-    const groundBody = new CANNON.Body({
-      type: CANNON.Body.STATIC,
-      shape: new CANNON.Box(new CANNON.Vec3(floorSize.w * 0.5, 0.01, floorSize.h * 0.5))
-    })
-
-    //groundBody.quaternion.setFromEuler(-Math.PI * 0.5, 0, 0)
-    groundBody.position.y += 0.05
-
-    world.addBody(groundBody)
-
     // Default material
     const defaultMaterial = new CANNON.Material('default')
     const defaultContactMaterial = new CANNON.ContactMaterial(
       defaultMaterial,
       {
-        friction: 0.3,
+        friction: 0.4,
         restitution: 0.0
       }
     )
     world.addContactMaterial(defaultContactMaterial)
     world.defaultContactMaterial = defaultContactMaterial
 
+    // Concrete material
+    const concreteMaterial = new CANNON.Material('concrete')
+    const concreteDefaultContactMaterial = new CANNON.ContactMaterial(
+      concreteMaterial,
+      defaultMaterial,
+      {
+        friction: 0.1,
+        restitution: 0.1
+      }
+    )
+    world.addContactMaterial(concreteDefaultContactMaterial)
+
+    // Fox material
+    const foxMaterial = new CANNON.Material('fox')
+    const foxDefaultContactMaterial = new CANNON.ContactMaterial(
+      foxMaterial,
+      defaultMaterial,
+      {
+        friction: 0.0,
+        restitution: 0.3
+      }
+    )
+    world.addContactMaterial(foxDefaultContactMaterial)
+
+    // Cannon ground
+    const floorSize = { w: 100, h: 100 }
+    const groundBody = new CANNON.Body({
+      type: CANNON.Body.STATIC,
+      shape: new CANNON.Box(new CANNON.Vec3(floorSize.w * 0.5, 0.01, floorSize.h * 0.5)),
+      material: concreteMaterial
+    })
+    world.addBody(groundBody)
+
     // Cannon debugger
     // const cannonDebugger = new CannonDebugger(scene, world))
 
+    // TODO: NEED TO FIX HOVERING CANNON BODY
     // Cannon fox body
     const foxBody = new CANNON.Body({
-      mass: 2,
-      shape: new CANNON.Box(new CANNON.Vec3(25.185 * 0.025 * 0.5, 79.028 * 0.025 * 0.5, 154.720 * 0.025 * 0.5)),
-      position: new CANNON.Vec3(0, 3, 0),
-      material: defaultMaterial
+      mass: 100,
+      shape: new CANNON.Box(new CANNON.Vec3(
+        25.185 * 0.025 * 0.5,
+        79.028 * 0.025 * 0.5,
+        154.720 * 0.025 * 0.5)
+      ),
+      position: new CANNON.Vec3(0, 1, 0),
+      material: foxMaterial
     })
-    foxBody.addEventListener('collide', playHitSound)
+    foxBody.addEventListener('collide', (e) => {
+      playHitSound(e)
+      checkCollision(e)
+    })
     world.addBody(foxBody)
 
     /**
@@ -235,8 +294,8 @@
 
         scene.add(fox)
 
-        foxBoundingBoxHelper = new THREE.BoxHelper(fox, 0xff0000)
-        scene.add(foxBoundingBoxHelper)
+        // foxBoundingBoxHelper = new THREE.BoxHelper(fox, 0xff0000)
+        // scene.add(foxBoundingBoxHelper)
 
         // get size of fox model
         // Result: Vector3 { x: 25.185436248779297, y: 79.02893318235874, z: 154.71986389160156 }
@@ -254,10 +313,11 @@
       new THREE.PlaneGeometry(floorSize.w, floorSize.h),
       new THREE.MeshStandardMaterial({
         color: '#C4A484',
-        metalness: 0.3,
-        roughness: 0.4,
+        metalness: 0.0,
+        roughness: 1.0,
         envMap: environmentMap,
-        envMapIntensity: 0.5
+        envMapIntensity: 0.5,
+        side: THREE.DoubleSide
       })
     )
     floor.receiveShadow = true
@@ -357,14 +417,14 @@
      * Utils
      */
     const objectsToUpdate = []
-    const sphereGeometry = new THREE.SphereGeometry(5, 20, 20)
+    const sphereGeometry = new THREE.SphereGeometry(1, 20, 20)
     const sphereMaterial = new THREE.MeshStandardMaterial({
       metalness: .3,
       roughness: .4,
       envMap: environmentMap
     })
 
-    const createSphere = (radius, position) => {
+    const createSphere = (radius, position, mass, material) => {
       // Three.js mesh
       const mesh = new THREE.Mesh(sphereGeometry, sphereMaterial)
       mesh.scale.set(radius, radius, radius)
@@ -378,7 +438,7 @@
         mass: 1,
         position: new CANNON.Vec3(0, 15, 0),
         shape,
-        material: defaultMaterial
+        material: material
       })
       body.position.copy(position)
       body.addEventListener('collide', playHitSound)
@@ -392,7 +452,7 @@
     }
 
     // Create box
-    const boxGeometry = new THREE.BoxGeometry(5, 5, 5)
+    const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
     const boxMaterial = new THREE.MeshStandardMaterial({
       metalness: 0.3,
       roughness: 0.4,
@@ -400,7 +460,7 @@
       envMapIntensity: 0.5
     })
 
-    const createBox = (width, height, depth, position) => {
+    const createBox = (width, height, depth, position, mass, material) => {
       // Three.js mesh
       const mesh = new THREE.Mesh(boxGeometry, boxMaterial)
       mesh.scale.set(width, height, depth)
@@ -412,10 +472,10 @@
       const shape = new CANNON.Box(new CANNON.Vec3(width * 0.5, height * 0.5, depth * 0.5))
 
       const body = new CANNON.Body({
-        mass: 1,
+        mass: mass ? mass : 1,
         position: new CANNON.Vec3(0, 3, 0),
         shape: shape,
-        material: defaultMaterial
+        material: material ? material : defaultMaterial
       })
       body.position.copy(position)
       body.addEventListener('collide', playHitSound)
@@ -427,7 +487,15 @@
       return { mesh, body }
     }
 
-    createBox(0.4, 1, 2, { x: 0, y: 10, z: 30 })
+    createBox(5, 1, 1.5, { x: 0, y: 1, z: 10 }, 10)
+    createBox(10, 2, 1.5, { x: 0, y: 2, z: 20 }, 30)
+    createBox(10, 3, 1.5, { x: 0, y: 3, z: 30 }, 60, concreteMaterial)
+    createBox(10, 10, 10, { x: 40, y: 10, z: 40 }, 1000, concreteMaterial)
+
+    createSphere(2, { x: 25, y: 10, z: -20 }, 10)
+    createSphere(3, { x: 25, y: 10, z: -10 }, 30)
+    createSphere(4, { x: 25, y: 10, z: 0 }, 60, concreteMaterial)
+    createSphere(5, { x: 25, y: 10, z: 10 }, 1000, concreteMaterial)
 
 
     /**
@@ -439,15 +507,23 @@
     const A = 'a'
     const S = 's'
     const D = 'd'
+    const R = 'r'
     const SHIFT = 'shift'
     const SPACE = 'space'
     const DIRECTIONS = [W, A, S, D]
 
     const fadeAnimDuration = 0.2
-    const walkVelocity = 15
-    const runVelocity = 28
+    debugObject.walkVelocity = 15
+    debugObject.runVelocity = 28
+    debugObject.foxVelocityMultiplier = 1.0
 
     let isSprinting = false
+    let reset = false
+
+    const followCamHeight = 4
+    const followCamDistance = 6
+    let cameraFollowRotation = 0
+    let toggleLookBehind = false
 
     const walkDirection = new THREE.Vector3()
     const rotateAngle = new THREE.Vector3(0, 1, 0)
@@ -463,6 +539,10 @@
         isSprinting = !isSprinting
       } else {
         keysPressed[event.key.toLowerCase()] = true
+      }
+
+      if (event.key.toLowerCase() == 'r') {
+        toggleLookBehind = !toggleLookBehind
       }
     }, false)
 
@@ -542,7 +622,21 @@
         currentAction = playingAction
       }
 
-      // console.log(currentAction)
+      if (isFollowingModel) {
+        if (keysPressed[R]) {
+          const rotZ = Math.cos(cameraFollowRotation)
+          const rotX = Math.sin(cameraFollowRotation)
+          if (toggleLookBehind) {
+            camera.position.x = fox.position.x + (followCamDistance * rotX)
+            camera.position.y = fox.position.y + followCamHeight
+            camera.position.z = fox.position.z - (followCamDistance * rotZ)
+          } else {
+            camera.position.x = fox.position.x - (followCamDistance * rotX)
+            camera.position.y = fox.position.y + followCamHeight
+            camera.position.z = fox.position.z + (followCamDistance * rotZ)
+          }
+        }
+      }
 
       if (currentAction == runningAnim || currentAction == walkingAnim) {
         // calculate towards camera direction
@@ -566,7 +660,7 @@
         walkDirection.applyAxisAngle(rotateAngle, directionOffset)
 
         // run / walk velocity
-        const velocity = currentAction == runningAnim ? runVelocity : walkVelocity
+        const velocity = currentAction == runningAnim ? debugObject.runVelocity * debugObject.foxVelocityMultiplier : debugObject.walkVelocity * debugObject.foxVelocityMultiplier
 
         // move model & camera
         const moveX = -walkDirection.x * velocity * deltaTime
@@ -574,8 +668,62 @@
         foxBody.position.x += moveX
         foxBody.position.z += moveZ
         updateCameraTarget(moveX, moveZ)
+
+        // rotate camera (in follow model mode)
+        if (isFollowingModel) {
+          const rotateAng = Math.PI * 0.5 * deltaTime * debugObject.cameraFollowSensitivity
+
+          if (keysPressed[A]) {
+            cameraFollowRotation -= rotateAng
+          } else if (keysPressed[D]) {
+            cameraFollowRotation += rotateAng
+          }
+          const rotZ = Math.cos(cameraFollowRotation)
+          const rotX = Math.sin(cameraFollowRotation)
+
+          if (toggleLookBehind) {
+            camera.position.x = fox.position.x + (followCamDistance * rotX)
+            camera.position.y = fox.position.y + followCamHeight
+            camera.position.z = fox.position.z - (followCamDistance * rotZ)
+          } else {
+            camera.position.x = fox.position.x - (followCamDistance * rotX)
+            camera.position.y = fox.position.y + followCamHeight
+            camera.position.z = fox.position.z + (followCamDistance * rotZ)
+          }
+        }
       }
     }
+
+    // Fox model debug menu
+    const foxFolder = gui.addFolder('Fox Model')
+
+    debugObject.resetFoxPosition = () => {
+      foxBody.position.set(0, 1, 0)
+    }
+    foxFolder.add(debugObject, 'resetFoxPosition').name('Reset fox position')
+
+    foxFolder.add(debugObject, 'foxVelocityMultiplier')
+      .min(0.1)
+      .max(3.0)
+      .step(0.1)
+      .name('Walking/Running speed')
+
+
+    // Camera debug menu
+    const cameraFolder = gui.addFolder('Camera')
+
+    debugObject.toggleFollowFox = () => {
+      toggleFollowModel()
+      console.log(isFollowingModel)
+    }
+    cameraFolder.add(debugObject, 'toggleFollowFox').name('Toggle follow model')
+
+    debugObject.cameraFollowSensitivity = 1.5
+    cameraFolder.add(debugObject, 'cameraFollowSensitivity')
+      .min(0.1)
+      .max(5.0)
+      .step(0.1)
+      .name('Follow rotation sensitivity')
 
     /**
      * Lights
@@ -617,8 +765,8 @@
     directionalLight.position.set(0, 35, 50)
     scene.add(directionalLight)
 
-    const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 10)
-    scene.add(directionalLightHelper)
+    // const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 10)
+    // scene.add(directionalLightHelper)
 
     /**
      * Sizes
@@ -647,18 +795,51 @@
      */
     // Base camera
     const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 500)
-    camera.position.set(-28, 15, 28)
+    camera.position.set(-18, 15, -18)
     scene.add(camera)
 
     // Controls
     const controls = new OrbitControls(camera, canvas)
     controls.enableDamping = true
 
+    let isFollowingModel = false
+
+    const toggleFollowModel = () => {
+      if (!isFollowingModel) {
+        isFollowingModel = true
+        // disable orbit controls
+        controls.enabled = false
+
+        if (fox) {
+          if (toggleLookBehind) {
+            camera.position.x = fox.position.x + (followCamDistance)
+            camera.position.y = fox.position.y + followCamHeight
+            camera.position.z = fox.position.z - (followCamDistance)
+          } else {
+            camera.position.x = fox.position.x - (followCamDistance)
+            camera.position.y = fox.position.y + followCamHeight
+            camera.position.z = fox.position.z + (followCamDistance)
+          }
+        }
+      } else {
+        isFollowingModel = false
+        controls.reset()
+        controls.enabled = true
+
+        // update camera target
+        cameraTarget.x = foxBody.position.x
+        cameraTarget.y = foxBody.position.y + 1
+        cameraTarget.z = foxBody.position.z
+        controls.target = cameraTarget
+      }
+    }
+
     /**
      * Renderer
      */
     const renderer = new THREE.WebGLRenderer({
-      canvas: canvas
+      canvas: canvas,
+      antialias: true
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -693,6 +874,13 @@
       if (fox) {
         fox.position.copy(foxBody.position)
         fox.quaternion.copy(foxBody.quaternion)
+
+        if (isFollowingModel) {
+          cameraTarget.x = foxBody.position.x
+          cameraTarget.y = foxBody.position.y + 1
+          cameraTarget.z = foxBody.position.z
+          controls.target = cameraTarget
+        }
       }
 
       // Animate grass
