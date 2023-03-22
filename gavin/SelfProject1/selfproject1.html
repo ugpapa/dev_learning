@@ -742,6 +742,38 @@
       }
     }
 
+    let isFollowingModel = false
+
+    const toggleFollowModel = () => {
+      if (!isFollowingModel) {
+        isFollowingModel = true
+        // disable orbit controls
+        controls.enabled = false
+
+        if (fox) {
+          if (toggleLookBehind) {
+            camera.position.x = fox.position.x + (followCamDistance)
+            camera.position.y = fox.position.y + followCamHeight
+            camera.position.z = fox.position.z - (followCamDistance)
+          } else {
+            camera.position.x = fox.position.x - (followCamDistance)
+            camera.position.y = fox.position.y + followCamHeight
+            camera.position.z = fox.position.z + (followCamDistance)
+          }
+        }
+      } else {
+        isFollowingModel = false
+        controls.reset()
+        controls.enabled = true
+
+        // update camera target
+        cameraTarget.x = foxBody.position.x
+        cameraTarget.y = foxBody.position.y + 1
+        cameraTarget.z = foxBody.position.z
+        controls.target = cameraTarget
+      }
+    }
+
     // Fox model debug menu
     const foxFolder = gui.addFolder('Fox Model')
 
@@ -849,38 +881,6 @@
     // Controls
     const controls = new OrbitControls(camera, canvas)
     controls.enableDamping = true
-
-    let isFollowingModel = false
-
-    const toggleFollowModel = () => {
-      if (!isFollowingModel) {
-        isFollowingModel = true
-        // disable orbit controls
-        controls.enabled = false
-
-        if (fox) {
-          if (toggleLookBehind) {
-            camera.position.x = fox.position.x + (followCamDistance)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z - (followCamDistance)
-          } else {
-            camera.position.x = fox.position.x - (followCamDistance)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z + (followCamDistance)
-          }
-        }
-      } else {
-        isFollowingModel = false
-        controls.reset()
-        controls.enabled = true
-
-        // update camera target
-        cameraTarget.x = foxBody.position.x
-        cameraTarget.y = foxBody.position.y + 1
-        cameraTarget.z = foxBody.position.z
-        controls.target = cameraTarget
-      }
-    }
 
     /**
      * Renderer
