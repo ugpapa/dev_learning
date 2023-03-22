@@ -32,8 +32,8 @@ export default class Particles {
     this.debug = this.experience.debug;
 
     this.parameters = {
-      count: 3000, // number of total particles
-      size: 0.1, // particles size
+      count: 30000, // number of total particles
+      size: 5, // particles size
       radius: 20,
       branches: 3,
       spin: 0.9,
@@ -53,7 +53,7 @@ export default class Particles {
     const colorInside = new THREE.Color(this.parameters.insideColor);
     const colorOutside = new THREE.Color(this.parameters.outsideColor);
 
-    for (let i = 0; i < positions.length; i++) {
+    for (let i = 0; i < this.parameters.count; i++) {
       const index3D = i * 3;
       const radius = Math.random() * this.parameters.radius;
       // bigger number multiple with pi will get curvier spin
@@ -75,9 +75,12 @@ export default class Particles {
         Math.pow(Math.random(), this.parameters.randomNessPow) *
         (Math.random() < 0.5 ? 1 : -1);
 
-      positions[index3D + 0] =  Math.cos(branchAngle + spinAngle) * radius + randomX; // x
-      positions[index3D + 1] =  randomY; // y
-      positions[index3D + 2] =  Math.sin(branchAngle + spinAngle) * radius + randomZ; // z
+      positions[index3D + 0] = this.parameters.radius;
+        // Math.cos(branchAngle + spinAngle) * radius + randomX; // x
+      positions[index3D + 1] = 0
+      // randomY; // y
+      positions[index3D + 2] = 0
+        // Math.sin(branchAngle + spinAngle) * radius + randomZ; // z
 
       /**
        * Color
