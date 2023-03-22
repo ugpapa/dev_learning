@@ -53,7 +53,8 @@
                 "lil-gui": "https://unpkg.com/lil-gui@0.16.1/dist/lil-gui.esm.js",
                 "orbitControl": "https://unpkg.com/three@0.141.0/examples/jsm/controls/OrbitControls.js",
                 "gltfLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js",
-                "dracoLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js"
+                "dracoLoader": "https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js",
+                "stats": "https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.min.js"
             }
           }
     </script>
@@ -66,8 +67,17 @@
         import { RenderPass } from "https://unpkg.com/three@0.147.0/examples/jsm/postprocessing/RenderPass.js";
         import { ShaderPass } from "https://unpkg.com/three@0.147.0/examples/jsm/postprocessing/ShaderPass.js";
         import { DotScreenPass } from "https://unpkg.com/three@0.147.0/examples/jsm/postprocessing/DotScreenPass.js";
-        import { UnrealBloomPass } from "https://unpkg.com/three@0.147.0/examples/jsm/postprocessing/UnrealBloomPass.js"; 
+        import { UnrealBloomPass } from "https://unpkg.com/three@0.147.0/examples/jsm/postprocessing/UnrealBloomPass.js";
         import { GLTFLoader } from "gltfLoader";
+        import Stats from 'https://cdnjs.cloudflare.com/ajax/libs/stats.js/17/Stats.js'
+
+        const stats = new Stats();
+        // stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+        // stats.showPanel(1)
+        stats.showPanel(0)
+        //stats.showPanel(1)
+
+        document.body.appendChild(stats.dom)
 
         let camera, controls, scene, renderer, gui, canvas;
         console.log(DotScreenPass);
@@ -113,7 +123,7 @@
         /**
          * Update all materials
          */
-         const updateAllMaterials = () => {
+        const updateAllMaterials = () => {
             scene.traverse((child) => {
                 if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
                     console.log(child)
@@ -225,7 +235,7 @@
         unrealBloomPass.strength = bloomParameters.strength
         unrealBloomPass.radius = bloomParameters.radius
         unrealBloomPass.threshold = bloomParameters.threshold
-        unrealBloomPass.enabled = true
+        unrealBloomPass.enabled = false
         effectComposer.addPass(unrealBloomPass)
 
         // GUI
@@ -235,12 +245,13 @@
         bloomFolder.add(unrealBloomPass, 'radius').min(0).max(2).step(0.001)
         bloomFolder.add(unrealBloomPass, 'threshold').min(0).max(1).step(0.001)
 
-        const dotScreenPassFolder = gui.addFolder('Dot Screen Pass')
-        dotScreenPassFolder.add(dotScreenPassParam, 'enabled')
+        // const dotScreenPassFolder = gui.addFolder('Dot Screen Pass')
+        // dotScreenPassFolder.add(dotScreenPassParam, 'enabled')
 
         const clock = new THREE.Clock()
         let previousTime = 0;
         const animate = () => {
+            stats.begin()
             const elapsedTime = clock.getElapsedTime()
             const deltaTime = elapsedTime - previousTime;
             previousTime = elapsedTime;
@@ -248,11 +259,12 @@
             controls.update();
 
             effectComposer.render();
-            
+
             // since we use effect composer this one no longer needed
             // render();
 
             window.requestAnimationFrame(animate)
+            stats.end()
         }
 
         animate()
