@@ -107,6 +107,7 @@
     objectFolder.add(debugObject, 'createSphere').name('Create sphere')
     objectFolder.add(debugObject, 'createBox').name('Create box')
     objectFolder.add(debugObject, 'reset').name('Remove all')
+    objectFolder.close()
 
     /**
      * Base
@@ -329,89 +330,136 @@
      * Source: https://discourse.threejs.org/t/simple-instanced-grass-example/26694
      */
 
-    // MATERIALS
-    const vertexShader = `
-      varying vec2 vUv;
-      uniform float time;
-      
-      void main() {
+    let grassMesh = null
+    let grassDummy = null
+    let grassGeometry = null
+    let grassMaterial = null
 
-        vUv = uv;
-        
-        // VERTEX POSITION
-        
-        vec4 mvPosition = vec4( position, 1.0 );
-        #ifdef USE_INSTANCING
-          mvPosition = instanceMatrix * mvPosition;
-        #endif
-        
-        // DISPLACEMENT
-        
-        // here the displacement is made stronger on the blades tips.
-        float dispPower = 1.0 - cos( uv.y * 3.1416 / 2.0 );
-        
-        float displacement = sin( mvPosition.z + time * 10.0 ) * ( 0.1 * dispPower );
-        mvPosition.z += displacement;
-        
-        //
-        
-        vec4 modelViewPosition = modelViewMatrix * mvPosition;
-        gl_Position = projectionMatrix * modelViewPosition;
+    const grassParams = {
+      amount: 300000,
+      height: 1
+    }
+    debugObject.grassAmount = grassParams.amount
+    debugObject.grassHeight = grassParams.height
 
-      }
-    `
-    const fragmentShader = `
-      varying vec2 vUv;
-      
-      void main() {
-        vec3 baseColor = vec3( 0.41, 1.0, 0.5 );
-        float clarity = ( vUv.y * 0.5 ) + 0.5;
-        gl_FragColor = vec4( baseColor * clarity, 1 );
-      }
-    `
-
-    const uniforms = {
-      time: {
-        value: 0
+    const removeGrass = () => {
+      if (grassMesh) {
+        grassDummy.remove()
+        grassGeometry.dispose()
+        grassMaterial.dispose()
+        scene.remove(grassMesh)
       }
     }
 
-    const leavesMaterial = new THREE.ShaderMaterial({
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
-      uniforms: uniforms,
-      side: THREE.DoubleSide
-    })
+    const generateGrass = () => {
+      removeGrass()
 
-    // MESH
-    const instanceNumber = 200000
-    const dummy = new THREE.Object3D()
+      // MATERIALS
+      const vertexShader = `
+        varying vec2 vUv;
+        uniform float time;
+        
+        void main() {
+          vUv = uv;
+          
+          // VERTEX POSITION
+          vec4 mvPosition = vec4( position, 1.0 );
+          #ifdef USE_INSTANCING
+            mvPosition = instanceMatrix * mvPosition;
+          #endif
+          
+          // DISPLACEMENT
+          // here the displacement is made stronger on the blades tips.
+          float dispPower = 1.0 - cos( uv.y * 3.1416 / 2.0 );
+          
+          float displacement = sin( mvPosition.z + time * 10.0 ) * ( 0.1 * dispPower );
+          mvPosition.z += displacement;
+          
+          vec4 modelViewPosition = modelViewMatrix * mvPosition;
+          gl_Position = projectionMatrix * modelViewPosition;
+        }
+      `
+      const fragmentShader = `
+        varying vec2 vUv;
+        
+        void main() {
+          vec3 baseColor = vec3( 0.41, 1.0, 0.5 );
+          float clarity = ( vUv.y * 0.5 ) + 0.5;
+          gl_FragColor = vec4( baseColor * clarity, 1 );
+        }
+      `
+      const uniforms = {
+        time: {
+          value: 0
+        }
+      }
 
-    const geometry = new THREE.PlaneGeometry(0.1, 1, 1, 4)
+      grassMaterial = new THREE.ShaderMaterial({
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        uniforms: uniforms,
+        side: THREE.DoubleSide
+      })
 
-    // grass height
-    geometry.translate(0, 0.5, 0)
+      // MESH
+      grassDummy = new THREE.Object3D()
+      grassGeometry = new THREE.PlaneGeometry(0.1, debugObject.grassHeight, 1, 4)
 
-    const instancedMesh = new THREE.InstancedMesh(geometry, leavesMaterial, instanceNumber)
+      // grass height
+      grassGeometry.translate(0, debugObject.grassHeight * 0.5, 0)
 
-    // instancedMesh.receiveShadow = true
-    // instancedMesh.castShadow = true
-    scene.add(instancedMesh)
+      grassMesh = new THREE.InstancedMesh(grassGeometry, grassMaterial, debugObject.grassAmount)
 
-    // Position and scale the grass blade instances randomly.
-    for (let i = 0; i < instanceNumber; i++) {
-      dummy.position.set(
-        (Math.random() - 0.5) * floorSize.w, // plane width
-        0,
-        (Math.random() - 0.5) * floorSize.h // plant height
-      );
+      // grassMesh.receiveShadow = true
+      // grassMesh.castShadow = true
+      scene.add(grassMesh)
 
-      dummy.scale.setScalar(0.5 + Math.random() * 0.2)
-      dummy.rotation.y = Math.random() * Math.PI
+      // Position and scale the grass blade instances randomly.
+      for (let i = 0; i < debugObject.grassAmount; i++) {
+        grassDummy.position.set(
+          (Math.random() - 0.5) * floorSize.w, // plane width
+          0,
+          (Math.random() - 0.5) * floorSize.h // plant height
+        );
 
-      dummy.updateMatrix()
-      instancedMesh.setMatrixAt(i, dummy.matrix)
+        grassDummy.scale.setScalar(0.5 + Math.random() * 0.2)
+        grassDummy.rotation.y = Math.random() * Math.PI
+
+        grassDummy.updateMatrix()
+        grassMesh.setMatrixAt(i, grassDummy.matrix)
+      }
     }
+
+    generateGrass()
+
+    const grassFolder = gui.addFolder('Grass')
+    grassFolder.add(debugObject, 'grassHeight')
+      .min(0.1)
+      .max(5)
+      .step(0.1)
+      .name('Grass height')
+      .onChange(generateGrass)
+
+    grassFolder.add(debugObject, 'grassAmount')
+      .min(0)
+      .max(1000000)
+      .step(100)
+      .name('Grass amount')
+      .onChange(generateGrass)
+    debugObject.removeGrass = () => {
+      removeGrass()
+    }
+    debugObject.generateGrass = () => {
+      generateGrass()
+    }
+    debugObject.resetGrass = () => {
+      debugObject.grassAmount = grassParams.amount
+      debugObject.grassHeight = grassParams.height
+      generateGrass()
+    }
+    grassFolder.add(debugObject, 'removeGrass').name('Remove grass')
+    grassFolder.add(debugObject, 'generateGrass').name('Generate grass')
+    grassFolder.add(debugObject, 'resetGrass').name('Reset grass')
 
     /**
      * Utils
@@ -884,8 +932,10 @@
       }
 
       // Animate grass
-      leavesMaterial.uniforms.time.value = clock.getElapsedTime() * 0.3
-      leavesMaterial.uniformsNeedUpdate = true
+      if (grassMaterial) {
+        grassMaterial.uniforms.time.value = clock.getElapsedTime() * 0.3
+        grassMaterial.uniformsNeedUpdate = true
+      }
 
       updateCharacter(deltaTime, keysPressed)
       if (foxBoundingBoxHelper) foxBoundingBoxHelper.update()
