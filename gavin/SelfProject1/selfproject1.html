@@ -121,6 +121,12 @@
     const textureLoader = new THREE.TextureLoader()
     const cubeTextureLoader = new THREE.CubeTextureLoader()
 
+    // Provide a DRACOLoader instance to decode compressed mesh data
+    const dracoLoader = new DRACOLoader()
+    dracoLoader.setDecoderPath('./draco/')
+    const gltfLoader = new GLTFLoader()
+    gltfLoader.setDRACOLoader(dracoLoader)
+
     const environmentMap = cubeTextureLoader.load([
       './textures/environmentMaps/px.png',
       './textures/environmentMaps/nx.png',
@@ -136,6 +142,109 @@
     scene.background = new THREE.Color('skyblue')
     scene.environment = environmentMap
 
+    let MODE = 0
+
+    const GM1_orangeList = []
+    // TODO: a mini gamemode where the fox has to eat all the food within a certain amount of time
+    const GM1_EatEverything = () => {
+      MODE = 1
+      isFollowingModel = false
+      toggleFollowModel()
+      // camera.position.set(0, 50, -65)
+
+      // Clear all debug objects in the scene
+      for (const object of objectsToUpdate) {
+        // Remove body
+        object.body.removeEventListener('collide', playHitSound)
+        world.removeBody(object.body)
+
+        // Remove mesh
+        scene.remove(object.mesh)
+      }
+      objectsToUpdate.splice(0, objectsToUpdate.length)
+
+      // Spawn 50 oranges randomly
+      GM1_addOranges(50)
+
+      // Create bounding box for the fox model
+      foxBoundingBox = new THREE.Box3().setFromObject(fox)
+      foxBoundingBox.name = "foxBoundingBox"
+    }
+
+    const GM1_addOranges = (amount) => {
+      if (MODE != 1) return
+
+      for (let i = GM1_orangeList.length; i < GM1_orangeList.length + (amount ? amount : 10); i++) {
+        gltfLoader.load(
+          './models/orange.glb',
+          (gltf) => {
+            const orange = gltf.scene
+
+            orange.children[0].name = 'orangeMesh ' + i
+            orange.children[0].castShadow = true
+            orange.children[0].receiveShadow = true
+
+            orange.position.y += 2
+            orange.position.x = getRandomIntInclusive(-(floorSize.w / 2 - 5), floorSize.w / 2 - 5)
+            orange.position.z = getRandomIntInclusive(-(floorSize.h / 2 - 5), floorSize.h / 2 - 5)
+
+            orange.name = "orangeGroup " + i
+
+            const orangeBoundingBox = new THREE.Box3().setFromObject(orange)
+            orangeBoundingBox.name = "orangeBoundingBox " + i
+            GM1_orangeList.push({ orange, orangeBoundingBox })
+
+            scene.add(orange)
+          }
+        )
+      }
+    }
+
+    const GM1_reduceOranges = () => {
+      if (MODE != 1) return
+      for (let i = 0; i < 10; i++) {
+        let orangeRemoved = GM1_orangeList.splice(getRandomIntInclusive(0, GM1_orangeList.length - 1), 1)[0]
+        scene.remove(orangeRemoved.orange)
+        scene.remove(orangeRemoved.orangeBoundingBox)
+        orangeRemoved.orangeBoundingBox = null
+      }
+    }
+
+    const updateGameMode1 = () => {
+      if (!fox || !foxBoundingBox) return
+      if (MODE != 1) return
+
+      foxBoundingBox.setFromObject(fox)
+
+      for (let i = 0; i < GM1_orangeList.length; i++) {
+        let { orange, orangeBoundingBox } = GM1_orangeList[i]
+
+        orangeBoundingBox.setFromObject(orange)
+
+        if (foxBoundingBox.intersectsBox(orangeBoundingBox)) {
+          eatSound.currentTime = 0
+          eatSound.play()
+
+          scene.remove(orange)
+          scene.remove(orangeBoundingBox)
+          orangeBoundingBox = null
+
+          GM1_orangeList.splice(i, 1)
+        }
+      }
+    }
+
+    debugObject.GM1_EatEverything = () => { GM1_EatEverything() }
+
+    const gameModeFolder = gui.addFolder('Game modes')
+    gameModeFolder.add(debugObject, 'GM1_EatEverything').name("Start Game Mode 1 (Eat oranges)")
+
+    const gameMode1Folder = gameModeFolder.addFolder('Game mode 1')
+    debugObject.GM1_addOranges = () => { GM1_addOranges() }
+    debugObject.GM1_reduceOranges = () => { GM1_reduceOranges() }
+    gameMode1Folder.add(debugObject, 'GM1_addOranges').name("Add more oranges (10)")
+    gameMode1Folder.add(debugObject, 'GM1_reduceOranges').name("Reduce oranges (10)")
+
     // TODO: click to load scene
     /**
      * Click to start
@@ -146,6 +255,7 @@
      * Sounds
      */
     const hitSound = new Audio('./sounds/hit.mp3')
+    const eatSound = new Audio('./sounds/eat.mp3')
 
     // Some browsers like Chrome prevent sounds from playing
     // unless the user has interacted with the page like clicking
@@ -254,18 +364,9 @@
     world.addBody(foxBody)
 
     /**
-     * Models
+     * Fox model
      */
-    // Provide a DRACOLoader instance to decode compressed mesh data
-    const dracoLoader = new DRACOLoader()
-    // path copied to 'static' from 'node_modules/three/examples/jsm/libs/draco/'
-    dracoLoader.setDecoderPath('/draco/')
-
-    const gltfLoader = new GLTFLoader()
-    // console.log(gltfLoader) // debug
-    gltfLoader.setDRACOLoader(dracoLoader)
-
-    let mixer, fox, foxAnims, foxBoundingBoxHelper,
+    let mixer, fox, foxAnims, foxBoundingBox, foxBoundingBoxHelper,
       currentAction, playingAction,
       idlingAnim, walkingAnim, runningAnim
 
@@ -460,6 +561,7 @@
     grassFolder.add(debugObject, 'removeGrass').name('Remove grass')
     grassFolder.add(debugObject, 'generateGrass').name('Generate grass')
     grassFolder.add(debugObject, 'resetGrass').name('Reset grass')
+    grassFolder.close()
 
     /**
      * Utils
@@ -715,7 +817,10 @@
         const moveZ = -walkDirection.z * velocity * deltaTime
         foxBody.position.x += moveX
         foxBody.position.z += moveZ
-        updateCameraTarget(moveX, moveZ)
+
+        if (MODE != 1) {
+          updateCameraTarget(moveX, moveZ)
+        }
 
         // rotate camera (in follow model mode)
         if (isFollowingModel) {
@@ -788,13 +893,13 @@
       .step(0.1)
       .name('Walking/Running speed')
 
+    foxFolder.close()
 
     // Camera debug menu
     const cameraFolder = gui.addFolder('Camera')
 
     debugObject.toggleFollowFox = () => {
       toggleFollowModel()
-      console.log(isFollowingModel)
     }
     cameraFolder.add(debugObject, 'toggleFollowFox').name('Toggle follow model')
 
@@ -939,6 +1044,15 @@
 
       updateCharacter(deltaTime, keysPressed)
       if (foxBoundingBoxHelper) foxBoundingBoxHelper.update()
+
+      if (MODE == 1) {
+        updateGameMode1()
+
+        // move orange up and down slightly
+        GM1_orangeList.forEach(object => {
+          object.orange.position.y = 1.5 + Math.sin(elapsedTime * 2.5) * 0.25
+        })
+      }
 
       // Update controls
       controls.update()
