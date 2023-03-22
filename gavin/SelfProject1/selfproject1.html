@@ -200,9 +200,13 @@
       }
     }
 
-    const GM1_reduceOranges = () => {
+    const GM1_reduceOranges = (amount) => {
       if (MODE != 1) return
-      for (let i = 0; i < 10; i++) {
+      if (GM1_orangeList.length == 0) return
+
+      if (amount > GM1_orangeList.length) amount = GM1_orangeList.length
+
+      for (let i = 0; i < (amount ? amount : GM1_orangeList.length); i++) {
         let orangeRemoved = GM1_orangeList.splice(getRandomIntInclusive(0, GM1_orangeList.length - 1), 1)[0]
         scene.remove(orangeRemoved.orange)
         scene.remove(orangeRemoved.orangeBoundingBox)
@@ -241,7 +245,7 @@
 
     const gameMode1Folder = gameModeFolder.addFolder('Game mode 1')
     debugObject.GM1_addOranges = () => { GM1_addOranges() }
-    debugObject.GM1_reduceOranges = () => { GM1_reduceOranges() }
+    debugObject.GM1_reduceOranges = () => { GM1_reduceOranges(10) }
     gameMode1Folder.add(debugObject, 'GM1_addOranges').name("Add more oranges (10)")
     gameMode1Folder.add(debugObject, 'GM1_reduceOranges').name("Reduce oranges (10)")
 
