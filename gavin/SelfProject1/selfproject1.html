@@ -224,7 +224,35 @@
      * Debug
      */
     const gui = new dat.GUI()
+    gui.close()
     const debugObject = {}
+
+    // Refresh rate
+    let isObservingPlanet = false
+    let observingObject = null
+    let observingObjectParams = null
+    const observePlanet = (planet) => {
+      cinematicView = false
+      isObservingPlanet = true
+      if (controlMode == 0) controls.reset()
+      observingObject = planet[0]
+      observingObjectParams = planet[1]
+    }
+
+    gui.add(debugObject, 'refreshRate', {
+      60: 60,
+      120: 120,
+      144: 144,
+      165: 165,
+      180: 180,
+      244: 244,
+      300: 300,
+      360: 360,
+      480: 480,
+      500: 500,
+    })
+      .name('Refresh Rate')
+      .setValue(60)
 
     const pos = 15
 
@@ -328,6 +356,11 @@
 
           // unlock W A S D controls
           isControlLocked = false
+
+          // open debug menu 
+          window.setTimeout(() => {
+            gui.open()
+          }, 1000)
         }, 500)
       },
 
@@ -603,6 +636,7 @@
       gameOverOverlay = new THREE.Mesh(gameOverOverlayGeometry, gameOverOverlayMaterial)
       scene.add(gameOverOverlay)
 
+      // TODO: NEED TO FIX THIS, IT WORKS LIKE 10% OF THE TIME FOR SOME REASON
       new TWEEN.Tween(gameOverOverlayMaterial.uniforms.uAlpha).to({ value: 0.4 }, 1000).start()
 
       // console.log(gameOverOverlayMaterial.uniforms.uAlpha.value)
@@ -1109,7 +1143,6 @@
     const followCamHeight = 4
     const followCamDistance = 6
     let cameraFollowRotation = 0
-    let toggleLookBehind = false
 
     let isControlLocked = true
 
@@ -1130,7 +1163,7 @@
       }
 
       if (event.key.toLowerCase() == 'r') {
-        toggleLookBehind = !toggleLookBehind
+        debugObject.isToggledLookingBehind = !debugObject.isToggledLookingBehind
       }
     }, false)
 
@@ -1214,17 +1247,7 @@
 
       if (isFollowingModel) {
         if (keysPressed[R]) {
-          const rotZ = Math.cos(cameraFollowRotation)
-          const rotX = Math.sin(cameraFollowRotation)
-          if (toggleLookBehind) {
-            camera.position.x = fox.position.x + (followCamDistance * rotX)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z - (followCamDistance * rotZ)
-          } else {
-            camera.position.x = fox.position.x - (followCamDistance * rotX)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z + (followCamDistance * rotZ)
-          }
+          setCameraFollowModelMode()
         }
       }
 
@@ -1269,18 +1292,7 @@
             } else if (keysPressed[D]) {
               cameraFollowRotation += rotateAng
             }
-            const rotZ = Math.cos(cameraFollowRotation)
-            const rotX = Math.sin(cameraFollowRotation)
-
-            if (toggleLookBehind) {
-              camera.position.x = fox.position.x + (followCamDistance * rotX)
-              camera.position.y = fox.position.y + followCamHeight
-              camera.position.z = fox.position.z - (followCamDistance * rotZ)
-            } else {
-              camera.position.x = fox.position.x - (followCamDistance * rotX)
-              camera.position.y = fox.position.y + followCamHeight
-              camera.position.z = fox.position.z + (followCamDistance * rotZ)
-            }
+            setCameraFollowModelMode()
           }
         }
       }
@@ -1381,6 +1393,21 @@
 
     let isFollowingModel = false
 
+    const setCameraFollowModelMode = () => {
+      if (fox) {
+        const rotZ = Math.cos(cameraFollowRotation)
+        const rotX = Math.sin(cameraFollowRotation)
+        if (debugObject.isToggledLookingBehind) {
+          camera.position.x = fox.position.x - (followCamDistance * rotX)
+          camera.position.z = fox.position.z + (followCamDistance * rotZ)
+        } else {
+          camera.position.x = fox.position.x + (followCamDistance * rotX)
+          camera.position.z = fox.position.z - (followCamDistance * rotZ)
+        }
+        camera.position.y = fox.position.y + followCamHeight
+      }
+    }
+
     const toggleFollowModel = (bool) => {
       if (bool) {
         isFollowingModel = true
@@ -1389,17 +1416,7 @@
         if (!isFollowingModelWithMouse)
           controls.enabled = false
 
-        if (fox) {
-          if (toggleLookBehind) {
-            camera.position.x = fox.position.x + (followCamDistance)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z - (followCamDistance)
-          } else {
-            camera.position.x = fox.position.x - (followCamDistance)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z + (followCamDistance)
-          }
-        }
+        setCameraFollowModelMode()
       } else {
         isFollowingModel = false
         debugObject.toggleFollowModel = false
@@ -1421,10 +1438,20 @@
       isFollowingModelWithMouse = bool
       controls.enabled = bool
 
-      if (!isFollowingModel) {
-        if (!controls.enabled)
-          controls.enabled = true
+      if (bool) {
+        controls.enablePan = false
+        controls.enableZoom = false
+      } else {
+        controls.enablePan = true
+        controls.enableZoom = true
       }
+
+      if (!isFollowingModel)
+        if (!controls.enabled) {
+          controls.enabled = true
+          controls.enablePan = true
+          controls.enableZoom = true
+        }
     }
 
     // Camera debug menu
@@ -1440,6 +1467,11 @@
     cameraFolder.add(debugObject, 'toggleFollowModelMouseMode')
       .onChange((value) => { toggleFollowModelMouseMode(value) })
       .name('Toggle mouse mode (in follow mode)')
+
+    debugObject.isToggledLookingBehind = false
+    cameraFolder.add(debugObject, 'isToggledLookingBehind')
+      .name('Look behind (follow model mode)')
+      .listen()
 
     debugObject.cameraFollowSensitivity = 1.5
     cameraFolder.add(debugObject, 'cameraFollowSensitivity')
@@ -1479,7 +1511,8 @@
       oldElapsedTime = elapsedTime
 
       // Update physics
-      world.step(1 / 120, deltaTime, 3)
+      world.step(1 / debugObject.refreshRate, deltaTime, 3)
+
       for (const obj of objectsToUpdate) {
         obj.mesh.position.copy(obj.body.position)
         obj.mesh.quaternion.copy(obj.body.quaternion)
