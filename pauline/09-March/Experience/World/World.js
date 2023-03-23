@@ -20,20 +20,31 @@ export default class World {
         this.resources.items.women2Painting,
         this.resources.items.women3Painting,
         this.resources.items.foldingScreen,
-        this.resources.items.food
+        this.resources.items.food,
       ];
-      // let nextAnimation = 0;
-      const itemArr = items.map((_, i)=>{
-        this.item = new Item(items[i], objectSettings[i]);
-        // this.item.on('next',()=>{
-        //   console.log(nextAnimation);
-        // })
+      let nextAnimation = 0;
+      this.itemArr = items.map((_, i) => {
+        this.item = new Item(items[i], objectSettings[i], nextAnimation);
         return this.item;
       });
-      itemArr.push(new Person());
-    
+      var i = 0;
+      this.setMovingObjects(i);
+
+      // itemArr.push(new Person());
 
       this.environment = new Environment();
     });
+  }
+
+  setMovingObjects(i) {
+    setTimeout(() => {
+      this.itemArr[i].setMovement();
+      i++;
+      if (i < 5) {
+        this.setMovingObjects(i);
+      } else {
+        this.experience.isManual = true;
+      }
+    }, 2000);
   }
 }
