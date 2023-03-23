@@ -948,8 +948,8 @@
 
     let isFollowingModel = false
 
-    const toggleFollowModel = () => {
-      if (!isFollowingModel) {
+    const toggleFollowModel = (bool) => {
+      if (bool) {
         isFollowingModel = true
 
         if (!isFollowingModelMouseFree)
@@ -981,7 +981,7 @@
 
     let isFollowingModelMouseFree = false
 
-    const toggleFollowModelMouseFreeMode = (bool) => {
+    const toggleFollowModelMouseMode = (bool) => {
       isFollowingModelMouseFree = bool
       controls.enabled = bool
 
@@ -994,18 +994,15 @@
     // Camera debug menu
     const cameraFolder = gui.addFolder('Camera')
 
-    debugObject.toggleFollowModel = () => {
-      toggleFollowModel()
-    }
-    cameraFolder.add(debugObject, 'toggleFollowModel').name('Toggle follow model')
+    debugObject.toggleFollowModel = false
+    cameraFolder.add(debugObject, 'toggleFollowModel')
+      .onChange((value) => { toggleFollowModel(value) })
+      .name('Toggle follow model')
 
-    // debugObject.toggleFollowModelMouseFreeMode = () => {
-    //   toggleFollowModelMouseFreeMode()
-    // }
-    debugObject.toggleFollowModelMouseFreeMode = false
-    cameraFolder.add(debugObject, 'toggleFollowModelMouseFreeMode')
-      .onChange((value) => { toggleFollowModelMouseFreeMode(value) })
-      .name('Toggle mouse-free mode (in follow mode)')
+    debugObject.toggleFollowModelMouseMode = false
+    cameraFolder.add(debugObject, 'toggleFollowModelMouseMode')
+      .onChange((value) => { toggleFollowModelMouseMode(value) })
+      .name('Toggle mouse mode (in follow mode)')
 
     debugObject.cameraFollowSensitivity = 1.5
     cameraFolder.add(debugObject, 'cameraFollowSensitivity')
