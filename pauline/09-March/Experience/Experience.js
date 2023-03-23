@@ -33,6 +33,7 @@ export default class Experience {
     this.camera = new Camera();
     this.renderer = new Renderer();
     this.world = new World();
+    this.isManual = false;
 
     // Resize event
     this.sizes.on("resize", () => {
@@ -59,7 +60,9 @@ export default class Experience {
   }
 
   update() {
-    this.camera.update();
+    if(this.isManual){
+      this.camera.update();
+    }
     this.renderer.update();
   }
 

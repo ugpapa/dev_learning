@@ -1,11 +1,9 @@
 import * as THREE from "three";
 import Experience from "../Experience.js";
 import gsap from "gsap";
-import EventEmitter from "../Utils/EventEmitter.js";
 
 export default class Item {
   constructor(model, settings) {
-    // super();
     this.experience = new Experience();
     this.scene = this.experience.scene;
     this.resources = this.experience.resources;
@@ -14,17 +12,16 @@ export default class Item {
     this.settings = settings;
 
     // Debug
-    if (this.debug.active) {
-      this.debugFolder = this.debug.ui.addFolder(settings.name);
-    }
+    // if (this.debug.active) {
+    //   this.debugFolder = this.debug.ui.addFolder(settings.name);
+    // }
 
     // Resource
     this.resource = model;
-
     this.setModel();
   }
 
-  setModel(nextAnimation) {
+  setModel() {
     this.model = this.resource.scene;
     this.model.scale.set(
       this.settings.scale.x,
@@ -43,11 +40,9 @@ export default class Item {
       this.model.rotateZ(this.settings.rotation.z);
     }
     this.scene.add(this.model);
-    // this.trigger('next');
-    // this.setMovement(nextAnimation);
   }
 
-  setMovement(nextAnimation) {
+  setMovement() {
     const t1 = gsap.timeline();
     this.experience.camera.instance.rotation.set(
       0,
@@ -56,7 +51,7 @@ export default class Item {
     );
     t1.to(this.experience.camera.instance.position, {
       x: this.settings.t1.x,
-      duration: 1,
+      duration: 3,
       onUpdate: () => {
         this.experience.camera.instance.lookAt(
           this.settings.t1.lookAt.x,
@@ -67,15 +62,13 @@ export default class Item {
     });
     t1.to(this.experience.camera.instance.position, {
       z: this.settings.t2.z,
-      duration: 1,
+      duration: 3,
       onUpdate: () => {
         this.experience.camera.instance.lookAt(
           this.settings.t2.lookAt.x,
           this.settings.t2.lookAt.y,
           this.settings.t2.lookAt.z
         );
-
-        nextAnimation += 1;
       },
     });
     

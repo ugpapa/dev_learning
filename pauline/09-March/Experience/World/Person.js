@@ -13,10 +13,10 @@ export default class Person
         this.debug = this.experience.debug
 
         // Debug
-        if(this.debug.active)
-        {
-            this.debugFolder = this.debug.ui.addFolder('person')
-        }
+        // if(this.debug.active)
+        // {
+        //     this.debugFolder = this.debug.ui.addFolder('person')
+        // }
 
         // Resource
         this.resource = this.resources.items.personModel
