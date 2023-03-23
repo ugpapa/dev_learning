@@ -23,11 +23,178 @@
       left: 0;
       outline: none;
     }
+
+    .loading-bar {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      height: 2px;
+      background: #ffffff;
+      transform: scaleX(0);
+      transform-origin: top left;
+      transition: transform 0.5s;
+    }
+
+    .loading-bar.ended {
+      transform: scaleX(0);
+      transform-origin: 100% 0;
+      transition: transform 1.5s ease-in-out;
+    }
+
+    .prevent-select {
+      -webkit-user-select: none;
+      /* Safari */
+      -ms-user-select: none;
+      /* IE 10 and IE 11 */
+      user-select: none;
+      /* Standard syntax */
+    }
+
+    p {
+      display: inline;
+    }
+
+    #GM1-hud-text {
+      display: none;
+      position: fixed;
+      padding: 1em;
+      font-family: Arial, Helvetica, sans-serif;
+      color: white;
+      text-shadow: 2px 2px 2px #000000;
+    }
+
+    .game-over {
+      display: none;
+      position: fixed;
+      top: 70%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: xx-large;
+      color: white;
+      text-shadow: 2px 2px 2px #000000;
+      opacity: 0;
+      text-align: center;
+
+      /* border: 1px solid red; */
+    }
+
+    .small-text {
+      font-size: x-large;
+    }
+
+    .center-text {
+      text-align: center;
+    }
+
+    .popup {
+      opacity: 1;
+      top: 60%;
+      display: block;
+      -webkit-animation: fadeIn 1.0s, popUp 1.0s;
+      animation: fadeIn 1.0s, popUp 1.0s;
+    }
+
+    .fadein {
+      opacity: 1;
+      display: block;
+      -webkit-animation: fadeIn 1.0s;
+      animation: fadeIn 1.0s;
+    }
+
+    /* (fade in the popup) */
+    @-webkit-keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* (fade in the popup) */
+    @-webkit-keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0;
+      }
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0;
+      }
+    }
+
+    /* (popup the popup) */
+    @-webkit-keyframes popUp {
+      from {
+        top: 70%;
+      }
+
+      to {
+        top: 60%;
+      }
+    }
+
+    @keyframes popUp {
+      from {
+        top: 70%;
+      }
+
+      to {
+        top: 60%;
+      }
+    }
   </style>
 </head>
 
 <body>
   <canvas class="webgl"></canvas>
+  <div class="loading-bar"></div>
+
+  <div class="prevent-select" id="GM1-hud-text">
+    <h1>
+      Remaining oranges: <p id="GM1-orange-remaining">0</p>
+    </h1>
+    <h1>
+      Score: <p id="GM1-score">0</p>
+    </h1>
+    <h1>
+      Time remaining: <p id="GM1-timer"></p>
+    </h1>
+  </div>
+
+  <div class="prevent-select game-over">
+    <h1>Game Over!</h1>
+    <h1>
+      Final Score: <p id="GM1-final-score"></p>
+    </h1>
+
+    <br />
+    <br />
+    <br />
+    <p class="small-text">(Click anywhere to exit)</p>
+  </div>
 
   <script defer src="https://ga.jspm.io/npm:es-module-shims@1.6.2/dist/es-module-shims.js"></script>
   <script type="importmap">
@@ -49,12 +216,43 @@
     import { GLTFLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js'
     import { DRACOLoader } from 'https://unpkg.com/three@0.147.0/examples/jsm/loaders/DRACOLoader.js'
 
+    import * as TWEEN from "https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.esm.js"
+
+    // import * as DOMPurify from "https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.1/purify.min.js"
 
     /**
      * Debug
      */
     const gui = new dat.GUI()
+    gui.close()
     const debugObject = {}
+
+    // Refresh rate
+    let isObservingPlanet = false
+    let observingObject = null
+    let observingObjectParams = null
+    const observePlanet = (planet) => {
+      cinematicView = false
+      isObservingPlanet = true
+      if (controlMode == 0) controls.reset()
+      observingObject = planet[0]
+      observingObjectParams = planet[1]
+    }
+
+    gui.add(debugObject, 'refreshRate', {
+      60: 60,
+      120: 120,
+      144: 144,
+      165: 165,
+      180: 180,
+      244: 244,
+      300: 300,
+      360: 360,
+      480: 480,
+      500: 500,
+    })
+      .name('Refresh Rate')
+      .setValue(60)
 
     const pos = 15
 
@@ -88,7 +286,7 @@
       )
     }
 
-    debugObject.reset = () => {
+    debugObject.removeAllDebugObjects = () => {
       for (const object of objectsToUpdate) {
         // Remove body
         object.body.removeEventListener('collide', playHitSound)
@@ -106,7 +304,7 @@
     const objectFolder = gui.addFolder('Objects')
     objectFolder.add(debugObject, 'createSphere').name('Create sphere')
     objectFolder.add(debugObject, 'createBox').name('Create box')
-    objectFolder.add(debugObject, 'reset').name('Remove all')
+    objectFolder.add(debugObject, 'removeAllDebugObjects').name('Remove all')
     objectFolder.close()
 
     /**
@@ -115,18 +313,75 @@
     // Canvas
     const canvas = document.querySelector('canvas.webgl')
 
-    /**
-     * Textures
-     */
-    const textureLoader = new THREE.TextureLoader()
-    const cubeTextureLoader = new THREE.CubeTextureLoader()
+    // Scene
+    const scene = new THREE.Scene()
 
-    // Provide a DRACOLoader instance to decode compressed mesh data
+    /**
+     * Loading screen and loaders
+     */
+    const loadingOverlayGeometry = new THREE.PlaneGeometry(2, 2, 1, 1)
+    const loadingOverlayMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      // wireframe: true,
+      uniforms:
+      {
+        uAlpha: { value: 1 }
+      },
+      vertexShader: `
+          void main()
+          {
+              gl_Position = vec4(position, 1.0);
+          }
+      `,
+      fragmentShader: `
+          uniform float uAlpha;
+          void main()
+          {
+              gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+          }
+      `
+    })
+    const loadingOverlay = new THREE.Mesh(loadingOverlayGeometry, loadingOverlayMaterial)
+    scene.add(loadingOverlay)
+
+    const loadingBarElement = document.querySelector('.loading-bar')
+    const loadingManager = new THREE.LoadingManager(
+      // Loaded
+      () => {
+        window.setTimeout(() => {
+          new TWEEN.Tween(loadingOverlayMaterial.uniforms.uAlpha).to({ value: 0 }, 2000).delay(500).start()
+
+          loadingBarElement.classList.add('ended')
+          loadingBarElement.style.transform = ''
+
+          // unlock W A S D controls
+          isControlLocked = false
+
+          // open debug menu 
+          window.setTimeout(() => {
+            gui.open()
+          }, 1000)
+        }, 500)
+      },
+
+      // Progress
+      (itemUrl, itemsLoaded, itemsTotal) => {
+        const progressRatio = itemsLoaded / itemsTotal
+        loadingBarElement.style.transform = `scaleX(${progressRatio})`
+      }
+    )
+
+    // Loaders
+    const textureLoader = new THREE.TextureLoader(loadingManager)
+    const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager)
+
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('./draco/')
+
     const gltfLoader = new GLTFLoader()
     gltfLoader.setDRACOLoader(dracoLoader)
 
+    // Environment map
     const environmentMap = cubeTextureLoader.load([
       './textures/environmentMaps/px.png',
       './textures/environmentMaps/nx.png',
@@ -136,20 +391,104 @@
       './textures/environmentMaps/nz.png'
     ])
     environmentMap.encoding = THREE.sRGBEncoding
-
-    // Scene
-    const scene = new THREE.Scene()
     scene.background = new THREE.Color('skyblue')
     scene.environment = environmentMap
 
-    let MODE = 0
 
-    const GM1_orangeList = []
+    /**
+     * Game modes
+     */
+    let MODE = 0
+    let clickToResume = false
+
+    // Game-over overlay to darken the scene
+    const gameOverOverlayGeometry = new THREE.PlaneGeometry(2, 2, 1, 1)
+    const gameOverOverlayMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      uniforms:
+      {
+        uAlpha: { value: 0.0 }
+      },
+      vertexShader: `
+          void main()
+          {
+            gl_Position = vec4(position, 1.0);
+          }
+        `,
+      fragmentShader: `
+          uniform float uAlpha;
+          void main()
+          {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+          }
+        `
+    })
+    let gameOverOverlay = null
+
+    const GM1_countdownTime = 15.00
+    const gameModeParams = {
+      MODE1: {
+        // total amount of oranges
+        orangeAmount: 0,
+
+        // list too track oranges in the scene
+        orangeList: [],
+
+        // track score
+        score: 0,
+
+        // timer for gamemode (seconds)
+        countdownTime: GM1_countdownTime,
+        countdownTimer: null,
+
+        // HUD DOM elements
+        HUD_orange_remaining: null,
+        HUD_score: null,
+        HUD_timer: null,
+        HUD_gameover: null,
+        HUD_final_score: null
+      }
+    }
+
+    const resetToDefaultMode = () => {
+      GM1_close()
+
+      MODE = 0
+      toggleFollowModel(false)
+      debugObject.toggleFollowModel = false
+
+      isControlLocked = false
+      clickToResume = false
+      controls.enabled = true
+      controls.reset()
+      camera.position.set(-18, 15, -18)
+
+      foxBody.position.set(0, 1, 0)
+
+      // Clear all debug objects in the scene
+      for (const object of objectsToUpdate) {
+        // Remove body
+        object.body.removeEventListener('collide', playHitSound)
+        world.removeBody(object.body)
+
+        // Remove mesh
+        scene.remove(object.mesh)
+      }
+      objectsToUpdate.splice(0, objectsToUpdate.length)
+
+      spawnRandomObjects()
+    }
+
+    // ============================================================================================
+    // ============================================================================================
+    // ======== GAME MODE 1 ========
+
     // TODO: a mini gamemode where the fox has to eat all the food within a certain amount of time
     const GM1_EatEverything = () => {
+      if (MODE == 1) return
+
       MODE = 1
-      isFollowingModel = false
-      toggleFollowModel()
+      toggleFollowModel(true)
       // camera.position.set(0, 50, -65)
 
       // Clear all debug objects in the scene
@@ -163,18 +502,42 @@
       }
       objectsToUpdate.splice(0, objectsToUpdate.length)
 
-      // Spawn 50 oranges randomly
+      // HUD
+      document.getElementById('GM1-hud-text').style.display = "block"
+      gameModeParams.MODE1.HUD_score = document.getElementById('GM1-score')
+      gameModeParams.MODE1.HUD_orange_remaining = document.getElementById('GM1-orange-remaining')
+      gameModeParams.MODE1.HUD_timer = document.getElementById('GM1-timer')
+      gameModeParams.MODE1.HUD_gameover = document.getElementsByClassName('game-over')[0]
+
+      gameModeParams.MODE1.HUD_score.innerHTML = gameModeParams.MODE1.score
+      gameModeParams.MODE1.HUD_timer.innerHTML = gameModeParams.MODE1.countdownTime.toFixed(2)
+
+      // Spawn oranges randomly
       GM1_addOranges(50)
 
       // Create bounding box for the fox model
       foxBoundingBox = new THREE.Box3().setFromObject(fox)
       foxBoundingBox.name = "foxBoundingBox"
+
+      gameModeParams.MODE1.countdownTimer = setInterval(() => {
+        if (gameModeParams.MODE1.countdownTime <= 0) {
+          clearInterval(gameModeParams.MODE1.countdownTimer)
+          gameModeParams.MODE1.countdownTimer = null
+          gameModeParams.MODE1.countdownTime = 0.00
+          GM1_gameOver()
+          return
+        }
+
+        gameModeParams.MODE1.countdownTime -= 0.01
+      }, 10);
     }
 
     const GM1_addOranges = (amount) => {
       if (MODE != 1) return
 
-      for (let i = GM1_orangeList.length; i < GM1_orangeList.length + (amount ? amount : 10); i++) {
+      const realAmount = amount ? amount : 10
+
+      for (let i = gameModeParams.MODE1.orangeList.length; i < gameModeParams.MODE1.orangeList.length + realAmount; i++) {
         gltfLoader.load(
           './models/orange.glb',
           (gltf) => {
@@ -192,55 +555,139 @@
 
             const orangeBoundingBox = new THREE.Box3().setFromObject(orange)
             orangeBoundingBox.name = "orangeBoundingBox " + i
-            GM1_orangeList.push({ orange, orangeBoundingBox })
+            gameModeParams.MODE1.orangeList.push({ orange, orangeBoundingBox })
+            gameModeParams.MODE1.HUD_orange_remaining.innerHTML = gameModeParams.MODE1.orangeList.length
 
             scene.add(orange)
           }
         )
       }
+
+      gameModeParams.MODE1.orangeAmount += realAmount
     }
 
     const GM1_reduceOranges = (amount) => {
       if (MODE != 1) return
-      if (GM1_orangeList.length == 0) return
+      if (gameModeParams.MODE1.orangeList.length == 0) return
 
-      if (amount > GM1_orangeList.length) amount = GM1_orangeList.length
+      let realAmount = amount ? amount : 10
 
-      for (let i = 0; i < (amount ? amount : GM1_orangeList.length); i++) {
-        let orangeRemoved = GM1_orangeList.splice(getRandomIntInclusive(0, GM1_orangeList.length - 1), 1)[0]
+      if (realAmount > gameModeParams.MODE1.orangeList.length || realAmount < 0)
+        realAmount = gameModeParams.MODE1.orangeList.length
+
+      for (let i = 0; i < realAmount; i++) {
+        let orangeRemoved = gameModeParams.MODE1.orangeList.splice(getRandomIntInclusive(0, gameModeParams.MODE1.orangeList.length - 1), 1)[0]
         scene.remove(orangeRemoved.orange)
-        scene.remove(orangeRemoved.orangeBoundingBox)
         orangeRemoved.orangeBoundingBox = null
+        gameModeParams.MODE1.HUD_orange_remaining.innerHTML = gameModeParams.MODE1.orangeList.length
       }
+
+      gameModeParams.MODE1.orangeAmount -= realAmount
     }
 
-    const updateGameMode1 = () => {
+    const GM1_update = () => {
       if (!fox || !foxBoundingBox) return
       if (MODE != 1) return
 
       foxBoundingBox.setFromObject(fox)
 
-      for (let i = 0; i < GM1_orangeList.length; i++) {
-        let { orange, orangeBoundingBox } = GM1_orangeList[i]
+      for (let i = 0; i < gameModeParams.MODE1.orangeList.length; i++) {
+        let { orange, orangeBoundingBox } = gameModeParams.MODE1.orangeList[i]
 
         orangeBoundingBox.setFromObject(orange)
 
         if (foxBoundingBox.intersectsBox(orangeBoundingBox)) {
+          scene.remove(orange)
+          orangeBoundingBox = null
+
+          gameModeParams.MODE1.orangeList.splice(i, 1)
+
+          gameModeParams.MODE1.score += 1
+
+          eatSound.volume = 0.3
           eatSound.currentTime = 0
           eatSound.play()
 
-          scene.remove(orange)
-          scene.remove(orangeBoundingBox)
-          orangeBoundingBox = null
-
-          GM1_orangeList.splice(i, 1)
+          gameModeParams.MODE1.HUD_score.innerHTML = gameModeParams.MODE1.score
+          gameModeParams.MODE1.HUD_orange_remaining.innerHTML = gameModeParams.MODE1.orangeList.length
         }
       }
+
+      gameModeParams.MODE1.HUD_timer.innerHTML = Math.abs(gameModeParams.MODE1.countdownTime).toFixed(2)
     }
 
+    const GM1_gameOver = () => {
+      // lock controls (prevent w a s d movement)
+      isControlLocked = true
+      // prevent mouse control
+      if (controls.enabled) controls.enabled = false
+
+      // require user to click to resume
+      clickToResume = true
+
+      // remove hud
+      document.getElementById('GM1-hud-text').style.display = "none"
+
+      // set final score
+      gameModeParams.MODE1.HUD_final_score = document.getElementById('GM1-final-score')
+      gameModeParams.MODE1.HUD_final_score.innerHTML = gameModeParams.MODE1.score
+
+      // fade in dark game over overlay
+      gameOverOverlay = new THREE.Mesh(gameOverOverlayGeometry, gameOverOverlayMaterial)
+      scene.add(gameOverOverlay)
+
+      // TODO: NEED TO FIX THIS, IT WORKS LIKE 10% OF THE TIME FOR SOME REASON
+      new TWEEN.Tween(gameOverOverlayMaterial.uniforms.uAlpha).to({ value: 0.4 }, 1000).start()
+
+      // console.log(gameOverOverlayMaterial.uniforms.uAlpha.value)
+
+      // setTimeout(() => {
+      //   console.log(gameOverOverlayMaterial.uniforms.uAlpha.value)
+      // }, 2000);
+
+      // pop up the game over text overlay
+      gameModeParams.MODE1.HUD_gameover.classList.add('popup')
+    }
+
+    const GM1_close = () => {
+      GM1_reduceOranges(-1)
+      foxBoundingBox = null
+
+      // recover controls
+      isControlLocked = false
+
+      if ((isFollowingModel && isFollowingModelWithMouse) || !isFollowingModel)
+        if (!controls.enabled)
+          controls.enabled = true
+
+      clickToResume = false
+
+      // remove overlay
+      if (gameOverOverlay !== null) {
+        scene.remove(gameOverOverlay)
+      }
+      document.getElementById('GM1-hud-text').style.display = "none"
+      gameOverOverlayMaterial.uniforms.uAlpha.value = 0.0
+
+      // restore HTML element
+      gameModeParams.MODE1.HUD_gameover = document.getElementsByClassName('game-over')[0]
+      gameModeParams.MODE1.HUD_gameover.classList.remove('popup')
+
+      // restore parameters
+      if (gameModeParams.MODE1.countdownTimer !== null) {
+        clearInterval(gameModeParams.MODE1.countdownTimer)
+        gameModeParams.MODE1.countdownTimer = null
+      }
+      gameModeParams.MODE1.countdownTime = GM1_countdownTime
+      gameModeParams.MODE1.orangeAmount = 0
+      gameModeParams.MODE1.score = 0
+    }
+
+    debugObject.resetToDefaultMode = () => { resetToDefaultMode() }
     debugObject.GM1_EatEverything = () => { GM1_EatEverything() }
 
     const gameModeFolder = gui.addFolder('Game modes')
+    gameModeFolder.add(debugObject, 'resetToDefaultMode').name("Reset to default mode")
     gameModeFolder.add(debugObject, 'GM1_EatEverything').name("Start Game Mode 1 (Eat oranges)")
 
     const gameMode1Folder = gameModeFolder.addFolder('Game mode 1')
@@ -248,6 +695,22 @@
     debugObject.GM1_reduceOranges = () => { GM1_reduceOranges(10) }
     gameMode1Folder.add(debugObject, 'GM1_addOranges').name("Add more oranges (10)")
     gameMode1Folder.add(debugObject, 'GM1_reduceOranges').name("Reduce oranges (10)")
+
+    // ======== END OF GAME MODE 1 ========
+    // ============================================================================================
+    // ============================================================================================
+
+
+    canvas.addEventListener("mousedown", (e) => {
+      // console.log(e.button)
+      // left click
+      if (MODE == 1 && clickToResume) {
+        if (e.button === 0) {
+          clickToResume = false
+          resetToDefaultMode()
+        }
+      }
+    })
 
     // TODO: click to load scene
     /**
@@ -641,15 +1104,18 @@
       return { mesh, body }
     }
 
-    createBox(5, 1, 1.5, { x: 0, y: 1, z: 10 }, 10)
-    createBox(10, 2, 1.5, { x: 0, y: 2, z: 20 }, 30)
-    createBox(10, 3, 1.5, { x: 0, y: 3, z: 30 }, 60, concreteMaterial)
-    createBox(10, 10, 10, { x: 40, y: 10, z: 40 }, 1000, concreteMaterial)
+    const spawnRandomObjects = () => {
+      createBox(5, 1, 1.5, { x: 0, y: 1, z: 10 }, 10)
+      createBox(10, 2, 1.5, { x: 0, y: 2, z: 20 }, 30)
+      createBox(10, 3, 1.5, { x: 0, y: 3, z: 30 }, 60, concreteMaterial)
+      createBox(10, 10, 10, { x: 40, y: 10, z: 40 }, 1000, concreteMaterial)
 
-    createSphere(2, { x: 25, y: 10, z: -20 }, 10)
-    createSphere(3, { x: 25, y: 10, z: -10 }, 30)
-    createSphere(4, { x: 25, y: 10, z: 0 }, 60, concreteMaterial)
-    createSphere(5, { x: 25, y: 10, z: 10 }, 1000, concreteMaterial)
+      createSphere(2, { x: 25, y: 10, z: -20 }, 10)
+      createSphere(3, { x: 25, y: 10, z: -10 }, 30)
+      createSphere(4, { x: 25, y: 10, z: 0 }, 60, concreteMaterial)
+      createSphere(5, { x: 25, y: 10, z: 10 }, 1000, concreteMaterial)
+    }
+    spawnRandomObjects()
 
 
     /**
@@ -677,7 +1143,8 @@
     const followCamHeight = 4
     const followCamDistance = 6
     let cameraFollowRotation = 0
-    let toggleLookBehind = false
+
+    let isControlLocked = true
 
     const walkDirection = new THREE.Vector3()
     const rotateAngle = new THREE.Vector3(0, 1, 0)
@@ -696,7 +1163,7 @@
       }
 
       if (event.key.toLowerCase() == 'r') {
-        toggleLookBehind = !toggleLookBehind
+        debugObject.isToggledLookingBehind = !debugObject.isToggledLookingBehind
       }
     }, false)
 
@@ -758,6 +1225,8 @@
 
       mixer.update(deltaTime)
 
+      if (isControlLocked) return
+
       let toAction = null
       const directionPressed = DIRECTIONS.some(key => keysPressed[key] == true)
 
@@ -778,17 +1247,7 @@
 
       if (isFollowingModel) {
         if (keysPressed[R]) {
-          const rotZ = Math.cos(cameraFollowRotation)
-          const rotX = Math.sin(cameraFollowRotation)
-          if (toggleLookBehind) {
-            camera.position.x = fox.position.x + (followCamDistance * rotX)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z - (followCamDistance * rotZ)
-          } else {
-            camera.position.x = fox.position.x - (followCamDistance * rotX)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z + (followCamDistance * rotZ)
-          }
+          setCameraFollowModelMode()
         }
       }
 
@@ -821,14 +1280,11 @@
         const moveZ = -walkDirection.z * velocity * deltaTime
         foxBody.position.x += moveX
         foxBody.position.z += moveZ
-
-        if (MODE != 1) {
-          updateCameraTarget(moveX, moveZ)
-        }
+        updateCameraTarget(moveX, moveZ)
 
         // rotate camera (in follow model mode)
         if (isFollowingModel) {
-          if (!isFollowingModelMouseFree) {
+          if (!isFollowingModelWithMouse) {
             const rotateAng = Math.PI * 0.5 * deltaTime * debugObject.cameraFollowSensitivity
 
             if (keysPressed[A]) {
@@ -836,18 +1292,7 @@
             } else if (keysPressed[D]) {
               cameraFollowRotation += rotateAng
             }
-            const rotZ = Math.cos(cameraFollowRotation)
-            const rotX = Math.sin(cameraFollowRotation)
-
-            if (toggleLookBehind) {
-              camera.position.x = fox.position.x + (followCamDistance * rotX)
-              camera.position.y = fox.position.y + followCamHeight
-              camera.position.z = fox.position.z - (followCamDistance * rotZ)
-            } else {
-              camera.position.x = fox.position.x - (followCamDistance * rotX)
-              camera.position.y = fox.position.y + followCamHeight
-              camera.position.z = fox.position.z + (followCamDistance * rotZ)
-            }
+            setCameraFollowModelMode()
           }
         }
       }
@@ -948,26 +1393,34 @@
 
     let isFollowingModel = false
 
+    const setCameraFollowModelMode = () => {
+      if (fox) {
+        const rotZ = Math.cos(cameraFollowRotation)
+        const rotX = Math.sin(cameraFollowRotation)
+        if (debugObject.isToggledLookingBehind) {
+          camera.position.x = fox.position.x - (followCamDistance * rotX)
+          camera.position.z = fox.position.z + (followCamDistance * rotZ)
+        } else {
+          camera.position.x = fox.position.x + (followCamDistance * rotX)
+          camera.position.z = fox.position.z - (followCamDistance * rotZ)
+        }
+        camera.position.y = fox.position.y + followCamHeight
+      }
+    }
+
     const toggleFollowModel = (bool) => {
       if (bool) {
         isFollowingModel = true
+        debugObject.toggleFollowModel = true
 
-        if (!isFollowingModelMouseFree)
+        if (!isFollowingModelWithMouse)
           controls.enabled = false
 
-        if (fox) {
-          if (toggleLookBehind) {
-            camera.position.x = fox.position.x + (followCamDistance)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z - (followCamDistance)
-          } else {
-            camera.position.x = fox.position.x - (followCamDistance)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z + (followCamDistance)
-          }
-        }
+        setCameraFollowModelMode()
       } else {
         isFollowingModel = false
+        debugObject.toggleFollowModel = false
+
         controls.reset()
         controls.enabled = true
 
@@ -979,16 +1432,26 @@
       }
     }
 
-    let isFollowingModelMouseFree = false
+    let isFollowingModelWithMouse = false
 
     const toggleFollowModelMouseMode = (bool) => {
-      isFollowingModelMouseFree = bool
+      isFollowingModelWithMouse = bool
       controls.enabled = bool
 
-      if (!isFollowingModel) {
-        if (!controls.enabled)
-          controls.enabled = true
+      if (bool) {
+        controls.enablePan = false
+        controls.enableZoom = false
+      } else {
+        controls.enablePan = true
+        controls.enableZoom = true
       }
+
+      if (!isFollowingModel)
+        if (!controls.enabled) {
+          controls.enabled = true
+          controls.enablePan = true
+          controls.enableZoom = true
+        }
     }
 
     // Camera debug menu
@@ -998,11 +1461,17 @@
     cameraFolder.add(debugObject, 'toggleFollowModel')
       .onChange((value) => { toggleFollowModel(value) })
       .name('Toggle follow model')
+      .listen()
 
     debugObject.toggleFollowModelMouseMode = false
     cameraFolder.add(debugObject, 'toggleFollowModelMouseMode')
       .onChange((value) => { toggleFollowModelMouseMode(value) })
       .name('Toggle mouse mode (in follow mode)')
+
+    debugObject.isToggledLookingBehind = false
+    cameraFolder.add(debugObject, 'isToggledLookingBehind')
+      .name('Look behind (follow model mode)')
+      .listen()
 
     debugObject.cameraFollowSensitivity = 1.5
     cameraFolder.add(debugObject, 'cameraFollowSensitivity')
@@ -1042,7 +1511,8 @@
       oldElapsedTime = elapsedTime
 
       // Update physics
-      world.step(1 / 120, deltaTime, 3)
+      world.step(1 / debugObject.refreshRate, deltaTime, 3)
+
       for (const obj of objectsToUpdate) {
         obj.mesh.position.copy(obj.body.position)
         obj.mesh.quaternion.copy(obj.body.quaternion)
@@ -1070,16 +1540,19 @@
       if (foxBoundingBoxHelper) foxBoundingBoxHelper.update()
 
       if (MODE == 1) {
-        updateGameMode1()
+        GM1_update()
 
         // move orange up and down slightly
-        GM1_orangeList.forEach(object => {
+        gameModeParams.MODE1.orangeList.forEach(object => {
           object.orange.position.y = 1.5 + Math.sin(elapsedTime * 2.5) * 0.25
         })
       }
 
       // Update controls
       controls.update()
+
+      // Update tween
+      TWEEN.update()
 
       // Render
       renderer.render(scene, camera)
