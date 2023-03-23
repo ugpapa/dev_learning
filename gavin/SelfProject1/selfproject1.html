@@ -828,58 +828,28 @@
 
         // rotate camera (in follow model mode)
         if (isFollowingModel) {
-          const rotateAng = Math.PI * 0.5 * deltaTime * debugObject.cameraFollowSensitivity
+          if (!isFollowingModelMouseFree) {
+            const rotateAng = Math.PI * 0.5 * deltaTime * debugObject.cameraFollowSensitivity
 
-          if (keysPressed[A]) {
-            cameraFollowRotation -= rotateAng
-          } else if (keysPressed[D]) {
-            cameraFollowRotation += rotateAng
-          }
-          const rotZ = Math.cos(cameraFollowRotation)
-          const rotX = Math.sin(cameraFollowRotation)
+            if (keysPressed[A]) {
+              cameraFollowRotation -= rotateAng
+            } else if (keysPressed[D]) {
+              cameraFollowRotation += rotateAng
+            }
+            const rotZ = Math.cos(cameraFollowRotation)
+            const rotX = Math.sin(cameraFollowRotation)
 
-          if (toggleLookBehind) {
-            camera.position.x = fox.position.x + (followCamDistance * rotX)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z - (followCamDistance * rotZ)
-          } else {
-            camera.position.x = fox.position.x - (followCamDistance * rotX)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z + (followCamDistance * rotZ)
-          }
-        }
-      }
-    }
-
-    let isFollowingModel = false
-
-    const toggleFollowModel = () => {
-      if (!isFollowingModel) {
-        isFollowingModel = true
-        // disable orbit controls
-        controls.enabled = false
-
-        if (fox) {
-          if (toggleLookBehind) {
-            camera.position.x = fox.position.x + (followCamDistance)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z - (followCamDistance)
-          } else {
-            camera.position.x = fox.position.x - (followCamDistance)
-            camera.position.y = fox.position.y + followCamHeight
-            camera.position.z = fox.position.z + (followCamDistance)
+            if (toggleLookBehind) {
+              camera.position.x = fox.position.x + (followCamDistance * rotX)
+              camera.position.y = fox.position.y + followCamHeight
+              camera.position.z = fox.position.z - (followCamDistance * rotZ)
+            } else {
+              camera.position.x = fox.position.x - (followCamDistance * rotX)
+              camera.position.y = fox.position.y + followCamHeight
+              camera.position.z = fox.position.z + (followCamDistance * rotZ)
+            }
           }
         }
-      } else {
-        isFollowingModel = false
-        controls.reset()
-        controls.enabled = true
-
-        // update camera target
-        cameraTarget.x = foxBody.position.x
-        cameraTarget.y = foxBody.position.y + 1
-        cameraTarget.z = foxBody.position.z
-        controls.target = cameraTarget
       }
     }
 
@@ -898,21 +868,6 @@
       .name('Walking/Running speed')
 
     foxFolder.close()
-
-    // Camera debug menu
-    const cameraFolder = gui.addFolder('Camera')
-
-    debugObject.toggleFollowFox = () => {
-      toggleFollowModel()
-    }
-    cameraFolder.add(debugObject, 'toggleFollowFox').name('Toggle follow model')
-
-    debugObject.cameraFollowSensitivity = 1.5
-    cameraFolder.add(debugObject, 'cameraFollowSensitivity')
-      .min(0.1)
-      .max(5.0)
-      .step(0.1)
-      .name('Follow rotation sensitivity')
 
     /**
      * Lights
@@ -990,6 +945,74 @@
     // Controls
     const controls = new OrbitControls(camera, canvas)
     controls.enableDamping = true
+
+    let isFollowingModel = false
+
+    const toggleFollowModel = () => {
+      if (!isFollowingModel) {
+        isFollowingModel = true
+
+        if (!isFollowingModelMouseFree)
+          controls.enabled = false
+
+        if (fox) {
+          if (toggleLookBehind) {
+            camera.position.x = fox.position.x + (followCamDistance)
+            camera.position.y = fox.position.y + followCamHeight
+            camera.position.z = fox.position.z - (followCamDistance)
+          } else {
+            camera.position.x = fox.position.x - (followCamDistance)
+            camera.position.y = fox.position.y + followCamHeight
+            camera.position.z = fox.position.z + (followCamDistance)
+          }
+        }
+      } else {
+        isFollowingModel = false
+        controls.reset()
+        controls.enabled = true
+
+        // update camera target
+        cameraTarget.x = foxBody.position.x
+        cameraTarget.y = foxBody.position.y + 1
+        cameraTarget.z = foxBody.position.z
+        controls.target = cameraTarget
+      }
+    }
+
+    let isFollowingModelMouseFree = false
+
+    const toggleFollowModelMouseFreeMode = (bool) => {
+      isFollowingModelMouseFree = bool
+      controls.enabled = bool
+
+      if (!isFollowingModel) {
+        if (!controls.enabled)
+          controls.enabled = true
+      }
+    }
+
+    // Camera debug menu
+    const cameraFolder = gui.addFolder('Camera')
+
+    debugObject.toggleFollowModel = () => {
+      toggleFollowModel()
+    }
+    cameraFolder.add(debugObject, 'toggleFollowModel').name('Toggle follow model')
+
+    // debugObject.toggleFollowModelMouseFreeMode = () => {
+    //   toggleFollowModelMouseFreeMode()
+    // }
+    debugObject.toggleFollowModelMouseFreeMode = false
+    cameraFolder.add(debugObject, 'toggleFollowModelMouseFreeMode')
+      .onChange((value) => { toggleFollowModelMouseFreeMode(value) })
+      .name('Toggle mouse-free mode (in follow mode)')
+
+    debugObject.cameraFollowSensitivity = 1.5
+    cameraFolder.add(debugObject, 'cameraFollowSensitivity')
+      .min(0.1)
+      .max(5.0)
+      .step(0.1)
+      .name('Follow rotation sensitivity')
 
     /**
      * Renderer
