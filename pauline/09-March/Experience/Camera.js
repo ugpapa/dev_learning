@@ -30,7 +30,7 @@ export default class Camera extends EventEmitter {
   setControls() {
     this.controls = new OrbitControls(this.instance, this.canvas);
     this.controls.enableDamping = true;
-    this.controls.enabled = false;
+    this.controls.enabled = this.experience.isManual;
     this.controls.listenToKeyEvents(window);
     this.controls.keys = {
       LEFT: "KeyA",
@@ -50,16 +50,16 @@ export default class Camera extends EventEmitter {
   }
 
   setRestrictControl() {
-    console.log(this.instance.position);
+    // console.log(this.instance.position);
     // how far can you dolly in perspective view
     // this.controls.minDistance = cameraSettings.minDistance // how far can you dolly in
     // this.controls.maxDistance = cameraSettings.maxDistance // how far can you dolly out
 
-    // Limit vertical rotations --> 0 to PI
+    // // Limit vertical rotations --> 0 to PI
     // this.controls.minPolarAngle = cameraSettings.minPolarAngle// how far can you dolly vertically in
     // this.controls.maxPolarAngle = cameraSettings.maxAzimuthAngle // how far can you dolly vertically out
 
-    // Limit horizontal rotation
+    // // Limit horizontal rotation
     // this.controls.minAzimuthAngle = cameraSettings.minAzimuthAngle
     // this.controls.maxAzimuthAngle = cameraSettings.maxAzimuthAngle
   }
@@ -70,6 +70,6 @@ export default class Camera extends EventEmitter {
   }
 
   update() {
-    // this.controls.update();
+    this.controls.update();
   }
 }

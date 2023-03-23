@@ -22,25 +22,29 @@ export default class World {
         this.resources.items.foldingScreen,
         this.resources.items.food,
       ];
-      // let i = 0;
-      let isDoneAnimation = true;
-      // while(i < items.length){
-      //   if(!isDoneAnimation){
-      //     isDoneAnimation = true;
-      //     i += 1;
-      //   } else {
-      //     const item = new Item(items[i], objectSettings[i], isDoneAnimation);
-      //   }
-      // }
-      this.women1Painting = new Item(this.resources.items.women1Painting, objectSettings[0], isDoneAnimation);
-      console.log(isDoneAnimation)
-      // this.women2Painting = new Item(this.resources.items.women2Painting, objectSettings.women2);
-      // this.women3Painting = new Item(this.resources.items.women3Painting, objectSettings.women3);
-      // this.foldingScreen = new Item(this.resources.items.foldingScreen, objectSettings.foldingScreen);
-      // this.food = new Item(this.resources.items.food, objectSettings.food);
+      let nextAnimation = 0;
+      this.itemArr = items.map((_, i) => {
+        this.item = new Item(items[i], objectSettings[i], nextAnimation);
+        return this.item;
+      });
+      var i = 0;
+      this.setMovingObjects(i);
 
-      this.person = new Person();
+      // itemArr.push(new Person());
+
       this.environment = new Environment();
     });
+  }
+
+  setMovingObjects(i) {
+    setTimeout(() => {
+      this.itemArr[i].setMovement();
+      i++;
+      if (i < 5) {
+        this.setMovingObjects(i);
+      } else {
+        this.experience.isManual = true;
+      }
+    }, 2000);
   }
 }

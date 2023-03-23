@@ -13,10 +13,10 @@ export default class Room
         this.debug = this.experience.debug
 
         // Debug
-        if(this.debug.active)
-        {
-            this.debugFolder = this.debug.ui.addFolder('room')
-        }
+        // if(this.debug.active)
+        // {
+        //     this.debugFolder = this.debug.ui.addFolder('room')
+        // }
 
         // Resource
         this.resource = this.resources.items.roomModel
